@@ -1,0 +1,19 @@
+# Ignore the backend node_modules folder
+server/node_modules
+client/node_modules
+
+# Ignore environment files (for storing secrets)
+.vs
+.vscode
+.env
+server/.env
+client/.env
+
+# Seed data
+server/*.csv
+server/seeder*
+server/migration
+server/*.csv
+server/seeder*
+server/migration
+.vercel
