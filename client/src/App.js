@@ -1,24 +1,32 @@
-import logo from './logo.svg';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import UserManagementPage from './pages/UserManagementPage';
+import PrivateRoute from './components/PrivateRoute';
+import Navbar from './components/Navbar';
 import './App.css';
+
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Navbar />
+      <main>
+        <Routes>
+          {/* Public Route */}
+          <Route path="/login" element={<LoginPage />} />
+
+          {/* Private Routes */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/users" element={<UserManagementPage />} />
+            {/* Add other private routes for motors, equipment etc. here */}
+          </Route>
+        </Routes>
+      </main>
+    </Router>
   );
 }
 

@@ -5,12 +5,15 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "import": "node _seeder/seeder.js -i",
+    "destroy": "node _seeder/seeder.js -d"
   },
   "author": "MAshraf",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "colors": "^1.4.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",

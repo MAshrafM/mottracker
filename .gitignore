@@ -11,7 +11,7 @@ client/.env
 
 # Seed data
 server/*.csv
-server/seeder*
+server/_seeder
 server/migration
 server/*.csv
 server/seeder*

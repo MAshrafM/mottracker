@@ -5,6 +5,9 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 // Import the database connection function
 const connectDB = require('./config/db');
+// --- Import route files ---
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 // Connect to MongoDB
 connectDB();
@@ -17,6 +20,10 @@ const app = express();
 // Middleware
 app.use(cors()); // Enable Cross-Origin Resource Sharing
 app.use(express.json()); // Enable parsing of JSON in request body
+
+// --- Mount routers ---
+app.use('/api/auth', authRoutes); // Any request to /api/auth/... will be handled by authRoutes
+app.use('/api/users', userRoutes); // Mount the new user routes
 
 // A simple test route to make sure everything is working
 app.get('/', (req, res) => {
