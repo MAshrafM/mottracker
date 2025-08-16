@@ -31,7 +31,7 @@ const Navbar = () => {
                 </div>
               </div>
             </Link>
-      
+
             {/* Right Side Content */}
             <div className="flex items-center space-x-4">
               {user && (
@@ -87,19 +87,7 @@ const Navbar = () => {
                     )}
                   </div>
 
-                  {/* Mobile Welcome Text */}
-                  <div className="md:hidden">
-                    <span className="text-sm text-blue-200">Hi, {user.username.split(' ')[0]}</span>
-                  </div>
-
-                  {/* Logout Button (Fallback) */}
-                  <button
-                    onClick={handleLogout}
-                    className="md:hidden p-2 text-red-300 hover:text-red-200 hover:bg-red-500/10 rounded-lg transition-all duration-200"
-                    title="Logout"
-                  >
-                    <LogOut className="w-5 h-5" />
-                  </button>
+                  
                 </>
               )}
             </div>

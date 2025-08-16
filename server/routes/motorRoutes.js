@@ -9,6 +9,7 @@ const {
   updateMotor,
   deleteMotor,
 } = require('../controllers/motorController');
+const maintenanceRouter = require('./maintenanceRoutes');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // Apply the 'protect' middleware to all routes in this file
@@ -23,5 +24,7 @@ router.route('/:id')
   .get(getMotor)
   .put(authorize('admin', 'manager'), updateMotor) // Admin and manager can update
   .delete(authorize('admin'), deleteMotor); // Only admin can delete
+
+router.use('/:motorId/maintenance', maintenanceRouter);
 
 module.exports = router;

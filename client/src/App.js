@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import UserManagementPage from './pages/UserManagementPage';
 import MotorManagementPage from './pages/MotorManagementPage';
+import MotorHistoryPage from './pages/MotorHistoryPage';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
 import './App.css';
@@ -24,6 +25,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/users" element={<UserManagementPage />} />
             <Route path="/motors" element={<MotorManagementPage />} />
+            <Route path="/motors/:motorId/maintenance" element={<MotorHistoryPage />} />
             {/* Add other private routes for motors, equipment etc. here */}
           </Route>
         </Routes>
