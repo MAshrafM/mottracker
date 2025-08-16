@@ -3,6 +3,22 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
+const MotorHistorySchema = new Schema({
+  motor: {
+    type: Schema.Types.ObjectId,
+    ref: 'Motor',
+    required: true,
+  },
+  dateAssigned: {
+    type: Date,
+    default: Date.now,
+  },
+  dateRemoved: {
+    type: Date,
+  },
+});
+
+
 const PlantEquipmentSchema = new Schema({
   tonNumber: {
     type: String,
@@ -15,7 +31,7 @@ const PlantEquipmentSchema = new Schema({
     required: [true, 'Please add a designation'],
   },
   // This creates a relationship between this schema and the Motor schema
-  motor: {
+  currentMotor: {
     type: Schema.Types.ObjectId,
     ref: 'Motor', // The 'ref' tells Mongoose which model to use during population
     default: null,
@@ -24,6 +40,8 @@ const PlantEquipmentSchema = new Schema({
     type: String,
     required: [true, 'Please add a plant name'],
     },
+  // A log of all motors ever installed on this equipment
+  motorHistory: [MotorHistorySchema],
 }, {
   timestamps: true
 });

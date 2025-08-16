@@ -90,9 +90,12 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Action Button */}
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <div className="w-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 group-hover:border-amber-400/50">
+                <div className="flex items-center space-x-4 mt-4 pt-4 border-t border-white/10">
+                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 group-hover:border-amber-400/50">
                     <Link to="/motors" className="text-amber-200 group-hover:text-white text-sm font-medium">View All Motors</Link>
+                  </div>
+                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 group-hover:border-amber-400/50">
+                    <Link to="/equipment" className="text-amber-200 group-hover:text-white text-sm font-medium">View All Equipments</Link>
                   </div>
                 </div>
               </div>
