@@ -8,6 +8,7 @@ const connectDB = require('./config/db');
 // --- Import route files ---
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const motorRoutes = require('./routes/motorRoutes');
 
 // Connect to MongoDB
 connectDB();
@@ -24,6 +25,7 @@ app.use(express.json()); // Enable parsing of JSON in request body
 // --- Mount routers ---
 app.use('/api/auth', authRoutes); // Any request to /api/auth/... will be handled by authRoutes
 app.use('/api/users', userRoutes); // Mount the new user routes
+app.use('/api/motors', motorRoutes); // Mount the motor routes
 
 // A simple test route to make sure everything is working
 app.get('/', (req, res) => {

@@ -20,16 +20,18 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo Section */}
-            <div className="flex items-center space-x-3 hover:opacity-90 transition-opacity duration-200 cursor-pointer">
-              <div className="p-2 bg-blue-500 rounded-lg shadow-lg">
-                <Link to="/dashboard"><Car className="w-6 h-6 text-white" /></Link>
+            <Link to="/dashboard">
+              <div className="flex items-center space-x-3 hover:opacity-90 transition-opacity duration-200 cursor-pointer">
+                <div className="p-2 bg-blue-500 rounded-lg shadow-lg">
+                  <Car className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white">MotorTracker</h1>
+                  <p className="text-xs text-blue-200 -mt-1 hidden sm:block">Motor Maintenance</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">MotorTracker</h1>
-                <p className="text-xs text-blue-200 -mt-1 hidden sm:block">Motor Maintenance</p>
-              </div>
-            </div>
-
+            </Link>
+      
             {/* Right Side Content */}
             <div className="flex items-center space-x-4">
               {user && (

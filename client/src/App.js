@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import UserManagementPage from './pages/UserManagementPage';
+import MotorManagementPage from './pages/MotorManagementPage';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
 import './App.css';
@@ -22,6 +23,7 @@ function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/users" element={<UserManagementPage />} />
+            <Route path="/motors" element={<MotorManagementPage />} />
             {/* Add other private routes for motors, equipment etc. here */}
           </Route>
         </Routes>
