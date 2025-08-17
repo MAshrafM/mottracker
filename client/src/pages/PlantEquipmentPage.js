@@ -10,9 +10,15 @@ const PlantEquipmentPage = () => {
   const { user } = useContext(AuthContext);
   const [equipments, setEquipments] = useState([]);
   const [spareMotors, setSpareMotors] = useState([]);
+
+  // Filter - Search on ton number
+  const [tonFilter, setTonFilter] = useState('');
+
+  // State for loading and error handling
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // State for the CRUD modal
   const [isCrudModalOpen, setIsCrudModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(null); // Will hold equipment ID when editing
   const [formData, setFormData] = useState({ tonNumber: '', designation: '' });
@@ -123,6 +129,10 @@ const PlantEquipmentPage = () => {
     }
   };
 
+  const filteredEquipments = equipments.filter(eq =>
+    eq.tonNumber.toLowerCase().includes(tonFilter.toLowerCase())
+  );
+
   if (isLoading) {
         return (
           <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center">
@@ -171,9 +181,39 @@ const PlantEquipmentPage = () => {
         </div>
       </div>
 
+      {/* Search Filter */}
+      <div className="relative mb-8">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input 
+          type="text" 
+          placeholder="Filter by TON Number..." 
+          value={tonFilter} 
+          onChange={(e) => setTonFilter(e.target.value)}
+          className="w-full bg-white/10 border border-white/20 rounded-lg pl-12 pr-4 py-3 text-white 
+                    placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                    focus:ring-blue-400/50 transition-all duration-300 backdrop-blur-sm
+                    hover:border-white/30 hover:bg-white/15"
+        />
+        {tonFilter && (
+          <button
+            onClick={() => setTonFilter('')}
+            className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-white transition-colors duration-200"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+
       {/* Equipment Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {equipments.map((eq) => (
+        {filteredEquipments.map((eq) => (
           <div key={eq._id} className="glass rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 relative group">
             {/* Admin Actions */}
             {user.role === 'admin' && (
@@ -287,7 +327,7 @@ const PlantEquipmentPage = () => {
                   {eq.motorHistory.slice(0, 3).map((h, index) => (
                     <div key={h._id} className="bg-white/5 rounded-lg p-3 border border-white/10 hover:border-white/20 transition-all duration-300">
                       <Link 
-                        to={`/motors/${h.motor._id}/history`}
+                        to={`/motors/${h.motor._id}/maintenance`}
                         className="flex items-center justify-between text-sm hover:text-blue-300 transition-colors duration-300 group"
                       >
                         <div className="flex items-center space-x-3">

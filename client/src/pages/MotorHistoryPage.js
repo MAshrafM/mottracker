@@ -12,6 +12,11 @@ const MaintenanceHistory = () => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
   const [history, setHistory] = useState([]);
   const [motor, setMotor] = useState(null);
+
+  // State for edit modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  // Loading and error states
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -35,7 +40,6 @@ const MaintenanceHistory = () => {
   const fetchMotorDetails = async () => {
     try {
       const response = await api.get(`/motors/${motorId}`);
-      console.error('Motor details fetched:', response.data.data);
         setMotor(response.data.data);
     } catch (err) {
         console.error('Error fetching motor details:', err);
@@ -68,6 +72,45 @@ const MaintenanceHistory = () => {
       } catch (err) {
         setError('Failed to delete maintenance event.');
       }
+    }
+  };
+
+  const openEditModal = (event) => {
+    // The date from MongoDB is a full ISO string, we need to format it to YYYY-MM-DD for the input field
+    const formattedDate = new Date(event.date).toISOString().split('T')[0];
+    setEditingEvent({ ...event, date: formattedDate });
+    setIsEditModalOpen(true);
+    setError('');
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingEvent(null);
+  };
+
+  const handleEditInputChange = (e) => {
+    setEditingEvent({
+      ...editingEvent,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleUpdateEvent = async (e) => {
+    e.preventDefault();
+    if (!editingEvent.date || !editingEvent.description) {
+      setError('Date and description cannot be empty.');
+      return;
+    }
+    try {
+      await api.put(`/motors/${motorId}/maintenance/${editingEvent._id}`, {
+        date: editingEvent.date,
+        description: editingEvent.description,
+      });
+      closeEditModal();
+      fetchMotorDetails(); // Refresh the list to show the updated event
+    } catch (err) {
+      setError('Failed to update maintenance event.');
+      console.error(err);
     }
   };
 
@@ -261,6 +304,24 @@ const MaintenanceHistory = () => {
                     </div>
                     <p className="text-gray-300 ml-6 leading-relaxed">{event.description}</p>
                   </div>
+
+                  {/* Edit button for admin/manager */}
+                  {(user.role === 'admin' || user.role === 'manager') && (
+                    <button 
+                      onClick={() => openEditModal(event)}
+                      className="ml-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
+                                 text-white p-2 rounded-lg transition-all duration-300 transform hover:scale-110 
+                                 shadow-md hover:shadow-lg opacity-0 group-hover:opacity-100"
+                      title="Edit this event"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 7H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-6-6l3.586-3.586a2 2 0 012.828 0l1.586 1.586a2 2 0 010 2.828L16.414 9M11 7l3.586-3.586a2 2 0 012.828 0l1.586 1.586a2 2 0 010 2.828L16.414
+                      9M11 7l-3.586 3.586a2 2 0 00-2.828 0L3 12.414a2 2 0 000 2.828L6.414 18" />
+                      </svg>
+                    </button>
+                  )}
+                
+
                   
                   {/* Delete button for admin */}
                   {user.role === 'admin' && (
@@ -302,6 +363,62 @@ const MaintenanceHistory = () => {
           </div>
         )}
       </div>
+      {/* Edit Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="glass-dark rounded-2xl p-8 max-w-lg w-full shadow-2xl">
+            <h3 className="text-lg font-semibold text-blue-500 mb-4">Edit Maintenance Event</h3>
+            <form onSubmit={handleUpdateEvent} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-blue-500 text-sm font-semibold">Date</label>
+                <input 
+                  type="date"
+                  name="date"
+                  value={editingEvent.date}
+                  onChange={handleEditInputChange}
+                  required
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                             focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 
+                             transition-all duration-300"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-blue-500 text-sm font-semibold">Description</label>
+                <input 
+                  type="text"
+                  name="description"
+                  value={editingEvent.description}
+                  onChange={handleEditInputChange}
+                  required
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                             focus:ring-blue-400/50 transition-all duration-300"
+                />
+              </div>
+              <div className="flex justify-end pt-4">
+                <button
+                  type="submit"
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
+                             text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300
+                              transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Update Event</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="ml-4 bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                >
+                  Cancel  
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
