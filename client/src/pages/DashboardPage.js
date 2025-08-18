@@ -1,12 +1,84 @@
 // client/src/pages/DashboardPage.js
-import React, { useContext } from 'react';
+import React, { useState, useEffect,useContext } from 'react';
 import { Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
+import { Loader } from 'lucide-react';
+import api from '../services/api';
 import { Zap, ArrowRight, Gauge, Settings, AlertCircle, Activity, Power } from 'lucide-react';
 
 
 const DashboardPage = () => {
   const { user } = useContext(AuthContext);
+  const [totalMotors, setTotalMotors] = useState(0);
+  const [activeMotors, setActiveMotors] = useState(0);
+  const [spareMotors, setSpareMotors] = useState(0);
+  const [totalPower, setTotalPower] = useState(0);
+  const [totalEq, setTotalEq] = useState(0);
+  
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+
+  useEffect(() => {
+    fetchMotors();
+    fetchEquipments();
+  }, []);
+
+  const fetchMotors = async () => {
+    try {
+      setError('');
+      const response = await api.get('/motors');
+      let motorData = response.data.data;
+      let totalMotors = motorData.length;
+      let activeMotors = motorData.filter(f => f.status === "active").length;
+      let spareMotors = motorData.filter(f => f.status === "spare").length;
+      let totalPower = motorData.reduce((sum, i) => Number(i.power || 0) + sum, 0);
+      setActiveMotors(activeMotors);
+      setSpareMotors(spareMotors);
+      setTotalMotors(totalMotors);
+      setTotalPower(totalPower);
+    } catch (err) {
+      setError('Failed to fetch motors.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchEquipments = async () => {
+      try {
+        const response = await api.get('/equipment');
+        let eqData = response.data.data;
+        setTotalEq(eqData.length);
+      } catch (err) {
+        setError('Failed to fetch equipment.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center">
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 p-8 shadow-xl flex items-center space-x-3">
+          <Loader className="w-6 h-6 text-blue-400 animate-spin" />
+          <p className="text-white text-lg">Loading Motors...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center">
+        <div className="bg-red-500/20 backdrop-blur-lg rounded-xl border border-red-500/30 p-8 shadow-xl">
+          <p className="text-red-300 text-lg">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+
 
   return(
   <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
@@ -48,17 +120,21 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="grid grid-cols-4 gap-3 mb-4">
                   <div className="text-center">
-                    <div className="text-xl font-bold text-white">47</div>
-                    <div className="text-xs text-blue-200">Total</div>
+                    <div className="text-xl font-bold text-white">{totalEq}</div>
+                    <div className="text-xs text-blue-200">All Equip.</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-green-400">41</div>
+                    <div className="text-xl font-bold text-white">{totalMotors}</div>
+                    <div className="text-xs text-blue-200">Total Motors</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-green-400">{activeMotors}</div>
                     <div className="text-xs text-blue-200">On Service</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-red-400">6</div>
+                    <div className="text-xl font-bold text-red-400">{spareMotors}</div>
                     <div className="text-xs text-blue-200">Spare</div>
                   </div>
                 </div>
@@ -70,10 +146,10 @@ const DashboardPage = () => {
                       <Activity className="w-4 h-4 text-green-400" />
                       <span className="text-blue-200">System Efficiency</span>
                     </div>
-                    <span className="text-white font-medium">92%</span>
+                    <span className="text-white font-medium">{(activeMotors/(totalMotors || 1)*100).toFixed(2)}%</span>
                   </div>
                   <div className="w-full bg-slate-700/50 rounded-full h-2">
-                    <div className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full" style={{width: '92%'}}></div>
+                    <div className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full" style={{ width: `${(activeMotors / (totalMotors || 1)) * 100}%` }}></div>
                   </div>
                 </div>
 
@@ -81,11 +157,11 @@ const DashboardPage = () => {
                 <div className="border-t border-white/10 pt-4">
                   <div className="flex items-center space-x-2 text-sm">
                     <AlertCircle className="w-4 h-4 text-red-400" />
-                    <span className="text-blue-200">6 motors Spare</span>
+                    <span className="text-blue-200">{spareMotors} motors Spare</span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm mt-2">
                     <Power className="w-4 h-4 text-amber-400" />
-                    <span className="text-blue-200">Avg power: 750W</span>
+                    <span className="text-blue-200">Total power: {totalPower.toFixed(1)}KW</span>
                   </div>
                 </div>
 
