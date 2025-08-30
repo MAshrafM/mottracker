@@ -13,6 +13,8 @@ const PlantEquipmentPage = () => {
 
   // Filter - Search on ton number
   const [tonFilter, setTonFilter] = useState('');
+  // Serial - search on Spare Motors
+  const [motorSearch, setMotorSearch] = useState('');
 
   // State for loading and error handling
   const [isLoading, setIsLoading] = useState(true);
@@ -132,6 +134,10 @@ const PlantEquipmentPage = () => {
   const filteredEquipments = equipments.filter(eq =>
     eq.tonNumber.toLowerCase().includes(tonFilter.toLowerCase())
   );
+
+  const filteredSpareMotors = spareMotors.filter(motor =>
+  motor.serialNumber.toLowerCase().includes(motorSearch.toLowerCase())
+);
 
   if (isLoading) {
         return (
@@ -452,6 +458,16 @@ const PlantEquipmentPage = () => {
               </div>
 
               <div className="space-y-2">
+                <label className="text-blue-300 text-sm font-semibold">Search Spare Motors</label>
+                <input
+                  type="text"
+                  placeholder="Search by Serial Number..."
+                  value={motorSearch}
+                  onChange={(e) => setMotorSearch(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white 
+                            placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                            focus:ring-blue-400/50 transition-all duration-300"
+                />
                 <label className="text-blue-300 text-sm font-semibold">Available Spare Motors</label>
                 <select
                   value={selectedMotorId}
@@ -462,7 +478,7 @@ const PlantEquipmentPage = () => {
                              transition-all duration-300"
                 >
                   <option value="" className="bg-gray-800">-- Select a Spare Motor --</option>
-                  {spareMotors.map(motor => (
+                  {filteredSpareMotors.map(motor => (
                     <option key={motor._id} value={motor._id} className="bg-gray-800">
                       {motor.serialNumber} ({motor.manufacturer} - {motor.type})
                     </option>

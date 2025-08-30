@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 import { Loader } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 const MaintenanceHistory = () => {
   const { motorId } = useParams();
