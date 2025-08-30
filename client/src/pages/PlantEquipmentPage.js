@@ -324,7 +324,7 @@ const PlantEquipmentPage = () => {
 
               {eq.motorHistory.length > 0 ? (
                 <div className="space-y-2">
-                  {eq.motorHistory.slice(0, 3).map((h, index) => (
+                  {eq.motorHistory.map((h, index) => (
                     <div key={h._id} className="bg-white/5 rounded-lg p-3 border border-white/10 hover:border-white/20 transition-all duration-300">
                       <Link 
                         to={`/motors/${h.motor._id}/maintenance`}
@@ -341,13 +341,7 @@ const PlantEquipmentPage = () => {
                     </div>
                   ))}
                   
-                  {eq.motorHistory.length > 3 && (
-                    <div className="text-center py-2">
-                      <span className="text-gray-400 text-sm bg-white/5 px-3 py-1 rounded-full border border-white/10">
-                        ...and {eq.motorHistory.length - 3} more
-                      </span>
-                    </div>
-                  )}
+                  
                 </div>
               ) : (
                 <div className="text-center py-6">

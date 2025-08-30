@@ -115,3 +115,14 @@ exports.assignMotor = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+// @desc  Get current motor
+exports.activeMotor = async(req, res) => {
+  try{
+    const equipment = await PlantEquipment.findOne({currentMotor: req.params.motorId}).select('tonNumber designation plant')
+    if (!equipment) return res.status(404).json({ success: false, message: 'Equipment not found' });
+    res.status(200).json({ success: true, data: equipment });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

@@ -8,6 +8,7 @@ const {
   updateEquipment,
   deleteEquipment,
   assignMotor,
+  activeMotor,
 } = require('../controllers/plantEquipmentController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -21,6 +22,9 @@ router.route('/:id')
   .put(authorize('admin', 'manager'), updateEquipment)
   .delete(authorize('admin'), deleteEquipment);
 
+router.route('/:motorId')
+  .get(activeMotor)
+  
 router.route('/:id/assign-motor')
   .post(authorize('admin', 'manager'), assignMotor);
 

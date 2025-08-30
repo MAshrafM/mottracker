@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 const MotorManagementPage = () => {
   const { user } = useContext(AuthContext);
   const [motors, setMotors] = useState([]);
+  const [updatedMotors, setUpdatedMotors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -18,22 +19,52 @@ const MotorManagementPage = () => {
     manufacturer: '', bearingDE: '', bearingNDE: '', status: 'spare', lastMaintenanceDate: '', SAP: '', Note: '', Warehouse: ''
   });
 
-  useEffect(() => {
-    fetchMotors();
-  }, []);
 
-  const fetchMotors = async () => {
-    try {
-      setError('');
-      const response = await api.get('/motors');
-      setMotors(response.data.data);
-    } catch (err) {
-      setError('Failed to fetch motors.');
-    } finally {
-      setIsLoading(false);
-    }
+useEffect(() => { 
+  fetchMotors(); 
+}, []); 
+const fetchMotors = async () => { 
+  try { setError(''); 
+    const response = await api.get('/motors'); 
+    setMotors(response.data.data); 
+  } catch (err) { 
+    setError('Failed to fetch motors.'); 
+  } finally { setIsLoading(false); } 
+};
+  
+useEffect(() => {
+  const enrichMotors = async () => {
+    const withEq = await Promise.all(
+      motors.map(async motor => {
+        if (motor.status === "active") {
+          const motorEq = await fetchEq(motor._id);
+          return { ...motor, motorEq };
+        }
+        return motor;
+      })
+    );
+    setUpdatedMotors(withEq);
   };
 
+  if (motors.length > 0) {
+    enrichMotors();
+  }
+}, [motors]);
+
+const fetchEq = async (motorId) => { 
+  try{ 
+    setError(''); 
+    const res = await api.get(`/equipment/${motorId}`); 
+    return res.data.data; 
+  } catch(err){ 
+    setError('Failed to fetch motors.'); 
+  } finally { 
+    setIsLoading(false); 
+  } 
+}
+
+
+  
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -127,7 +158,7 @@ const MotorManagementPage = () => {
 
       {/* Motors Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-        {motors.map((motor) => (
+        {updatedMotors.map((motor) => (
           <div key={motor._id} className="glass rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
             {/* Status Badge */}
             <div className="flex justify-between items-start mb-4">
@@ -144,6 +175,12 @@ const MotorManagementPage = () => {
             <h3 className="text-xl font-bold text-white mb-4 border-b border-white/20 pb-2">
               {motor.manufacturer} - {motor.type}
             </h3>
+
+            {motor.status === 'active' && (
+              <h4 className="text-l font-bold text-white mb-4 border-b border-white/20 pb-2 text-center">
+              {motor.motorEq.tonNumber} - {motor.motorEq.designation}
+            </h4>
+            )}
 
             {/* Motor Details */}
             <div className="space-y-3 text-gray-300">

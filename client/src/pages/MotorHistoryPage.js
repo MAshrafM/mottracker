@@ -12,6 +12,8 @@ const MaintenanceHistory = () => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
   const [history, setHistory] = useState([]);
   const [motor, setMotor] = useState(null);
+  const [eq, setEq] = useState(null);
+  const [isActive, setIsActive] = useState(false);
 
   // State for edit modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -23,6 +25,9 @@ const MaintenanceHistory = () => {
   useEffect(() => {
     fetchMotorHistory();
     fetchMotorDetails();
+    if(isActive){
+      fetchEq();
+    }
   }, [motorId]);
 
   const fetchMotorHistory = async () => {
@@ -41,11 +46,26 @@ const MaintenanceHistory = () => {
     try {
       const response = await api.get(`/motors/${motorId}`);
         setMotor(response.data.data);
+        if(response.data.data.status === 'active'){
+          setIsActive(true);
+        }
     } catch (err) {
         console.error('Error fetching motor details:', err);
       setError('Failed to fetch motor details.');
     }
 };
+
+const fetchEq = async () => { 
+  try{ 
+    setError(''); 
+    const res = await api.get(`/equipment/${motorId}`); 
+     setEq(res.data.data); 
+  } catch(err){ 
+    console.error('Failed to fetch Equipment.'); 
+  } finally { 
+    setIsLoading(false); 
+  } 
+}
 
   const handleAddEvent = async (e) => {
     e.preventDefault();
@@ -166,6 +186,12 @@ const MaintenanceHistory = () => {
         <h3 className="text-xl font-bold text-white mb-4 border-b border-white/20 pb-2">
             {motor.manufacturer} - {motor.type}
         </h3>
+
+        {motor.status === 'active' && (
+              <h4 className="text-l font-bold text-white mb-4 border-b border-white/20 pb-2 text-center">
+              {eq.tonNumber} - {eq.designation}
+            </h4>
+        )}
 
         {/* Motor Details */}
         <div className="space-y-3 text-gray-300">
