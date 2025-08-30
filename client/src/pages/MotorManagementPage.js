@@ -12,6 +12,13 @@ const MotorManagementPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Search filters
+  const [filters, setFilters] = useState({
+    power: '',
+    speed: '',
+    status: ''
+  });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(null);
   const [formData, setFormData] = useState({
@@ -101,6 +108,18 @@ const fetchEq = async (motorId) => {
     }
   };
 
+  const handleFilterChange = (e) => {
+    setFilters({ ...filters, [e.target.name]: e.target.value });
+  };
+
+  const filteredMotors = updatedMotors.filter((motor) => {
+    return (
+      (filters.power === '' || motor.power.toString().toLowerCase().includes(filters.power.toLowerCase())) &&
+      (filters.speed === '' || motor.speed.toString().toLowerCase().includes(filters.speed.toLowerCase())) &&
+      (filters.status === '' || motor.status === filters.status)
+    );
+  });
+
   const openCreateModal = () => {
     setIsEditing(null);
     setFormData({
@@ -156,9 +175,46 @@ const fetchEq = async (motorId) => {
         </div>
       </div>
 
+      {/* Filters Section */}
+      <div className="glass rounded-xl p-6 mb-8 shadow-2xl">
+        <h3 className="text-xl font-semibold text-white mb-4">Filter Motors</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <input
+            type="text"
+            name="power"
+            placeholder="Search by Power..."
+            value={filters.power}
+            onChange={handleFilterChange}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 
+                      focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 transition-all duration-300"
+          />
+          <input
+            type="text"
+            name="speed"
+            placeholder="Search by Speed..."
+            value={filters.speed}
+            onChange={handleFilterChange}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 
+                      focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 transition-all duration-300"
+          />
+          <select
+            name="status"
+            value={filters.status}
+            onChange={handleFilterChange}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white 
+                      focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 transition-all duration-300"
+          >
+            <option className="bg-gray-800" value="">All Status</option>
+            <option className="bg-gray-800" value="active">Active</option>
+            <option className="bg-gray-800" value="spare">Spare</option>
+          </select>
+        </div>
+      </div>
+
+
       {/* Motors Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-        {updatedMotors.map((motor) => (
+        {filteredMotors.map((motor) => (
           <div key={motor._id} className="glass rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
             {/* Status Badge */}
             <div className="flex justify-between items-start mb-4">

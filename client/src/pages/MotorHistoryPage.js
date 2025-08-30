@@ -28,7 +28,7 @@ const MaintenanceHistory = () => {
     if(isActive){
       fetchEq();
     }
-  }, [motorId]);
+  }, [motorId, isActive]);
 
   const fetchMotorHistory = async () => {
     try {
