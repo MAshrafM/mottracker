@@ -187,7 +187,7 @@ const fetchEq = async () => {
             {motor.manufacturer} - {motor.type}
         </h3>
 
-        {motor.status === 'active' && (
+        {eq && motor.status === 'active' && (
               <h4 className="text-l font-bold text-white mb-4 border-b border-white/20 pb-2 text-center">
               {eq.tonNumber} - {eq.designation}
             </h4>

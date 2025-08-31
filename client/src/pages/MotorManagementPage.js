@@ -1,7 +1,7 @@
 // client/src/pages/MotorManagementPage.js
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
-import { Loader } from 'lucide-react';
+import { Loader, Grid3X3, List } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -19,6 +19,10 @@ const MotorManagementPage = () => {
     status: ''
   });
 
+  // different views
+  const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
+
+  // Handle Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(null);
   const [formData, setFormData] = useState({
@@ -211,8 +215,43 @@ const fetchEq = async (motorId) => {
         </div>
       </div>
 
+      {/* Select View */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-white">Motors</h2>
+        
+        {/* Toggle Slider */}
+        <div className="relative bg-white/10 border border-white/20 rounded-full p-1 w-20 h-10">
+          {/* Sliding Background */}
+          <div 
+            className={`absolute top-1 w-8 h-8 bg-white/20 rounded-full transition-transform duration-300 ease-in-out ${
+              viewMode === 'grid' ? 'translate-x-0' : 'translate-x-10'
+            }`}
+          />
+          
+          {/* Toggle Button */}
+          <button
+            onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+            className="relative flex items-center justify-between w-full h-full px-1 focus:outline-none focus:ring-2 focus:ring-blue-400/50 rounded-full"
+            aria-label={`Switch to ${viewMode === 'grid' ? 'list' : 'grid'} view`}
+          >
+            {/* Grid Icon */}
+            <div className={`flex items-center justify-center w-8 h-8 transition-colors duration-300 ${
+              viewMode === 'grid' ? 'text-white' : 'text-white/50'
+            }`}>
+              <Grid3X3 size={16} />
+            </div>
+            
+            {/* List Icon */}
+            <div className={`flex items-center justify-center w-8 h-8 transition-colors duration-300 ${
+              viewMode === 'list' ? 'text-white' : 'text-white/50'
+            }`}>
+              <List size={16} />
+            </div>
+          </button>
+        </div>
+      </div>
 
-      {/* Motors Grid */}
+      {viewMode === "grid" ? (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
         {filteredMotors.map((motor) => (
           <div key={motor._id} className="glass rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
@@ -315,7 +354,64 @@ const fetchEq = async (motorId) => {
           </div>
         ))}
       </div>
-
+      ) : (
+        <div className="space-y-4">
+          {filteredMotors.map((motor) => (
+            <div key={motor._id} className="glass rounded-lg p-4 shadow-lg">
+              <div className="flex justify-between">
+                <Link to={`/motors/${motor._id}/maintenance`} className='w-4/5'>
+                  <div className="flex justify-between mb-4">
+                  <h4 className="text-lg font-semibold text-white">{motor.serialNumber}</h4>
+                  <div className="flex justify-between items-start">
+                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        motor.status === 'active' 
+                          ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                          : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                      }`}>
+                        {motor.status}
+                      </span>
+                    </div>
+                    </div>
+                  <div className="flex justify-between">
+                    {motor.status === 'active' && (
+                      <h4 className="text-l font-semibold text-white pr-2">
+                        {motor.motorEq.tonNumber} - {motor.motorEq.designation}
+                      </h4>
+                    )}
+                    <p className="text-sm text-gray-300">
+                      {motor.manufacturer} | {motor.type} | {motor.power} kW | {motor.speed} RPM | {motor.IM} | {motor.frameSize}
+                    </p>
+                  </div>
+                </Link>
+                <div className="flex flex-wrap gap-2">
+                  {(user.role === 'admin' || user.role === 'manager') && (
+                    <button 
+                      onClick={() => handleEdit(motor)}
+                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 
+                                text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                                transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {user.role === 'admin' && (
+                    <button 
+                      onClick={() => handleDelete(motor._id)}
+                      className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 
+                                text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                                transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+      }
+      
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
