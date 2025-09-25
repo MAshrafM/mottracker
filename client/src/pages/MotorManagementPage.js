@@ -101,6 +101,17 @@ const fetchEq = async (motorId) => {
     setIsModalOpen(true);
   };
 
+  const handleSpare = async (motor) => {
+    if (window.confirm('Are you sure you want to set this motor as Spare?')) {
+      try {
+        await api.put(`/motors/${motor._id}`, { status: 'spare' });
+        fetchMotors();
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to update motor status.');
+      }
+    }
+  };
+
   const handleDelete = async (motorId) => {
     if (window.confirm('Are you sure you want to delete this motor?')) {
       try {
@@ -211,6 +222,7 @@ const fetchEq = async (motorId) => {
             <option className="bg-gray-800" value="">All Status</option>
             <option className="bg-gray-800" value="active">Active</option>
             <option className="bg-gray-800" value="spare">Spare</option>
+            <option className="bg-gray-800" value="out of service">Out of Service</option>
           </select>
         </div>
       </div>
@@ -260,7 +272,10 @@ const fetchEq = async (motorId) => {
               <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
                 motor.status === 'active' 
                   ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
-                  : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                  : 
+                  motor.status === 'spare' ?
+                  'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                  : 'bg-red-500/20 text-red-300 border border-red-500/30'
               }`}>
                 {motor.status}
               </span>
@@ -323,14 +338,26 @@ const fetchEq = async (motorId) => {
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-white/20">
               {(user.role === 'admin' || user.role === 'manager') && (
-                <button 
-                  onClick={() => handleEdit(motor)}
-                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 
-                             text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
-                             transform hover:scale-105 shadow-md hover:shadow-lg"
-                >
-                  Edit
-                </button>
+                <>
+                  <button 
+                    onClick={() => handleEdit(motor)}
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 
+                              text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                              transform hover:scale-105 shadow-md hover:shadow-lg"
+                  >
+                    Edit
+                  </button>
+                  {motor.status === 'out of service' && (
+                    <button
+                      onClick={() => handleSpare(motor)}
+                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 
+                                text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                                transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      Set Spare
+                    </button>
+                  )}
+                </>
               )}
               {user.role === 'admin' && (
                 <button 

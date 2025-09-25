@@ -85,7 +85,7 @@ exports.assignMotor = async (req, res) => {
     // --- The Core Logic ---
     // 1. If there's an old motor, set it to 'spare' and update its history record
     if (equipment.currentMotor) {
-      await Motor.findByIdAndUpdate(equipment.currentMotor, { status: 'spare' });
+      await Motor.findByIdAndUpdate(equipment.currentMotor, { status: 'out of service' });
       const historyEntry = equipment.motorHistory.find(h => h.motor.equals(equipment.currentMotor) && !h.dateRemoved);
       if (historyEntry) {
         historyEntry.dateRemoved = new Date();

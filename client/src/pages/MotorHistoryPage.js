@@ -213,7 +213,10 @@ const fetchEq = async () => {
             </p>
             
             </div>
-            
+            <div className="grid grid-cols-2 gap-2 text-sm">
+            <p><strong className="text-blue-300">Bearing NDE:</strong> {motor.bearingNDE}</p>
+            <p><strong className="text-blue-300">Bearing DE:</strong> {motor.bearingDE}</p>
+            </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
             <p><strong className="text-blue-300">Warehouse:</strong> {motor.Warehouse}</p>
             <p><strong className="text-blue-300">SAP ID:</strong> {motor.SAP}</p>

@@ -38,7 +38,7 @@ const MotorSchema = new Schema({
   maintenanceHistory: [MaintenanceEventSchema],
   status: {
     type: String,
-    enum: ['active', 'spare'],
+    enum: ['active', 'spare', 'out of service'],
     default: 'spare',
     required: true,
   },
