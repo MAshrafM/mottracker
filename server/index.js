@@ -1,5 +1,4 @@
-// server/server.js
-
+//server/index.js
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
@@ -10,6 +9,7 @@ dotenv.config();
 // Import the database connection function
 const connectDB = require('./config/db');
 // --- Import route files ---
+
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const motorRoutes = require('./routes/motorRoutes');
@@ -22,8 +22,8 @@ const app = express();
 // Middleware
 // --- CORS CONFIGURATION ---
 // Define the single origin that is allowed to make requests
-const allowedOrigins = ['https://mottracker.vercel.app'];
-
+//const allowedOrigins = ['https://mottracker.vercel.app'];
+/*
 const corsOptions = {
   origin: function (origin, callback) {
     // Check if the incoming origin is in our allowed list
@@ -44,13 +44,36 @@ app.use(cors(corsOptions));
 // This handles the 'preflight' request for all routes
 // Preflight requests are sent for 'complex' requests (like POST with JSON)
 app.options('*', cors(corsOptions));
+*/
+app.use(cors()); // Allow all origins for development; adjust in production
 app.use(express.json()); // Enable parsing of JSON in request body
 
 // --- Mount routers ---
-app.use('/api/auth', authRoutes); // Any request to /api/auth/... will be handled by authRoutes
-app.use('/api/users', userRoutes); // Mount the new user routes
-app.use('/api/motors', motorRoutes); // Mount the motor routes
-app.use('/api/equipment', plantEquipmentRoutes); // Mount the plant equipment routes
+
+try{
+  app.use('/api/auth', authRoutes);
+} catch (err) {
+  console.error('Error loading authRoutes:', err);
+}
+
+
+try{
+app.use('/api/users', userRoutes);
+} catch (err) {
+  console.error('Error loading userRoutes:', err);
+}
+
+try {
+  app.use('/api/motors', motorRoutes);
+} catch (err) {
+  console.error('Error loading motorRoutes:', err);
+}
+
+try{
+  app.use('/api/equipment', plantEquipmentRoutes);
+} catch (err) {
+  console.error('Error loading plantEquipmentRoutes:', err);
+}
 
 // A simple test route to make sure everything is working
 app.get('/', (req, res) => {
