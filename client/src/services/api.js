@@ -1,8 +1,9 @@
 // client/src/services/api.js
+import { BASE_API_URL } from '../config/api';
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5001/api', // Our backend API URL
+  baseURL: BASE_API_URL, // Our backend API URL
 } );
 
 // Interceptor to add the auth token to every request

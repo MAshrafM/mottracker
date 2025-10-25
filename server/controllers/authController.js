@@ -1,11 +1,7 @@
 // server/controllers/authController.js
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs'); 
-
-// Load environment variables
-dotenv.config(); // Ensure the .env file is loaded
 
 // @desc    Login user
 // @route   POST /api/auth/login
@@ -43,9 +39,20 @@ exports.login = async (req, res, next) => {
 
 // Helper function to create, sign, and send a JWT
 const sendTokenResponse = (user, statusCode, res) => {
-  const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  });
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ success: false, message: 'Server JWT configuration error' });
+  }
+
+  let token;
+  try {
+    token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: '30d',
+    });
+  } catch (err) {
+    console.error('JWT sign error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to create token' });
+  }
+  
 
   const options = {
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days

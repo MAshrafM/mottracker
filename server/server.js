@@ -3,6 +3,10 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+
+// Load environment variables from .env file BEFORE anything else
+dotenv.config();
+
 // Import the database connection function
 const connectDB = require('./config/db');
 // --- Import route files ---
@@ -13,10 +17,6 @@ const plantEquipmentRoutes = require('./routes/plantEquipmentRoutes');
 
 // Connect to MongoDB
 connectDB();
-
-// Load environment variables from .env file
-dotenv.config();
-
 const app = express();
 
 // Middleware

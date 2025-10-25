@@ -12,6 +12,7 @@ const DashboardPage = () => {
   const [totalMotors, setTotalMotors] = useState(0);
   const [activeMotors, setActiveMotors] = useState(0);
   const [spareMotors, setSpareMotors] = useState(0);
+  const [oServiceMotors, setOServiceMotors] = useState(0);
   const [totalPower, setTotalPower] = useState(0);
   const [totalEq, setTotalEq] = useState(0);
   
@@ -33,9 +34,11 @@ const DashboardPage = () => {
       let totalMotors = motorData.length;
       let activeMotors = motorData.filter(f => f.status === "active").length;
       let spareMotors = motorData.filter(f => f.status === "spare").length;
+      let oServiceMotors = motorData.filter(f => f.status === "out of service").length;
       let totalPower = motorData.reduce((sum, i) => Number(i.power || 0) + sum, 0);
       setActiveMotors(activeMotors);
       setSpareMotors(spareMotors);
+      setOServiceMotors(oServiceMotors);
       setTotalMotors(totalMotors);
       setTotalPower(totalPower);
     } catch (err) {
@@ -120,7 +123,7 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-4 gap-3 mb-4">
+                <div className="grid grid-cols-5 gap-3 mb-4">
                   <div className="text-center">
                     <div className="text-xl font-bold text-white">{totalEq}</div>
                     <div className="text-xs text-blue-200">All Equip.</div>
@@ -136,6 +139,10 @@ const DashboardPage = () => {
                   <div className="text-center">
                     <div className="text-xl font-bold text-red-400">{spareMotors}</div>
                     <div className="text-xs text-blue-200">Spare</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-red-400">{oServiceMotors}</div>
+                    <div className="text-xs text-blue-200">Out of Service</div>
                   </div>
                 </div>
 
