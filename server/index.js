@@ -20,7 +20,30 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing
+// --- CORS CONFIGURATION ---
+// Define the single origin that is allowed to make requests
+const allowedOrigins = ['https://mottracker.vercel.app'];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Check if the incoming origin is in our allowed list
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      // !origin allows requests from tools like Postman (where origin is undefined)
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  optionsSuccessStatus: 200 // For legacy browser support
+};
+
+// --- MIDDLEWARE ---
+// Use the CORS middleware *before* your routes
+app.use(cors(corsOptions));
+
+// This handles the 'preflight' request for all routes
+// Preflight requests are sent for 'complex' requests (like POST with JSON)
+app.options('*', cors(corsOptions));
 app.use(express.json()); // Enable parsing of JSON in request body
 
 // --- Mount routers ---
