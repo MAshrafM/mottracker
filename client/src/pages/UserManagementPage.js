@@ -212,6 +212,7 @@ const UserManagementPage = () => {
             <div className="flex items-center space-x-4 pt-4">
               <button
                 type="submit"
+                onClick={handleSubmit}
                 className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 shadow-lg"
               >
                 <Save className="w-4 h-4" />
