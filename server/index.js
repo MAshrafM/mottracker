@@ -14,6 +14,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const motorRoutes = require('./routes/motorRoutes');
 const plantEquipmentRoutes = require('./routes/plantEquipmentRoutes');
+const motorActiveReportRoutes = require('./routes/reportRoutes'); 
 
 // Connect to MongoDB
 connectDB();
@@ -49,31 +50,12 @@ app.use(cors()); // Allow all origins for development; adjust in production
 app.use(express.json()); // Enable parsing of JSON in request body
 
 // --- Mount routers ---
-
-try{
-  app.use('/api/auth', authRoutes);
-} catch (err) {
-  console.error('Error loading authRoutes:', err);
-}
-
-
-try{
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-} catch (err) {
-  console.error('Error loading userRoutes:', err);
-}
+app.use('/api/motors', motorRoutes);
+app.use('/api/equipment', plantEquipmentRoutes);
+app.use('/api/reports', motorActiveReportRoutes);
 
-try {
-  app.use('/api/motors', motorRoutes);
-} catch (err) {
-  console.error('Error loading motorRoutes:', err);
-}
-
-try{
-  app.use('/api/equipment', plantEquipmentRoutes);
-} catch (err) {
-  console.error('Error loading plantEquipmentRoutes:', err);
-}
 
 // A simple test route to make sure everything is working
 app.get('/', (req, res) => {

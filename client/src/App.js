@@ -6,6 +6,8 @@ import UserManagementPage from './pages/UserManagementPage';
 import MotorManagementPage from './pages/MotorManagementPage';
 import MotorHistoryPage from './pages/MotorHistoryPage';
 import PlantEquipmentPage from './pages/PlantEquipmentPage';
+import ReportsPage from './pages/ReportsPage';
+import ActiveMotorReport from './pages/ActiveMotorReport';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
 import './App.css';
@@ -28,6 +30,8 @@ function App() {
             <Route path="/motors" element={<MotorManagementPage />} />
             <Route path="/motors/:motorId/maintenance" element={<MotorHistoryPage />} />
             <Route path="/equipment" element={<PlantEquipmentPage />} />
+            <Route path="/reports/*" element={<ReportsPage />} />
+            <Route path="/reports/active-motors" element={<ActiveMotorReport />} />
             {/* Add other private routes for motors, equipment etc. here */}
           </Route>
         </Routes>
