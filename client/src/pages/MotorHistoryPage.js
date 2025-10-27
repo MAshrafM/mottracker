@@ -157,86 +157,147 @@ const fetchEq = async () => {
 
   return (
     <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 min-h-screen p-6">
+      <h4 className="text-2xl font-bold text-white flex justify-center items-center space-x-3 mb-4">
+        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <span>Maintenance History</span>
+      </h4>
       {/* Divider */}
       <div className="w-full h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent mb-8"></div>
-      
+       
       {/* Header Section */}
-      <div className="glass rounded-xl p-6 mb-8 shadow-2xl">
-        <h4 className="text-2xl font-bold text-white flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-          </div>
-          <span>Maintenance History</span>
-        </h4>
-
-        {/* Status Badge */}
-        <div className="flex justify-between items-start mb-4 mt-4">
+      <div className="glass rounded-xl p-4 md:p-6 mb-6 md:mb-8 shadow-2xl">
+        {/* Header with Status and Title */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          {/* Status Badge - Centered on mobile, left on desktop */}
+          <div className="flex justify-center md:justify-start">
             <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-            motor.status === 'active' 
+              motor.status === 'active' 
                 ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
                 : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
             }`}>
-                {motor.status}
+              {motor.status}
             </span>
+          </div>
+
+          {/* Motor Title - Centered on both screens */}
+          <div className="text-center md:text-left md:flex-1 md:px-4">
+            <h3 className="text-xl font-bold text-white">
+              {motor.manufacturer} - {motor.type}
+            </h3>
+          </div>
+
+          {/* Empty div to balance flex layout on desktop */}
+          <div className="hidden md:block w-20"></div>
         </div>
 
-        {/* Motor Title */}
-        <h3 className="text-xl font-bold text-white mb-4 border-b border-white/20 pb-2">
-            {motor.manufacturer} - {motor.type}
-        </h3>
-
+        {/* Equipment info if active */}
         {eq && motor.status === 'active' && (
-              <h4 className="text-l font-bold text-white mb-4 border-b border-white/20 pb-2 text-center">
-              {eq.tonNumber} - {eq.designation}
-            </h4>
+          <h4 className="text-lg text-white mb-4 border-b border-white/20 pb-2 text-center md:text-left">
+            {eq.tonNumber} - {eq.designation}
+          </h4>
         )}
 
         {/* Motor Details */}
         <div className="space-y-3 text-gray-300">
-            <p className="flex justify-around">
-            <strong className="text-blue-300">S/N:</strong> 
-            <span className="font-bold text-sm">{motor.serialNumber}</span>
+          {/* Serial Number */}
+          <div className="bg-white/5 rounded-lg p-3">
+            <p className="flex justify-between items-center">
+              <strong className="text-blue-300 text-base">S/N:</strong> 
+              <span className="font-bold text-base">{motor.serialNumber}</span>
             </p>
+          </div>
+          
+          {/* Technical Specs Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">Power:</strong> 
+                <span className="text-base">{motor.power} KW</span>
+              </p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">Current:</strong> 
+                <span className="text-base">{motor.current} A</span>
+              </p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">Speed:</strong> 
+                <span className="text-base">{motor.speed} rpm</span>
+              </p>
+            </div>
+          </div>
             
-            <div className="grid grid-cols-3 gap-2 text-sm">
-            <p><strong className="text-blue-300">Power:</strong> {motor.power}</p>
-            <p><strong className="text-blue-300">Current:</strong> {motor.current} A</p>
-            <p><strong className="text-blue-300">Speed:</strong> {motor.speed} RPM</p>
+          {/* Mounting and Frame Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">Mounting:</strong> 
+                <span className="text-base">{motor.IM}</span>
+              </p>
             </div>
-              
-            <div className="grid grid-cols-3 gap-2 text-sm">
-            <p><strong className="text-blue-300">Mounting:</strong> {motor.IM}</p>
-            <p className="text-sm">
-                <strong className="text-blue-300">Frame Size:</strong> {motor.frameSize}
-            </p>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">Frame Size:</strong> 
+                <span className="text-base">{motor.frameSize}</span>
+              </p>
+            </div>
+          </div>
+          
+          {/* Bearings Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">Bearing NDE:</strong> 
+                <span className="text-base">{motor.bearingNDE}</span>
+              </p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">Bearing DE:</strong> 
+                <span className="text-base">{motor.bearingDE}</span>
+              </p>
+            </div>
+          </div>
+          
+          {/* Warehouse and SAP Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">Warehouse:</strong> 
+                <span className="text-base">{motor.Warehouse}</span>
+              </p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">SAP ID:</strong> 
+                <span className="text-base">{motor.SAP}</span>
+              </p>
+            </div>
+          </div>
             
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-            <p><strong className="text-blue-300">Bearing NDE:</strong> {motor.bearingNDE}</p>
-            <p><strong className="text-blue-300">Bearing DE:</strong> {motor.bearingDE}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-            <p><strong className="text-blue-300">Warehouse:</strong> {motor.Warehouse}</p>
-            <p><strong className="text-blue-300">SAP ID:</strong> {motor.SAP}</p>
-            </div>
-              
-            <p className="text-sm">
-            <strong className="text-blue-300">Last Maintenance:</strong> 
-            <span className={`ml-2 ${!motor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
+          {/* Last Maintenance */}
+          <div className="bg-white/5 rounded-lg p-3">
+            <p className="flex justify-between items-center">
+              <strong className="text-blue-300 text-base">Last Maintenance:</strong> 
+              <span className={`text-base ${!motor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
                 {motor.lastMaintenanceDate ? new Date(motor.lastMaintenanceDate).toLocaleDateString() : 'N/A'}
-            </span>
+              </span>
             </p>
-              
-              
-              
-            {motor.Note && (
-            <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
-                <strong className="text-blue-300 text-sm">Notes:</strong>
-                <p className="text-sm mt-1 text-gray-300">{motor.Note}</p>
+          </div>
+            
+          {/* Notes */}
+          {motor.Note && (
+            <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+              <strong className="text-blue-300 text-base">Notes:</strong>
+              <p className="text-base mt-2 text-gray-300">{motor.Note}</p>
             </div>
-            )}
+          )}
         </div>
       </div>
       
@@ -298,100 +359,112 @@ const fetchEq = async () => {
       )}
 
       {/* Maintenance History List */}
-      <div className="glass rounded-xl p-6 shadow-xl">
-        <h5 className="text-lg font-semibold text-blue-300 mb-6 flex items-center space-x-2">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          <span>Event History</span>
-        </h5>
+<div className="glass rounded-xl p-4 md:p-6 shadow-xl">
+  <h5 className="text-lg font-semibold text-blue-300 mb-4 md:mb-6 flex items-center space-x-2">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+    </svg>
+    <span>Event History</span>
+  </h5>
 
-        {history && history.length > 0 ? (
-          <div className="space-y-4">
-            {history
-              .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date, newest first
-              .map((event, index) => (
-              <div 
-                key={event._id}
-                className="glass-dark rounded-lg p-4 border border-white/10 hover:border-white/20 
-                           transition-all duration-300 hover:shadow-lg group"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full"></div>
-                      <strong className="text-blue-300 font-semibold">
-                        {new Date(event.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </strong>
-                      <span className="text-xs text-gray-400 bg-white/5 px-2 py-1 rounded-full">
-                        {index === 0 ? 'Latest' : `${index + 1} event${index > 0 ? 's' : ''} ago`}
-                      </span>
-                    </div>
-                    <p className="text-gray-300 ml-6 leading-relaxed">{event.description}</p>
-                  </div>
-
-                  {/* Edit button for admin/manager */}
-                  {(user.role === 'admin' || user.role === 'manager') && (
-                    <button 
-                      onClick={() => openEditModal(event)}
-                      className="ml-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
-                                 text-white p-2 rounded-lg transition-all duration-300 transform hover:scale-110 
-                                 shadow-md hover:shadow-lg opacity-0 group-hover:opacity-100"
-                      title="Edit this event"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 7H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-6-6l3.586-3.586a2 2 0 012.828 0l1.586 1.586a2 2 0 010 2.828L16.414 9M11 7l3.586-3.586a2 2 0 012.828 0l1.586 1.586a2 2 0 010 2.828L16.414
-                      9M11 7l-3.586 3.586a2 2 0 00-2.828 0L3 12.414a2 2 0 000 2.828L6.414 18" />
-                      </svg>
-                    </button>
-                  )}
-                
-
-                  
-                  {/* Delete button for admin */}
-                  {user.role === 'admin' && (
-                    <button 
-                      onClick={() => handleDeleteEvent(event._id)}
-                      className="ml-4 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 
-                                 text-white p-2 rounded-lg transition-all duration-300 transform hover:scale-110 
-                                 shadow-md hover:shadow-lg opacity-0 group-hover:opacity-100"
-                      title="Delete this event"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
+  {history && history.length > 0 ? (
+    <div className="space-y-4">
+      {history
+        .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date, newest first
+        .map((event, index) => (
+        <div 
+          key={event._id}
+          className="glass-dark rounded-lg p-4 border border-white/10 hover:border-white/20 
+                     transition-all duration-300 hover:shadow-lg group"
+        >
+          {/* Main Content */}
+          <div className="flex flex-col">
+            {/* Date and Event Info Row */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex-shrink-0"></div>
+                <div className="min-w-0 flex-1">
+                  <strong className="text-blue-300 font-semibold text-sm md:text-base block truncate">
+                    {new Date(event.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </strong>
                 </div>
-                
-                {/* Timeline connector (except for last item) */}
-                {index < history.length - 1 && (
-                  <div className="ml-1.5 mt-4 w-0.5 h-4 bg-gradient-to-b from-blue-400 to-transparent"></div>
-                )}
               </div>
-            ))}
+              
+              {/* Event Badge */}
+              <span className="text-xs text-gray-400 bg-white/5 px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 ml-2">
+                {index === 0 ? 'Latest' : `${index + 1} event${index > 0 ? 's' : ''} ago`}
+              </span>
+            </div>
+
+            {/* Description */}
+            <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-3 ml-6">
+              {event.description}
+            </p>
+
+            {/* Action Buttons - Always visible on mobile, hover on desktop */}
+            <div className="flex justify-end space-x-2 ml-6 mt-2">
+              {/* Edit button for admin/manager */}
+              {(user.role === 'admin' || user.role === 'manager') && (
+                <button 
+                  onClick={() => openEditModal(event)}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
+                             text-white p-2 rounded-lg transition-all duration-300 transform hover:scale-105 
+                             shadow-md hover:shadow-lg opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                  title="Edit this event"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 7H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-6-6l3.586-3.586a2 2 0 012.828 0l1.586 1.586a2 2 0 010 2.828L16.414 9M11 7l3.586-3.586a2 2 0 012.828 0l1.586 1.586a2 2 0 010 2.828L16.414 9M11 7l-3.586 3.586a2 2 0 00-2.828 0L3 12.414a2 2 0 000 2.828L6.414 18" />
+                  </svg>
+                </button>
+              )}
+              
+              {/* Delete button for admin */}
+              {user.role === 'admin' && (
+                <button 
+                  onClick={() => handleDeleteEvent(event._id)}
+                  className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 
+                             text-white p-2 rounded-lg transition-all duration-300 transform hover:scale-105 
+                             shadow-md hover:shadow-lg opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                  title="Delete this event"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gradient-to-r from-gray-600 to-gray-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          
+          {/* Chevron Timeline connector */}
+          {index < history.length - 1 && (
+            <div className="flex justify-center mt-4 -mb-2 text-blue-400/60">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </div>
-            <p className="text-gray-400 text-lg font-medium">No maintenance history recorded</p>
-            <p className="text-gray-500 text-sm mt-2">
+          )}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="text-center py-8 text-gray-400">
+      <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+      <p>No maintenance events recorded yet.</p>
+      <p className="text-gray-500 text-sm mt-2">
               {(user.role === 'admin' || user.role === 'manager') 
                 ? "Use the form above to add the first maintenance event." 
                 : "Contact an administrator to add maintenance records."
               }
             </p>
-          </div>
-        )}
-      </div>
+    </div>
+  )}
+</div>
       {/* Edit Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
