@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import { Loader } from 'lucide-react';
 import api from '../services/api';
-import { Zap, ArrowRight, Gauge, Settings, AlertCircle, Activity, Power } from 'lucide-react';
+import { Zap, ArrowRight, AlertCircle, Activity, Power } from 'lucide-react';
 
 
 const DashboardPage = () => {
@@ -173,15 +173,15 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Action Button */}
-                <div className="flex items-center space-x-4 mt-4 pt-4 border-t border-white/10">
-                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 group-hover:border-amber-400/50">
-                    <Link to="/motors" className="text-amber-200 group-hover:text-white text-sm font-medium">View All Motors</Link>
+                <div className="flex flex-col md:flex-row md:items-center gap-3 md:space-x-4 mt-4 pt-4 border-t border-white/10">
+                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 hover:border-amber-400/50 w-full md:w-auto">
+                    <Link to="/motors" className="text-amber-200 hover:text-white text-sm font-medium block">View All Motors</Link>
                   </div>
-                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 group-hover:border-amber-400/50">
-                    <Link to="/equipment" className="text-amber-200 group-hover:text-white text-sm font-medium">View All Equipments</Link>
+                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 hover:border-amber-400/50 w-full md:w-auto">
+                    <Link to="/equipment" className="text-amber-200 hover:text-white text-sm font-medium block">View All Equipments</Link>
                   </div>
-                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 group-hover:border-amber-400/50">
-                    <Link to="/reports" className="text-amber-200 group-hover:text-white text-sm font-medium">Reports</Link>
+                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 hover:border-amber-400/50 w-full md:w-auto">
+                    <Link to="/reports" className="text-amber-200 hover:text-white text-sm font-medium block">Reports</Link>
                   </div>
                 </div>
               </div>

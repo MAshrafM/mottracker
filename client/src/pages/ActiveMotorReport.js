@@ -79,10 +79,11 @@ const ActiveMotorsReport = () => {
             <p className="text-gray-600 text-lg">Loading Active Motors...</p>
           </div>
         ) : (
-          <div className="mb-4 flex gap-3">
+          <div className="flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
             <button
               onClick={exportToExcel}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto"
             >
               <FileSpreadsheet size={18} />
               Export to Excel
@@ -90,15 +91,16 @@ const ActiveMotorsReport = () => {
             
             <button
               onClick={exportToPDF}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto"
             >
               <FileDown size={18} />
               Export to PDF
             </button>
             
-            <div className="ml-auto text-white-600 font-medium py-2">
-              Total Active Motors: {activeMotors.length}
+            <div className="text-white-600 font-medium py-2 text-center sm:text-left sm:ml-auto w-full sm:w-auto">
+              Total Active Motors: <span className="text-amber-400">{activeMotors.length}</span>
             </div>
+          </div>
           </div>
         )
         }
@@ -107,44 +109,96 @@ const ActiveMotorsReport = () => {
 
       {activeMotors.length > 0 && (
         <>
-          <div className="m-8 bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+          <div class="hidden lg:block m-4 glass-effect rounded-lg shadow-2xl overflow-x-auto">
+            <div class="overflow-x-auto"></div>
+              <table className="min-w-full divide-y divide-slate-700">
+                <thead className="table-header">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TON Number</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serial Number</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Power</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Speed</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IM</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frame Size</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bearing NDE</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bearing DE</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Maintenance</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">TON Number</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Designation</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Serial Number</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Power</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Speed</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Current</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">IM</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Frame Size</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Bearing NDE</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Bearing DE</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Last Maintenance</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-700">
                   {activeMotors.map((motor, index) => (
-                    <tr key={motor._id || index} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{motor.tonNumber}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{motor.designation}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{motor.serialNumber}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{motor.power}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{motor.speed}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{motor.current}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{motor.IM}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{motor.frameSize}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{motor.bearingNDE}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{motor.bearingDE}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{formatDate(motor.lastMaintenanceDate)}</td>
+                    <tr key={motor._id || index} className="hover:bg-slate-800/50 transition-colors">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-slate-200">{motor.tonNumber}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-200">{motor.designation}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-200">{motor.serialNumber}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-200">{motor.power}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-200">{motor.speed}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-200">{motor.current}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-200">{motor.IM}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-200">{motor.frameSize}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-200">{motor.bearingNDE}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-200">{motor.bearingDE}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-200">{formatDate(motor.lastMaintenanceDate)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
+
+            <div class="lg:hidden space-y-4 m-4">
+              {activeMotors.map((motor, index) => (
+                <div key={motor._id || index} class="motor-card rounded-lg p-4">
+                  <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-700">
+                    <h3 class="text-lg font-bold text-white">{motor.tonNumber}</h3>
+                  </div>
+                  <div class="space-y-3">
+                    <div class="flex">
+                        <span class="field-label">Designation: </span>
+                        <span class="field-value ml-2">{motor.designation}</span>
+                    </div>
+                    <div class="flex">
+                        <span class="field-label">Serial Number: </span>
+                        <span class="field-value ml-2">{motor.serialNumber}</span>
+                    </div>
+                    <div class="flex">
+                        <span class="field-label">Power: </span>
+                        <span class="field-value ml-2">{motor.power}</span>
+                    </div>
+                    <div class="flex">
+                        <span class="field-label">Speed: </span>
+                        <span class="field-value ml-2">{motor.speed}</span>
+                    </div>
+                    <div class="flex">
+                        <span class="field-label">Current: </span>
+                        <span class="field-value ml-2">{motor.current}</span> 
+                    </div>
+                    <div class="flex">
+                        <span class="field-label">IM: </span>
+                        <span class="field-value ml-2">{motor.IM}</span>  
+                    </div>
+                    <div class="flex">
+                        <span class="field-label">Frame Size: </span>
+                        <span class="field-value ml-2">{motor.frameSize}</span>  
+                    </div>
+
+                    <div class="flex">
+                        <span class="field-label">Bearing NDE: </span>
+                        <span class="field-value ml-2">{motor.bearingNDE}</span>  
+                    </div>
+                    <div class="flex">
+                        <span class="field-label">Bearing DE: </span>
+                        <span class="field-value ml-2">{motor.bearingDE}</span>  
+                    </div>
+                    <div class="flex">
+                        <span class="field-label">Last Maintenance: </span>
+                        <span class="field-value ml-2">{formatDate(motor.lastMaintenanceDate)}</span>  
+                    </div>
+                  </div>
+                </div>
+                ))}
+              </div>       
         </>
       )}
 

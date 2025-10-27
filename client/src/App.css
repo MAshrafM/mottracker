@@ -36,3 +36,47 @@
     transform: rotate(360deg);
   }
 }
+
+.motor-card {
+    transition: all 0.3s ease;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.motor-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(2, 8, 20, 0.5);
+    border-color: rgba(100, 116, 139, 0.5);
+}
+
+.field-label {
+    font-weight: 600;
+    color: #94a3b8;
+    min-width: 120px;
+}
+
+.field-value {
+    color: #e2e8f0;
+    word-break: break-word;
+}
+
+.gradient-bg {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+    position: relative;
+}
+
+.glass-effect {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.table-header {
+    background: rgba(30, 41, 59, 0.8);
+    border-bottom: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.table-cell {
+    border-color: rgba(100, 116, 139, 0.2);
+}
