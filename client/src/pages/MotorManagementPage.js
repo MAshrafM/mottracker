@@ -267,73 +267,135 @@ const fetchEq = async (motorId) => {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
         {filteredMotors.map((motor) => (
           <div key={motor._id} className="glass rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-            {/* Status Badge */}
-            <div className="flex justify-between items-start mb-4">
-              <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                motor.status === 'active' 
-                  ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
-                  : 
-                  motor.status === 'spare' ?
-                  'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
-                  : 'bg-red-500/20 text-red-300 border border-red-500/30'
-              }`}>
-                {motor.status}
-              </span>
+            {/* Header with Status and Title */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+            {/* Status Badge - Centered on mobile, left on desktop */}
+              <div className="flex justify-center md:justify-start">
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  motor.status === 'active' 
+                      ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                      : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                  }`}>
+                  {motor.status}
+                </span>
+              </div>
+
+              {/* Motor Title - Centered on both screens */}
+              <div className="text-center md:text-left md:flex-1 md:px-4">
+                <h3 className="text-xl font-bold text-white">
+                  {motor.manufacturer} | {motor.type}
+                </h3>
+              </div>
+
+              {/* Empty div to balance flex layout on desktop */}
+              <div className="hidden md:block w-20"></div>
             </div>
 
-            {/* Motor Title */}
-            <h3 className="text-xl font-bold text-white mb-4 border-b border-white/20 pb-2">
-              {motor.manufacturer} - {motor.type}
-            </h3>
-
-            {motor.status === 'active' && (
-              <h4 className="text-l font-bold text-white mb-4 border-b border-white/20 pb-2 text-center">
-              {motor.motorEq.tonNumber} - {motor.motorEq.designation}
-            </h4>
+            {/* Equipment info if active */}
+            {motor.eq && motor.status === 'active' && (
+              <h4 className="text-lg text-white mb-4 border-b border-white/20 pb-2 text-center md:text-left">
+                {motor.eq.tonNumber} - {motor.eq.designation}
+              </h4>
             )}
 
             {/* Motor Details */}
             <div className="space-y-3 text-gray-300">
-              <p className="flex justify-around">
-                <strong className="text-blue-300">S/N:</strong> 
-                <span className="font-bold text-sm">{motor.serialNumber}</span>
-              </p>
-              
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <p><strong className="text-blue-300">Power:</strong> {motor.power}</p>
-                <p><strong className="text-blue-300">Current:</strong> {motor.current} A</p>
-                <p><strong className="text-blue-300">Speed:</strong> {motor.speed} RPM</p>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <p><strong className="text-blue-300">Mounting:</strong> {motor.IM}</p>
-                <p className="text-sm">
-                    <strong className="text-blue-300">Frame Size:</strong> {motor.frameSize}
+              {/* Serial Number */}
+              <div className="bg-white/5 rounded-lg p-3">
+                <p className="flex justify-between items-center">
+                  <strong className="text-blue-300 text-base">S/N:</strong> 
+                  <span className="font-bold text-base">{motor.serialNumber}</span>
                 </p>
-                
               </div>
-              
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <p><strong className="text-blue-300">Warehouse:</strong> {motor.Warehouse}</p>
-                <p><strong className="text-blue-300">SAP ID:</strong> {motor.SAP}</p>
+          
+              {/* Technical Specs Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="flex justify-between items-center">
+                    <strong className="text-blue-300 text-base">Power:</strong> 
+                    <span className="text-base">{motor.power} KW</span>
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="flex justify-between items-center">
+                    <strong className="text-blue-300 text-base">Current:</strong> 
+                    <span className="text-base">{motor.current} A</span>
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="flex justify-between items-center">
+                    <strong className="text-blue-300 text-base">Speed:</strong> 
+                    <span className="text-base">{motor.speed} rpm</span>
+                  </p>
+                </div>
               </div>
-              
-              <p className="text-sm">
-                <strong className="text-blue-300">Last Maintenance:</strong> 
-                <span className={`ml-2 ${!motor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
-                  {motor.lastMaintenanceDate ? new Date(motor.lastMaintenanceDate).toLocaleDateString() : 'N/A'}
-                </span>
-              </p>
-              
-              
-              
+            
+              {/* Mounting and Frame Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="flex justify-between items-center">
+                    <strong className="text-blue-300 text-base">Mounting:</strong> 
+                    <span className="text-base">{motor.IM}</span>
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="flex justify-between items-center">
+                    <strong className="text-blue-300 text-base">Frame Size:</strong> 
+                    <span className="text-base">{motor.frameSize}</span>
+                  </p>
+                </div>
+              </div>
+          
+              {/* Bearings Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="flex justify-between items-center">
+                    <strong className="text-blue-300 text-base">Bearing NDE:</strong> 
+                    <span className="text-base">{motor.bearingNDE}</span>
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="flex justify-between items-center">
+                    <strong className="text-blue-300 text-base">Bearing DE:</strong> 
+                    <span className="text-base">{motor.bearingDE}</span>
+                  </p>
+                </div>
+              </div>
+          
+              {/* Warehouse and SAP Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="flex md:flex-col justify-between items-center">
+                    <strong className="text-blue-300 text-base">Warehouse:</strong> 
+                    <span className="text-base">{motor.Warehouse}</span>
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="flex justify-between items-center">
+                    <strong className="text-blue-300 text-base">SAP ID:</strong> 
+                    <span className="text-base">{motor.SAP}</span>
+                  </p>
+                </div>
+              </div>
+            
+              {/* Last Maintenance */}
+              <div className="bg-white/5 rounded-lg p-3">
+                <p className="flex justify-between items-center">
+                  <strong className="text-blue-300 text-base">Last Maintenance:</strong> 
+                  <span className={`text-base ${!motor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
+                    {motor.lastMaintenanceDate ? new Date(motor.lastMaintenanceDate).toLocaleDateString() : 'N/A'}
+                  </span>
+                </p>
+              </div>
+              {/* Notes */}
               {motor.Note && (
-                <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
-                  <strong className="text-blue-300 text-sm">Notes:</strong>
-                  <p className="text-sm mt-1 text-gray-300">{motor.Note}</p>
+                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <strong className="text-blue-300 text-base">Notes:</strong>
+                  <p className="text-base mt-2 text-gray-300">{motor.Note}</p>
                 </div>
               )}
             </div>
+          
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-white/20">
