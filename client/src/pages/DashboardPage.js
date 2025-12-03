@@ -2,6 +2,7 @@
 import React, { useState, useEffect,useContext } from 'react';
 import { Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
+import { useMotorData } from '../context/MotorContext';
 import { Loader } from 'lucide-react';
 import api from '../services/api';
 import { Zap, ArrowRight, AlertCircle, Activity, Power } from 'lucide-react';
@@ -9,6 +10,7 @@ import { Zap, ArrowRight, AlertCircle, Activity, Power } from 'lucide-react';
 
 const DashboardPage = () => {
   const { user } = useContext(AuthContext);
+  const { motors, loadMotors } = useMotorData();
   const [totalMotors, setTotalMotors] = useState(0);
   const [activeMotors, setActiveMotors] = useState(0);
   const [spareMotors, setSpareMotors] = useState(0);
@@ -22,15 +24,17 @@ const DashboardPage = () => {
 
 
   useEffect(() => {
-    fetchMotors();
+    //loadMotors();
     fetchEquipments();
   }, []);
 
-  const fetchMotors = async () => {
-    try {
-      setError('');
-      const response = await api.get('/motors');
-      let motorData = response.data.data;
+  useEffect(() => {
+    if (motors) {
+      calculateStats(motors);
+    }
+  }, [motors]);
+
+  const calculateStats = (motorData) => {
       let totalMotors = motorData.length;
       let activeMotors = motorData.filter(f => f.status === "active").length;
       let spareMotors = motorData.filter(f => f.status === "spare").length;
@@ -41,11 +45,7 @@ const DashboardPage = () => {
       setOServiceMotors(oServiceMotors);
       setTotalMotors(totalMotors);
       setTotalPower(totalPower);
-    } catch (err) {
-      setError('Failed to fetch motors.');
-    } finally {
       setIsLoading(false);
-    }
   };
 
   const fetchEquipments = async () => {

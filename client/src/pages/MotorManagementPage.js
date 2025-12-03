@@ -3,11 +3,12 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 import { Loader, Grid3X3, List } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
+import { useMotorData } from '../context/MotorContext';
 import { Link } from 'react-router-dom';
 
 const MotorManagementPage = () => {
   const { user } = useContext(AuthContext);
-  const [motors, setMotors] = useState([]);
+  const { motors, refreshData } = useMotorData();
   const [updatedMotors, setUpdatedMotors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,49 +32,12 @@ const MotorManagementPage = () => {
   });
 
 
-useEffect(() => { 
-  fetchMotors(); 
-}, []); 
-const fetchMotors = async () => { 
-  try { setError(''); 
-    const response = await api.get('/motors'); 
-    setMotors(response.data.data); 
-  } catch (err) { 
-    setError('Failed to fetch motors.'); 
-  } finally { setIsLoading(false); } 
-};
-  
-useEffect(() => {
-  const enrichMotors = async () => {
-    const withEq = await Promise.all(
-      motors.map(async motor => {
-        if (motor.status === "active") {
-          const motorEq = await fetchEq(motor._id);
-          return { ...motor, motorEq };
-        }
-        return motor;
-      })
-    );
-    setUpdatedMotors(withEq);
-  };
-
-  if (motors.length > 0) {
-    enrichMotors();
-  }
-}, [motors]);
-
-const fetchEq = async (motorId) => { 
-  try{ 
-    setError(''); 
-    const res = await api.get(`/equipment/${motorId}`); 
-    return res.data.data; 
-  } catch(err){ 
-    setError('Failed to fetch motors.'); 
-  } finally { 
-    setIsLoading(false); 
-  } 
-}
-
+  useEffect(() => {
+    if (motors) {
+      setUpdatedMotors(motors);
+      setIsLoading(false);
+    }
+  }, [motors]);
 
   
   const handleInputChange = (e) => {
@@ -88,7 +52,7 @@ const fetchEq = async (motorId) => {
       } else {
         await api.post('/motors', formData);
       }
-      fetchMotors();
+      refreshData();
       closeModal();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save motor.');
@@ -105,7 +69,7 @@ const fetchEq = async (motorId) => {
     if (window.confirm('Are you sure you want to set this motor as Spare?')) {
       try {
         await api.put(`/motors/${motor._id}`, { status: 'spare' });
-        fetchMotors();
+        refreshData();
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to update motor status.');
       }
@@ -116,7 +80,7 @@ const fetchEq = async (motorId) => {
     if (window.confirm('Are you sure you want to delete this motor?')) {
       try {
         await api.delete(`/motors/${motorId}`);
-        fetchMotors();
+        refreshData();
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to delete motor.');
       }
@@ -127,11 +91,11 @@ const fetchEq = async (motorId) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
-  const filteredMotors = updatedMotors.filter((motor) => {
+  const filteredMotors = updatedMotors.filter((motors) => {
     return (
-      (filters.power === '' || motor.power.toString().toLowerCase().includes(filters.power.toLowerCase())) &&
-      (filters.speed === '' || motor.speed.toString().toLowerCase().includes(filters.speed.toLowerCase())) &&
-      (filters.status === '' || motor.status === filters.status)
+      (filters.power === '' || motors.power.toString().toLowerCase().includes(filters.power.toLowerCase())) &&
+      (filters.speed === '' || motors.speed.toString().toLowerCase().includes(filters.speed.toLowerCase())) &&
+      (filters.status === '' || motors.status === filters.status)
     );
   });
 
@@ -266,6 +230,7 @@ const fetchEq = async (motorId) => {
       {viewMode === "grid" ? (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
         {filteredMotors.map((motor) => (
+          console.log(motor)) || (
           <div key={motor._id} className="glass rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
             {/* Header with Status and Title */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">

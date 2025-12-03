@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getMotors,
+  getMotorWithEquipment,
   getMotor,
   createMotor,
   updateMotor,
@@ -19,6 +20,9 @@ router.use(protect);
 router.route('/')
   .get(getMotors)
   .post(authorize('admin'), createMotor); // Only admin can create
+
+router.route('/with-equipment')
+  .get(getMotorWithEquipment);
 
 router.route('/:id')
   .get(getMotor)

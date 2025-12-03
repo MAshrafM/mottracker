@@ -29,6 +29,20 @@ exports.getMotor = async (req, res) => {
   }
 };
 
+exports.getMotorWithEquipment = async (req, res) => {
+  try {
+    const motor = await Motor.find()
+      .populate('eq');
+    if (!motor) {
+      return res.status(404).json({ success: false, message: 'Motor not found' });
+    }
+    res.status(200).json({ success: true, data: motor });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+
 // @desc    Create a new motor
 // @route   POST /api/motors
 // @access  Private/Admin

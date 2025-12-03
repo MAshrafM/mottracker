@@ -43,7 +43,16 @@ const MotorSchema = new Schema({
     required: true,
   },
 }, {
-  timestamps: true
+  timestamps: true,
+  toObject: { virtuals: true },
+  toJSON: { virtuals: true },
 });
+
+MotorSchema.virtual('eq', {
+  ref: 'PlantEquipment',
+  localField: '_id',
+  foreignField: 'currentMotor',
+  justOne: true
+})
 
 module.exports = mongoose.model('Motor', MotorSchema);
