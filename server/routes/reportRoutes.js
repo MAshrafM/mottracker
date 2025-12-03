@@ -4,7 +4,10 @@ const router = express.Router();
 const { getActiveMotorReport, 
     exportActiveMotorsToExcel, 
     exportActiveMotorsToPDF,
-    getReports
+    getReports,
+    getSpareMotorReport,
+    exportSpareMotorsToExcel,
+    exportSpareMotorsToPDF
 } = require('../controllers/reportController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -21,5 +24,14 @@ router.route('/active-motors/export-excel')
 
 router.route('/active-motors/export-pdf')
     .get(authorize('admin', 'manager'), exportActiveMotorsToPDF); // Adjust to call the appropriate export function
+
+router.route('/spare-motors')
+    .get(authorize('admin', 'manager', 'user'), getSpareMotorReport);
+    
+router.route('/spare-motors/export-excel')
+    .get(authorize('admin', 'manager'), exportSpareMotorsToExcel); // Adjust to call the appropriate export function
+
+router.route('/spare-motors/export-pdf')
+    .get(authorize('admin', 'manager'), exportSpareMotorsToPDF); // Adjust to call the appropriate export function
 
 module.exports = router;

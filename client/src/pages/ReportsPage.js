@@ -1,14 +1,9 @@
 // client/src/pages/ReportPage.js
-import React, { useState, useEffect,useContext } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import AuthContext from '../context/AuthContext';
-import { Loader, Settings } from 'lucide-react';
-import api from '../services/api';
+import { Settings } from 'lucide-react';
 
 const ReportsPage = () => {
-  const { user } = useContext(AuthContext);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
 
 return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
@@ -28,6 +23,16 @@ return (
             <Settings className="w-12 h-12 mb-4 text-white opacity-70 transition-opacity group-hover:opacity-100" />
             <h3 className="text-xl font-semibold mb-2 text-white">Active Motors Report</h3>
             <p className="text-sm text-slate-300">View and export a report of all active motors in service.</p>
+            </Link>
+
+            <Link to="/reports/spare-motors" className="group flex flex-col items-center p-6 text-center
+                         bg-white/5 backdrop-blur-md rounded-xl 
+                         border border-white/10 
+                         shadow-lg transition-all duration-300 
+                         hover:bg-white/20 hover:border-white/30 hover:shadow-xl">
+            <Settings className="w-12 h-12 mb-4 text-white opacity-70 transition-opacity group-hover:opacity-100" />
+            <h3 className="text-xl font-semibold mb-2 text-white">Spare Motors Report</h3>
+            <p className="text-sm text-slate-300">View and export a report of all spare motors in service.</p>
             </Link>
           </div>
         </div>

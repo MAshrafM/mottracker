@@ -230,7 +230,6 @@ const MotorManagementPage = () => {
       {viewMode === "grid" ? (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
         {filteredMotors.map((motor) => (
-          console.log(motor)) || (
           <div key={motor._id} className="glass rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
             {/* Header with Status and Title */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">

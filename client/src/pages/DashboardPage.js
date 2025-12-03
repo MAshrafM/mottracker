@@ -10,7 +10,7 @@ import { Zap, ArrowRight, AlertCircle, Activity, Power } from 'lucide-react';
 
 const DashboardPage = () => {
   const { user } = useContext(AuthContext);
-  const { motors, loadMotors } = useMotorData();
+  const { motors } = useMotorData();
   const [totalMotors, setTotalMotors] = useState(0);
   const [activeMotors, setActiveMotors] = useState(0);
   const [spareMotors, setSpareMotors] = useState(0);
@@ -24,7 +24,6 @@ const DashboardPage = () => {
 
 
   useEffect(() => {
-    //loadMotors();
     fetchEquipments();
   }, []);
 
