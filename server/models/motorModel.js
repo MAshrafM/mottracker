@@ -15,6 +15,17 @@ const MaintenanceEventSchema = new Schema({
   },
 });
 
+const AssignmentHistorySchema = new Schema({
+  equipment: {
+    type: Schema.Types.ObjectId,
+    ref: 'PlantEquipment',
+    required: true
+  },
+  plant: {type: String},
+  dateInstalled: { type: Date },
+  dateRemoved: { type: Date }
+});
+
 const MotorSchema = new Schema({
   serialNumber: {
     type: String,
@@ -36,6 +47,7 @@ const MotorSchema = new Schema({
   SAP: { type: String }, // SAP ID
   Note: { type: String },
   maintenanceHistory: [MaintenanceEventSchema],
+  assignmentHistory: [AssignmentHistorySchema],
   status: {
     type: String,
     enum: ['active', 'spare', 'out of service'],
@@ -47,6 +59,7 @@ const MotorSchema = new Schema({
   toObject: { virtuals: true },
   toJSON: { virtuals: true },
 });
+
 
 MotorSchema.virtual('eq', {
   ref: 'PlantEquipment',

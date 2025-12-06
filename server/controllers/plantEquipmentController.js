@@ -85,7 +85,16 @@ exports.assignMotor = async (req, res) => {
     // --- The Core Logic ---
     // 1. If there's an old motor, set it to 'spare' and update its history record
     if (equipment.currentMotor) {
-      await Motor.findByIdAndUpdate(equipment.currentMotor, { status: 'out of service' });
+      await Motor.findByIdAndUpdate(equipment.currentMotor, { 
+        status: 'out of service',
+        assignmentHistory: { $push: {
+          equipment: equipment._id,
+          plant: equipment.plant,
+          dateRemoved: new Date()
+          }
+        } 
+      
+      });
       const historyEntry = equipment.motorHistory.find(h => h.motor.equals(equipment.currentMotor) && !h.dateRemoved);
       if (historyEntry) {
         historyEntry.dateRemoved = new Date();
@@ -94,6 +103,11 @@ exports.assignMotor = async (req, res) => {
 
     // 2. Set the new motor to 'active'
     newMotor.status = 'active';
+    newMotor.assignmentHistory.push({
+      equipment: equipment._id,
+      plant: equipment.plant,
+      dateInstalled: new Date()
+    });
     await newMotor.save();
 
     // 3. Update the equipment's current motor

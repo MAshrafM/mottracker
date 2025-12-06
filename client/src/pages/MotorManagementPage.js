@@ -17,7 +17,9 @@ const MotorManagementPage = () => {
   const [filters, setFilters] = useState({
     power: '',
     speed: '',
-    status: ''
+    status: '',
+    serialNumber: '',
+    manufacturer: '',
   });
 
   // different views
@@ -95,7 +97,9 @@ const MotorManagementPage = () => {
     return (
       (filters.power === '' || motors.power.toString().toLowerCase().includes(filters.power.toLowerCase())) &&
       (filters.speed === '' || motors.speed.toString().toLowerCase().includes(filters.speed.toLowerCase())) &&
-      (filters.status === '' || motors.status === filters.status)
+      (filters.status === '' || motors.status === filters.status) && 
+      (filters.serialNumber === '' || motors.serialNumber.toString().toLowerCase().includes(filters.serialNumber.toLowerCase())) &&
+      (filters.manufacturer === '' || motors.manufacturer.toString().toLowerCase().includes(filters.manufacturer.toLowerCase()))
     );
   });
 
@@ -188,6 +192,27 @@ const MotorManagementPage = () => {
             <option className="bg-gray-800" value="spare">Spare</option>
             <option className="bg-gray-800" value="out of service">Out of Service</option>
           </select>
+          <input
+            type="text"
+            name="serialNumber"
+            placeholder="Search by Serial Number..."
+            value={filters.serialNumber}
+            onChange={handleFilterChange}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 
+                      focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 transition-all duration-300"
+          />
+          <input
+            type="text"
+            name="manufacturer"
+            placeholder="Search by Manufacturer..."
+            value={filters.manufacturer}
+            onChange={handleFilterChange}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 
+                      focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 transition-all duration-300"
+          />
+          <div className="text-white-600 font-medium py-2 text-center sm:text-left sm:ml-auto w-full sm:w-auto">
+            <p>Total Motors: <span className="text-amber-400">{filteredMotors.length}</span></p>
+          </div>
         </div>
       </div>
 

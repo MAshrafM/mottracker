@@ -200,6 +200,26 @@ const fetchEq = async () => {
             {eq.tonNumber} - {eq.designation}
           </h4>
         )}
+        
+        {/* Equipment list if not active */}
+        {motor.status !== 'active' && motor.assignmentHistory && motor.assignmentHistory.length > 0 && (
+          <div className="mb-4">
+            <h4 className="text-lg text-white border-b border-white/20 pb-2 text-center md:text-left">
+              Previous Installations:
+            </h4>
+            
+            <div className="text-sm text-gray-300 mt-2">
+              {motor.assignmentHistory.map((historyItem, index) => (
+                <span key={historyItem._id || index} className="block md:inline md:mr-4">
+                  {/* access equipment safely using ?. in case population failed */}
+                  {historyItem.equipment?.tonNumber} - {historyItem.equipment?.designation}
+                  {/* Add a separator if it's not the last item */}
+                  {index < motor.assignmentHistory.length - 1 ? ' | ' : ''}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Motor Details */}
         <div className="space-y-3 text-gray-300">
