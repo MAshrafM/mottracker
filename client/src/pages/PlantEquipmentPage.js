@@ -1,7 +1,7 @@
 // client/src/pages/PlantEquipmentPage.js
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader } from 'lucide-react';
+import { Loader, ImageIcon, ExternalLink} from 'lucide-react';
 import api from '../services/api';
 import AuthContext from '../context/AuthContext';
 
@@ -150,6 +150,36 @@ const PlantEquipmentPage = () => {
     }
   };
 
+  const handleOpenImage = async (tonNumber) => {
+    const ton = tonNumber.replace(/\./g, '');
+    // This bypasses Axios and acts like a standard link click
+    const newWindow = window.open('', '_blank');
+    try {
+      const response = await api.get(`/equipment/drive/${ton}`);
+      if (response.data.success && response.data.url) {
+        // 3. REDIRECT THE TAB
+        // We have the link, now send the blank tab there
+        if (newWindow) {
+            newWindow.location.href = response.data.url;
+        }
+      }
+    } catch (error) {
+      console.error("Failed to get image link", error);
+      
+      // Close the tab if we failed, or show error message
+      if (newWindow) {
+        newWindow.document.body.innerHTML = ''; // Clear loading text
+        if (error.response && error.response.status === 404) {
+             newWindow.document.write('<h3 style="color:red; font-family:sans-serif; text-align:center; margin-top:50px;">Image Not Found</h3>');
+        } else {
+             newWindow.close(); // Close on server error
+             alert("Could not open image. Please try again.");
+        }
+      }
+    }
+  };
+  
+
   const openCrudModal = (equipment = null) => {
     setError('');
     if (equipment) {
@@ -261,6 +291,9 @@ const PlantEquipmentPage = () => {
   const filteredSpareMotors = spareMotors.filter(motor =>
     motor.serialNumber.toLowerCase().includes(motorSearch.toLowerCase())
   );
+
+  
+
 
   if (isLoading) {
     return (
@@ -471,7 +504,19 @@ const PlantEquipmentPage = () => {
                   <span className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-sm font-mono border border-blue-500/30">
                     {eq.tonNumber}
                   </span>
+                  <button
+                    onClick={() => handleOpenImage(eq.tonNumber)}
+                    className="group flex items-center space-x-1.5 px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200
+                              bg-blue-500/10 text-blue-300 border-blue-500/30 
+                              hover:bg-blue-500/30 hover:text-white hover:border-blue-400/60"
+                  >
+                    <ImageIcon size={14} className="group-hover:scale-110 transition-transform" />
+                    <span>View Datasheet</span>
+                    {/* Tiny arrow to indicate opening new tab */}
+                    <ExternalLink size={10} className="opacity-60 ml-1" />
+                  </button>
                 </div>
+                
               </div>
 
               {/* Divider */}

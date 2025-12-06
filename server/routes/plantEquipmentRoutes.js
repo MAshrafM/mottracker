@@ -10,6 +10,7 @@ const {
   assignMotor,
   activeMotor,
 } = require('../controllers/plantEquipmentController');
+const { openImageByTon } = require('../controllers/driveController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.use(protect);
@@ -28,4 +29,6 @@ router.route('/:motorId')
 router.route('/:id/assign-motor')
   .post(authorize('admin', 'manager'), assignMotor);
 
+router.route('/drive/:tonNumber')
+  .get(openImageByTon);
 module.exports = router;
