@@ -19,8 +19,8 @@ const AssignmentHistorySchema = new Schema({
   equipment: {
     type: Schema.Types.ObjectId,
     ref: 'PlantEquipment',
-    required: true
   },
+  ton: {type: String},
   plant: {type: String},
   dateInstalled: { type: Date },
   dateRemoved: { type: Date }

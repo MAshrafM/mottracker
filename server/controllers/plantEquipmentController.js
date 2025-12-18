@@ -85,15 +85,16 @@ exports.assignMotor = async (req, res) => {
     // --- The Core Logic ---
     // 1. If there's an old motor, set it to 'spare' and update its history record
     if (equipment.currentMotor) {
-      await Motor.findByIdAndUpdate(equipment.currentMotor, { 
+      await Motor.findByIdAndUpdate(equipment.currentMotor, {
         status: 'out of service',
-        assignmentHistory: { $push: {
-          equipment: equipment._id,
-          plant: equipment.plant,
-          dateRemoved: new Date()
+        $push: {
+          assignmentHistory: {
+            equipment: equipment._id,
+            ton: equipment.tonNumber,
+            plant: equipment.plant || 'AFC-3',
+            dateRemoved: new Date()
           }
-        } 
-      
+        }
       });
       const historyEntry = equipment.motorHistory.find(h => h.motor.equals(equipment.currentMotor) && !h.dateRemoved);
       if (historyEntry) {
@@ -105,7 +106,8 @@ exports.assignMotor = async (req, res) => {
     newMotor.status = 'active';
     newMotor.assignmentHistory.push({
       equipment: equipment._id,
-      plant: equipment.plant,
+      ton: equipment.tonNumber,
+      plant: equipment.plant || 'AFC-3',
       dateInstalled: new Date()
     });
     await newMotor.save();
@@ -117,7 +119,7 @@ exports.assignMotor = async (req, res) => {
     equipment.motorHistory.push({ motor: newMotor._id });
 
     await equipment.save();
-    
+
     // Populate the response to send back full data
     const updatedEquipment = await PlantEquipment.findById(req.params.id)
       .populate('currentMotor', 'serialNumber manufacturer type')
@@ -131,9 +133,9 @@ exports.assignMotor = async (req, res) => {
 };
 
 // @desc  Get current motor
-exports.activeMotor = async(req, res) => {
-  try{
-    const equipment = await PlantEquipment.findOne({currentMotor: req.params.motorId}).select('tonNumber designation plant')
+exports.activeMotor = async (req, res) => {
+  try {
+    const equipment = await PlantEquipment.findOne({ currentMotor: req.params.motorId }).select('tonNumber designation plant')
     if (!equipment) return res.status(404).json({ success: false, message: 'Equipment not found' });
     res.status(200).json({ success: true, data: equipment });
   } catch (error) {

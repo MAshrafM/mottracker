@@ -19,7 +19,7 @@ exports.getMotors = async (req, res) => {
 // @access  Private
 exports.getMotor = async (req, res) => {
   try {
-    const motor = await Motor.findById(req.params.id);
+    const motor = await Motor.findById(req.params.id).populate('assignmentHistory.equipment');
     if (!motor) {
       return res.status(404).json({ success: false, message: 'Motor not found' });
     }
@@ -88,7 +88,7 @@ exports.deleteMotor = async (req, res) => {
     }
     // Add a check: cannot delete a motor if it is 'active' (installed on equipment)
     if (motor.status === 'active') {
-        return res.status(400).json({ success: false, message: 'Cannot delete an active motor. Please mark it as spare first.' });
+      return res.status(400).json({ success: false, message: 'Cannot delete an active motor. Please mark it as spare first.' });
     }
     await motor.deleteOne();
     res.status(200).json({ success: true, data: {} });

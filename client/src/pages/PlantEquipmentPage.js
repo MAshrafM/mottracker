@@ -1,7 +1,7 @@
 // client/src/pages/PlantEquipmentPage.js
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader, ImageIcon, ExternalLink} from 'lucide-react';
+import { Loader, ImageIcon, ExternalLink } from 'lucide-react';
 import api from '../services/api';
 import AuthContext from '../context/AuthContext';
 
@@ -160,25 +160,25 @@ const PlantEquipmentPage = () => {
         // 3. REDIRECT THE TAB
         // We have the link, now send the blank tab there
         if (newWindow) {
-            newWindow.location.href = response.data.url;
+          newWindow.location.href = response.data.url;
         }
       }
     } catch (error) {
       console.error("Failed to get image link", error);
-      
+
       // Close the tab if we failed, or show error message
       if (newWindow) {
         newWindow.document.body.innerHTML = ''; // Clear loading text
         if (error.response && error.response.status === 404) {
-             newWindow.document.write('<h3 style="color:red; font-family:sans-serif; text-align:center; margin-top:50px;">Image Not Found</h3>');
+          newWindow.document.write('<h3 style="color:red; font-family:sans-serif; text-align:center; margin-top:50px;">Image Not Found</h3>');
         } else {
-             newWindow.close(); // Close on server error
-             alert("Could not open image. Please try again.");
+          newWindow.close(); // Close on server error
+          alert("Could not open image. Please try again.");
         }
       }
     }
   };
-  
+
 
   const openCrudModal = (equipment = null) => {
     setError('');
@@ -271,8 +271,8 @@ const PlantEquipmentPage = () => {
 
     // If a plant is selected, filter by TON number prefixes
     if (selectedPlant) {
-      filtered = equipments.filter(eq => 
-        selectedPlant.prefixes.some(prefix => 
+      filtered = equipments.filter(eq =>
+        selectedPlant.prefixes.some(prefix =>
           eq.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
         )
       );
@@ -292,7 +292,7 @@ const PlantEquipmentPage = () => {
     motor.serialNumber.toLowerCase().includes(motorSearch.toLowerCase())
   );
 
-  
+
 
 
   if (isLoading) {
@@ -339,7 +339,7 @@ const PlantEquipmentPage = () => {
             >
               {/* Background Gradient */}
               <div className={`absolute inset-0 bg-gradient-to-r ${plant.color} opacity-0 group-hover:opacity-20 transition-opacity duration-300`}></div>
-              
+
               {/* Card Content */}
               <div className="relative z-10 text-center">
                 <div className={`w-16 h-16 bg-gradient-to-r ${plant.color} rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
@@ -350,8 +350,8 @@ const PlantEquipmentPage = () => {
                 </h3>
                 <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-4"></div>
                 <p className="text-gray-300 text-sm">
-                  {equipments.filter(eq => 
-                    plant.prefixes.some(prefix => 
+                  {equipments.filter(eq =>
+                    plant.prefixes.some(prefix =>
                       eq.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
                     )
                   ).length} Equipment(s)
@@ -406,7 +406,7 @@ const PlantEquipmentPage = () => {
 
           {/* Add Equipment Button */}
           {user.role === 'admin' && (
-            <button 
+            <button
               onClick={() => openCrudModal()}
               className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 
                          text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all duration-300 
@@ -426,10 +426,10 @@ const PlantEquipmentPage = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
-        <input 
-          type="text" 
-          placeholder="Filter by TON Number..." 
-          value={tonFilter} 
+        <input
+          type="text"
+          placeholder="Filter by TON Number..."
+          value={tonFilter}
           onChange={(e) => setTonFilter(e.target.value)}
           className="w-full bg-white/10 border border-white/20 rounded-lg pl-12 pr-4 py-3 text-white 
                     placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
@@ -473,7 +473,7 @@ const PlantEquipmentPage = () => {
               {/* Admin Actions */}
               {user.role === 'admin' && (
                 <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button 
+                  <button
                     onClick={() => openCrudModal(eq)}
                     className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 
                                text-white p-2 rounded-lg transition-all duration-300 transform hover:scale-110 shadow-md"
@@ -483,7 +483,7 @@ const PlantEquipmentPage = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDeleteEquipment(eq._id)}
                     className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 
                                text-white p-2 rounded-lg transition-all duration-300 transform hover:scale-110 shadow-md"
@@ -516,7 +516,7 @@ const PlantEquipmentPage = () => {
                     <ExternalLink size={10} className="opacity-60 ml-1" />
                   </button>
                 </div>
-                
+
               </div>
 
               {/* Divider */}
@@ -530,7 +530,7 @@ const PlantEquipmentPage = () => {
                   </svg>
                   <span>Current Motor</span>
                 </h4>
-                
+
                 {eq.currentMotor ? (
                   <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                     <div className="space-y-2">
@@ -558,7 +558,7 @@ const PlantEquipmentPage = () => {
 
                 {/* Assign/Replace Motor Button */}
                 {(user.role === 'admin' || user.role === 'manager') && (
-                  <button  
+                  <button
                     onClick={() => openAssignModal(eq)}
                     className="w-full mt-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 
                                text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 
@@ -576,48 +576,61 @@ const PlantEquipmentPage = () => {
               <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-6"></div>
 
               {/* Motor History Section */}
-              <div>
-                <h4 className="text-lg font-semibold text-blue-300 mb-4 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Motor History</span>
-                  </div>
-                  <span className="bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full text-xs font-semibold border border-purple-500/30">
-                    {eq.motorHistory.length} total
-                  </span>
-                </h4>
+              <div className="mt-auto">
+                {(() => {
+                  const uniqueHistory = eq.motorHistory?.reduce((acc, current) => {
+                    if (current.motor && !acc.some(x => x.motor?.serialNumber === current.motor?.serialNumber)) {
+                      acc.push(current);
+                    }
+                    return acc;
+                  }, []) || [];
 
-                {eq.motorHistory.length > 0 ? (
-                  <div className="space-y-2">
-                    {eq.motorHistory.map((h, index) => (
-                      <div key={h._id} className="bg-white/5 rounded-lg p-3 border border-white/10 hover:border-white/20 transition-all duration-300">
-                        <Link 
-                          to={`/motors/${h.motor._id}/maintenance`}
-                          className="flex items-center justify-between text-sm hover:text-blue-300 transition-colors duration-300 group"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full"></div>
-                            <span className="font-mono">S/N: {h.motor.serialNumber}</span>
-                          </div>
-                          <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  return (
+                    <>
+                      <h4 className="text-lg font-semibold text-blue-300 mb-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <div className="w-12 h-12 bg-gray-600/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <p className="text-gray-400 text-sm">No motor history available</p>
-                  </div>
-                )}
+                          <span>Motor History</span>
+                        </div>
+                        <span className="bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full text-xs font-semibold border border-purple-500/30">
+                          {uniqueHistory.length} total
+                        </span>
+                      </h4>
+
+                      {uniqueHistory.length > 0 ? (
+                        <div className="space-y-2">
+                          {uniqueHistory.map((h, index) => (
+                            <div key={h._id || index} className="bg-white/5 rounded-lg p-3 border border-white/10 hover:border-white/20 transition-all duration-300">
+                              <Link
+                                to={`/motors/${h.motor._id}/maintenance`}
+                                className="flex items-center justify-between text-sm hover:text-blue-300 transition-colors duration-300 group"
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full"></div>
+                                  <span className="font-mono">S/N: {h.motor.serialNumber}</span>
+                                </div>
+                                <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                              </Link>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6">
+                          <div className="w-12 h-12 bg-gray-600/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <p className="text-gray-400 text-sm">No motor history available</p>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           ))}
@@ -632,13 +645,13 @@ const PlantEquipmentPage = () => {
               <h2 className="text-2xl font-bold text-white mb-6 border-b border-white/20 pb-4">
                 {isEditing ? 'Edit Equipment' : 'Add New Equipment'}
               </h2>
-              
+
               <div className="space-y-2">
                 <label className="text-blue-300 text-sm font-semibold">TON Number</label>
                 <input
                   name="tonNumber"
                   value={formData.tonNumber}
-                  onChange={(e) => setFormData({...formData, tonNumber: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, tonNumber: e.target.value })}
                   placeholder="e.g., E-12345"
                   required
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
@@ -652,7 +665,7 @@ const PlantEquipmentPage = () => {
                 <input
                   name="designation"
                   value={formData.designation}
-                  onChange={(e) => setFormData({...formData, designation: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
                   placeholder="e.g., Main Conveyor Belt"
                   required
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
@@ -666,7 +679,7 @@ const PlantEquipmentPage = () => {
                 <input
                   name="plant"
                   value={formData.plant}
-                  onChange={(e) => setFormData({...formData, plant: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, plant: e.target.value })}
                   placeholder="AFC 3"
                   required
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
@@ -676,15 +689,15 @@ const PlantEquipmentPage = () => {
               </div>
 
               <div className="flex justify-end space-x-4 pt-6 border-t border-white/20">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={closeCrudModal}
                   className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold 
                              transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
                   className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 
                              text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 
@@ -747,15 +760,15 @@ const PlantEquipmentPage = () => {
               </div>
 
               <div className="flex justify-end space-x-4 pt-6 border-t border-white/20">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={closeAssignModal}
                   className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold 
                              transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
                   className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 
                              text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 
