@@ -2,11 +2,13 @@
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
-import { Car, User, LogOut, Users, ChevronDown } from 'lucide-react';
+import { Car, User, LogOut, Users, ChevronDown, Bell } from 'lucide-react';
+import { useNotifications } from '../context/NotificationContext';
 
 const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, logout } = useContext(AuthContext);
+  const { notifications } = useNotifications(); // Get notifications
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -36,6 +38,17 @@ const Navbar = () => {
             <div className="flex items-center space-x-4">
               {user && (
                 <>
+                  {/* Notifications Bell */}
+                  <div className="relative p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 cursor-pointer">
+                    <Bell className="w-5 h-5" />
+                    {notifications.length > 0 && (
+                      <span className="absolute top-2 right-2 flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                      </span>
+                    )}
+                  </div>
+
                   {/* Admin Link */}
                   {user.role === 'admin' && (
                     <div className="hidden sm:flex items-center space-x-2 px-3 py-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 text-sm font-medium cursor-pointer">
@@ -75,7 +88,7 @@ const Navbar = () => {
                           <p className="text-sm font-medium text-white">{user.username}</p>
                           <p className="text-xs text-blue-300 capitalize">{user.role} Account</p>
                         </div>
-                        
+
                         <button
                           onClick={handleLogout}
                           className="w-full text-left px-3 py-2 text-sm text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all duration-200 flex items-center space-x-2 mt-2"
@@ -87,7 +100,7 @@ const Navbar = () => {
                     )}
                   </div>
 
-                  
+
                 </>
               )}
             </div>

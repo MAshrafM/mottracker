@@ -49,6 +49,15 @@ exports.getMotorWithEquipment = async (req, res) => {
 exports.createMotor = async (req, res) => {
   try {
     const motor = await Motor.create(req.body);
+
+    // Notify all clients
+    const io = req.app.get('socketio');
+    io.emit('notification', {
+      type: 'success',
+      message: `New Motor Created: ${motor.serialNumber}`,
+      timestamp: new Date()
+    });
+
     res.status(201).json({ success: true, data: motor });
   } catch (error) {
     // Handle duplicate serial number error
@@ -71,6 +80,15 @@ exports.updateMotor = async (req, res) => {
     if (!motor) {
       return res.status(404).json({ success: false, message: 'Motor not found' });
     }
+
+    // Notify all clients
+    const io = req.app.get('socketio');
+    io.emit('notification', {
+      type: 'info',
+      message: `Motor Updated: ${motor.serialNumber}`,
+      timestamp: new Date()
+    });
+
     res.status(200).json({ success: true, data: motor });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
@@ -91,6 +109,15 @@ exports.deleteMotor = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Cannot delete an active motor. Please mark it as spare first.' });
     }
     await motor.deleteOne();
+
+    // Notify all clients
+    const io = req.app.get('socketio');
+    io.emit('notification', {
+      type: 'warning',
+      message: `Motor Deleted: ${motor.serialNumber}`,
+      timestamp: new Date()
+    });
+
     res.status(200).json({ success: true, data: {} });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

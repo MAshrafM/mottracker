@@ -14,7 +14,7 @@ exports.getMaintenanceEvents = async (req, res) => {
     }
     res.status(200).json({ success: true, data: motor.maintenanceHistory });
   }
-    catch (error) {
+  catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -42,11 +42,19 @@ exports.addMaintenanceEvent = async (req, res) => {
 
     // Add to the beginning of the array so newest events are first
     motor.maintenanceHistory.unshift(newEvent);
-    
+
     // Also update the last maintenance date on the motor
     motor.lastMaintenanceDate = date;
 
     await motor.save();
+
+    // Notify all clients
+    const io = req.app.get('socketio');
+    io.emit('notification', {
+      type: 'info',
+      message: `Maintenance Added: ${motor.serialNumber} - ${description}`,
+      timestamp: new Date()
+    });
 
     res.status(201).json({ success: true, data: motor });
 
@@ -80,6 +88,14 @@ exports.updateMaintenanceEvent = async (req, res) => {
 
     await motor.save();
 
+    // Notify all clients
+    const io = req.app.get('socketio');
+    io.emit('notification', {
+      type: 'info',
+      message: `Maintenance Updated: ${motor.serialNumber}`,
+      timestamp: new Date()
+    });
+
     res.status(200).json({ success: true, data: motor });
 
   } catch (error) {
@@ -110,6 +126,14 @@ exports.deleteMaintenanceEvent = async (req, res) => {
     await event.deleteOne();
 
     await motor.save();
+
+    // Notify all clients
+    const io = req.app.get('socketio');
+    io.emit('notification', {
+      type: 'warning',
+      message: `Maintenance Deleted for Motor: ${motor.serialNumber}`,
+      timestamp: new Date()
+    });
 
     res.status(200).json({ success: true, data: motor });
 

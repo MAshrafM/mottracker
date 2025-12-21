@@ -14,11 +14,33 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const motorRoutes = require('./routes/motorRoutes');
 const plantEquipmentRoutes = require('./routes/plantEquipmentRoutes');
-const motorActiveReportRoutes = require('./routes/reportRoutes'); 
+const motorActiveReportRoutes = require('./routes/reportRoutes');
 
 // Connect to MongoDB
 connectDB();
 const app = express();
+const http = require('http');
+const { Server } = require("socket.io");
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Allow all origins for simplicity, tighten in production if needed
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+});
+
+// Make io accessible globally via app
+app.set('socketio', io);
+
+// Socket.io connection handler
+io.on('connection', (socket) => {
+  console.log(`New client connected: ${socket.id}`);
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
+});
 
 // Middleware
 // --- CORS CONFIGURATION ---
@@ -64,6 +86,6 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5001; // Use port from .env or default to 5001
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Server and Socket.IO running on port ${PORT}`);
 });
