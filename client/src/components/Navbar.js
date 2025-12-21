@@ -62,7 +62,7 @@ const Navbar = () => {
 
                     {/* Notification Dropdown */}
                     {isNotificationsOpen && (
-                      <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-slate-800/95 backdrop-blur-lg border border-white/10 rounded-lg shadow-xl py-2 z-50 max-h-[80vh] flex flex-col">
+                      <div className="fixed left-4 right-4 top-16 sm:absolute sm:right-0 sm:left-auto sm:top-full mt-2 sm:w-96 bg-slate-800/95 backdrop-blur-lg border border-white/10 rounded-lg shadow-xl py-2 z-50 max-h-[80vh] flex flex-col">
                         <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center bg-slate-800/50 rounded-t-lg">
                           <h3 className="text-sm font-semibold text-white">Notifications</h3>
                           <div className="flex space-x-2">
@@ -118,22 +118,6 @@ const Navbar = () => {
                     )}
                   </div>
 
-                  {/* Admin Link */}
-                  {user.role === 'admin' && (
-                    <div className="hidden sm:flex items-center space-x-2 px-3 py-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 text-sm font-medium cursor-pointer">
-                      <Users className="w-4 h-4" />
-                      <Link to="/users">Manage Users</Link>
-                    </div>
-                  )}
-
-                  {/* Mobile Admin Link */}
-                  {user.role === 'admin' && (
-                    <div className="sm:hidden p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 cursor-pointer"
-                      title="Manage Users">
-                      <Link to="/users"><Users className="w-5 h-5" /></Link>
-                    </div>
-                  )}
-
                   {/* User Profile Section */}
                   <div className="relative">
                     <button
@@ -157,6 +141,18 @@ const Navbar = () => {
                           <p className="text-sm font-medium text-white">{user.username}</p>
                           <p className="text-xs text-blue-300 capitalize">{user.role} Account</p>
                         </div>
+
+                        {user.role === 'admin' && (
+                          <Link
+                            to="/users"
+                            className="w-full text-left px-3 py-2 text-sm text-blue-300 hover:text-white hover:bg-white/10 transition-all duration-200 flex items-center space-x-2"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <Users className="w-4 h-4" />
+                            <span>Manage Users</span>
+                          </Link>
+                        )}
+
 
                         <button
                           onClick={handleLogout}
