@@ -7,6 +7,7 @@ import MotorManagementPage from './pages/MotorManagementPage';
 import MotorHistoryPage from './pages/MotorHistoryPage';
 import PlantEquipmentPage from './pages/PlantEquipmentPage';
 import ReportsPage from './pages/ReportsPage';
+import NotificationHistoryPage from './pages/NotificationHistoryPage';
 import ActiveMotorReport from './pages/ActiveMotorReport';
 import SpareMotorsReport from './pages/SpareMotorReport';
 import BearingReport from './pages/BearingReport';
@@ -37,6 +38,7 @@ function App() {
               <Route path="/motors" element={<MotorManagementPage />} />
               <Route path="/motors/:motorId/maintenance" element={<MotorHistoryPage />} />
               <Route path="/equipment" element={<PlantEquipmentPage />} />
+              <Route path="/notifications" element={<NotificationHistoryPage />} />
               <Route path="/reports/*" element={<ReportsPage />} />
               <Route path="/reports/active-motors" element={<ActiveMotorReport />} />
               <Route path="/reports/spare-motors" element={<SpareMotorsReport />} />

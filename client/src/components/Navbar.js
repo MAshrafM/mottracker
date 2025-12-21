@@ -106,6 +106,16 @@ const Navbar = () => {
                             ))
                           )}
                         </div>
+
+                        <div className="p-2 border-t border-white/10 bg-slate-800/50 rounded-b-lg">
+                          <Link
+                            to="/notifications"
+                            className="block text-center text-sm text-blue-400 hover:text-white transition-colors py-1"
+                            onClick={() => setIsNotificationsOpen(false)}
+                          >
+                            View all history
+                          </Link>
+                        </div>
                       </div>
                     )}
                   </div>
