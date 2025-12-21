@@ -65,19 +65,19 @@ const NotificationHistoryPage = () => {
                     <div className="flex items-center gap-2 bg-slate-900/50 p-1 rounded-lg border border-white/5">
                         <button
                             onClick={() => setFilter('all')}
-                            className={`px - 4 py - 1.5 rounded - md text - sm font - medium transition - all ${filter === 'all' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'} `}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'all' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
                         >
                             All
                         </button>
                         <button
                             onClick={() => setFilter('unread')}
-                            className={`px - 4 py - 1.5 rounded - md text - sm font - medium transition - all ${filter === 'unread' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'} `}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'unread' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
                         >
                             Unread
                         </button>
                         <button
                             onClick={() => setFilter('read')}
-                            className={`px - 4 py - 1.5 rounded - md text - sm font - medium transition - all ${filter === 'read' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'} `}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'read' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
                         >
                             Read
                         </button>
@@ -96,7 +96,7 @@ const NotificationHistoryPage = () => {
                 </div>
 
                 {/* List */}
-                <div className="space-y-3">
+                <div className="space-y-3 pb-10">
                     {filteredNotifications.length === 0 ? (
                         <div className="text-center py-20 bg-slate-800/30 rounded-2xl border border-white/5 flex flex-col items-center">
                             <Archive className="w-16 h-16 text-slate-700 mb-4" />
@@ -119,9 +119,9 @@ const NotificationHistoryPage = () => {
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
                                             <span className={`text - xs font - bold px - 2 py - 0.5 rounded - full uppercase tracking - wide border ${note.type === 'success' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                                    note.type === 'warning' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                        note.type === 'error' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                            'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                                note.type === 'warning' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                    note.type === 'error' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                                        'bg-blue-500/10 text-blue-400 border-blue-500/20'
                                                 } `}>
                                                 {note.type}
                                             </span>
