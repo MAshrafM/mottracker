@@ -9,6 +9,7 @@ export const useNotifications = () => useContext(NotificationContext);
 export const NotificationProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
     const [notifications, setNotifications] = useState([]);
+    const [showLog, setShowLog] = useState(false);
 
     useEffect(() => {
         // Derive socket URL from BASE_API_URL
@@ -38,20 +39,46 @@ export const NotificationProvider = ({ children }) => {
 
     const addNotification = (data) => {
         const id = Date.now();
-        setNotifications((prev) => [{ id, ...data }, ...prev]);
+        // Keep a log of notifications, limited to last 20 for example, to show in the dropdown
+        setNotifications((prev) => {
+            const newNote = { id, ...data, read: false };
+            return [newNote, ...prev].slice(0, 50);
+        });
 
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            removeNotification(id);
-        }, 5000);
+        // We don't auto-remove them entirely from the state anymore if we want a log.
+        // Instead, we can have a separate "toasts" state if we want transient toasts + persistent log,
+        // OR we just use one list and the Toast component only shows recent/unread ones.
+        // simpler: use one main list. Valid "Toast" notifications could be just the unread ones or recent ones.
+    };
+
+    const markAsRead = (id) => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    };
+
+    const clearAll = () => {
+        setNotifications([]);
     };
 
     const removeNotification = (id) => {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
     };
 
+    const toggleLog = () => setShowLog(prev => !prev);
+
+    // Computed property for unread count
+    const unreadCount = notifications.filter(n => !n.read).length;
+
     return (
-        <NotificationContext.Provider value={{ notifications, removeNotification }}>
+        <NotificationContext.Provider value={{
+            notifications,
+            removeNotification,
+            markAsRead,
+            clearAll,
+            showLog,
+            setShowLog,
+            toggleLog,
+            unreadCount
+        }}>
             {children}
         </NotificationContext.Provider>
     );

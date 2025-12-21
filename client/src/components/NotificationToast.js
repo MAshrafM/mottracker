@@ -3,20 +3,35 @@ import { useNotifications } from '../context/NotificationContext';
 import { X, CheckCircle, Info, AlertTriangle } from 'lucide-react';
 
 const NotificationToast = () => {
-    const { notifications, removeNotification } = useNotifications();
+    const { notifications, markAsRead } = useNotifications();
 
-    if (notifications.length === 0) return null;
+    // Only show unread notifications as toasts
+    const activeToasts = notifications.filter(n => !n.read);
+
+    // Auto-dismiss toasts (mark as read) after 5 seconds
+    React.useEffect(() => {
+        if (activeToasts.length > 0) {
+            const timers = activeToasts.map(toast => {
+                return setTimeout(() => {
+                    markAsRead(toast.id);
+                }, 5000);
+            });
+            return () => timers.forEach(timer => clearTimeout(timer));
+        }
+    }, [activeToasts, markAsRead]);
+
+    if (activeToasts.length === 0) return null;
 
     return (
         <div className="fixed top-24 right-4 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
-            {notifications.map((notification) => (
+            {activeToasts.map((notification) => (
                 <div
                     key={notification.id}
                     className={`pointer-events-auto transform transition-all duration-300 ease-in-out hover:scale-102 cursor-pointer
             ${getStyleByType(notification.type)}
             backdrop-blur-md border rounded-lg shadow-lg p-4 flex items-start gap-3 animate-slide-in-right ring-1 ring-inset
           `}
-                    onClick={() => removeNotification(notification.id)}
+                    onClick={() => markAsRead(notification.id)}
                 >
                     <div className="flex-shrink-0 mt-0.5">
                         {getIconByType(notification.type)}
@@ -35,7 +50,7 @@ const NotificationToast = () => {
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
-                            removeNotification(notification.id);
+                            markAsRead(notification.id);
                         }}
                         className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity p-1 -mr-2 -mt-2"
                     >

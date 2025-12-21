@@ -2,18 +2,25 @@
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
-import { Car, User, LogOut, Users, ChevronDown, Bell } from 'lucide-react';
+import { Car, User, LogOut, Users, ChevronDown, Bell, Check, Trash2, X } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
+
 
 const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false); // State for notification dropdown
   const { user, logout } = useContext(AuthContext);
-  const { notifications } = useNotifications(); // Get notifications
+  const { notifications, markAsRead, clearAll, removeNotification, unreadCount } = useNotifications();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleBellClick = () => {
+    setIsNotificationsOpen(!isNotificationsOpen);
+    setIsProfileOpen(false); // Close profile if open
   };
 
   return (
@@ -39,13 +46,67 @@ const Navbar = () => {
               {user && (
                 <>
                   {/* Notifications Bell */}
-                  <div className="relative p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 cursor-pointer">
-                    <Bell className="w-5 h-5" />
-                    {notifications.length > 0 && (
-                      <span className="absolute top-2 right-2 flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                      </span>
+                  <div className="relative">
+                    <button
+                      onClick={handleBellClick}
+                      className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 cursor-pointer relative"
+                    >
+                      <Bell className="w-5 h-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute top-2 right-2 flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Notification Dropdown */}
+                    {isNotificationsOpen && (
+                      <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-slate-800/95 backdrop-blur-lg border border-white/10 rounded-lg shadow-xl py-2 z-50 max-h-[80vh] flex flex-col">
+                        <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center bg-slate-800/50 rounded-t-lg">
+                          <h3 className="text-sm font-semibold text-white">Notifications</h3>
+                          <div className="flex space-x-2">
+                            {unreadCount > 0 && (
+                              <button onClick={() => notifications.forEach(n => !n.read && markAsRead(n.id))} title="Mark all as read" className="text-blue-300 hover:text-white transition-colors">
+                                <Check className="w-4 h-4" />
+                              </button>
+                            )}
+                            {notifications.length > 0 && (
+                              <button onClick={clearAll} title="Clear all" className="text-red-300 hover:text-red-200 transition-colors">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="overflow-y-auto custom-scrollbar flex-1 p-2 space-y-2">
+                          {notifications.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-blue-300/50">
+                              <Bell className="w-8 h-8 mb-2 opacity-50" />
+                              <p className="text-sm">No new notifications</p>
+                            </div>
+                          ) : (
+                            notifications.map(notification => (
+                              <div key={notification.id} className={`p-3 rounded-lg border ${notification.read ? 'bg-slate-700/30 border-white/5' : 'bg-blue-500/10 border-blue-500/30'} relative group transition-all duration-200`}>
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1 pr-6">
+                                    <p className={`text-sm ${notification.read ? 'text-gray-300' : 'text-white font-medium'}`}>{notification.message}</p>
+                                    <p className="text-xs text-blue-300/70 mt-1">{new Date(notification.timestamp).toLocaleString()}</p>
+                                  </div>
+                                  {!notification.read && (
+                                    <button onClick={() => markAsRead(notification.id)} className="absolute top-2 right-2 p-1 text-blue-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Check className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                  <button onClick={() => removeNotification(notification.id)} className="absolute bottom-2 right-2 p-1 text-red-300/50 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
 
