@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: BASE_API_URL, // Our backend API URL
-} );
+});
 
 // Interceptor to add the auth token to every request
 api.interceptors.request.use(
@@ -16,6 +16,19 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor to handle 401 errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
     return Promise.reject(error);
   }
 );
