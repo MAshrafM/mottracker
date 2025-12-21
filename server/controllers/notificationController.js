@@ -90,7 +90,7 @@ exports.createNotification = async (io, { type, message, user = null, relatedId 
 
         // Emit via socket
         if (io) {
-            io.emit('notification', notification);
+            io.emit('notification', notification.toJSON());
         }
 
         return notification;

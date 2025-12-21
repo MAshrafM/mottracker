@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNotifications } from '../context/NotificationContext';
+import AuthContext from '../context/AuthContext';
 import { Archive, Bell, Check, Trash2, Calendar, Filter } from 'lucide-react';
 
 const NotificationHistoryPage = () => {
     const { notifications, markAsRead, clearAll, removeNotification, unreadCount } = useNotifications();
+    const { user } = useContext(AuthContext);
     const [filter, setFilter] = useState('all'); // all, unread, read
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -63,19 +65,19 @@ const NotificationHistoryPage = () => {
                     <div className="flex items-center gap-2 bg-slate-900/50 p-1 rounded-lg border border-white/5">
                         <button
                             onClick={() => setFilter('all')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'all' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            className={`px - 4 py - 1.5 rounded - md text - sm font - medium transition - all ${filter === 'all' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'} `}
                         >
                             All
                         </button>
                         <button
                             onClick={() => setFilter('unread')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'unread' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            className={`px - 4 py - 1.5 rounded - md text - sm font - medium transition - all ${filter === 'unread' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'} `}
                         >
                             Unread
                         </button>
                         <button
                             onClick={() => setFilter('read')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${filter === 'read' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            className={`px - 4 py - 1.5 rounded - md text - sm font - medium transition - all ${filter === 'read' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'} `}
                         >
                             Read
                         </button>
@@ -106,21 +108,21 @@ const NotificationHistoryPage = () => {
                             <div
                                 key={note.id}
                                 className={`
-                  relative group p-5 rounded-xl border transition-all duration-200
+                  relative group p - 5 rounded - xl border transition - all duration - 200
                   ${note.read
                                         ? 'bg-slate-800/40 border-white/5 hover:bg-slate-800/60'
                                         : 'bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10 shadow-[0_0_15px_-3px_rgba(59,130,246,0.1)]'
                                     }
-                `}
+`}
                             >
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border ${note.type === 'success' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                            <span className={`text - xs font - bold px - 2 py - 0.5 rounded - full uppercase tracking - wide border ${note.type === 'success' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
                                                     note.type === 'warning' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
                                                         note.type === 'error' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
                                                             'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                                }`}>
+                                                } `}>
                                                 {note.type}
                                             </span>
                                             <span className="flex items-center text-xs text-slate-400 gap-1">
@@ -128,7 +130,7 @@ const NotificationHistoryPage = () => {
                                                 {new Date(note.timestamp).toLocaleString()}
                                             </span>
                                         </div>
-                                        <p className={`text-lg leading-relaxed ${note.read ? 'text-slate-300' : 'text-white'}`}>
+                                        <p className={`text - lg leading - relaxed ${note.read ? 'text-slate-300' : 'text-white'} `}>
                                             {note.message}
                                         </p>
                                     </div>
@@ -143,13 +145,15 @@ const NotificationHistoryPage = () => {
                                                 <Check className="w-5 h-5" />
                                             </button>
                                         )}
-                                        <button
-                                            onClick={() => removeNotification(note.id)}
-                                            className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                                            title="Delete"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
+                                        {user?.role === 'admin' && (
+                                            <button
+                                                onClick={() => removeNotification(note.id)}
+                                                className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                title="Delete"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

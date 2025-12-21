@@ -1,6 +1,6 @@
 const express = require('express');
 const { getNotifications, markAsRead, deleteNotification, clearAllNotifications } = require('../controllers/notificationController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, authorize } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -8,9 +8,9 @@ router.use(protect); // All routes are protected
 
 router.route('/')
     .get(getNotifications)
-    .delete(clearAllNotifications);
+    .delete(authorize('admin'), clearAllNotifications);
 
 router.route('/:id/read').put(markAsRead);
-router.route('/:id').delete(deleteNotification);
+router.route('/:id').delete(authorize('admin'), deleteNotification);
 
 module.exports = router;

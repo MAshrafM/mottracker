@@ -36,16 +36,28 @@ export const NotificationProvider = ({ children }) => {
 
         newSocket.on('notification', (data) => {
             // Create a local notification object from the socket data
-            // For persistent ones, standardise structure:
-            // If data comes from DB create, it has _id. Use that as id.
+            // Ensure we use the persistent DB ID if available
+            // If data._id is missing, something is wrong with backend emission, but we fallback safely to avoid crashes.
+            const safeDate = (dateStr) => {
+                try {
+                    const d = new Date(dateStr);
+                    return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+                } catch (e) {
+                    return new Date().toISOString();
+                }
+            };
+
             const newNote = {
-                id: data._id || Date.now(),
-                ...data,
+                id: data.id || data._id || `temp-${Date.now()}`,
                 message: data.message,
                 type: data.type,
-                timestamp: data.createdAt || new Date(),
-                read: false
+                timestamp: safeDate(data.createdAt),
+                read: false,
+                relatedId: data.relatedId
             };
+
+            // Console warning if we are falling back to temp ID, which means persistence will fail for this item's actions
+            if (!data._id && !data.id) console.warn("Received notification without DB ID:", data);
 
             addNotification(newNote);
         });
@@ -58,8 +70,11 @@ export const NotificationProvider = ({ children }) => {
             const res = await api.get('/notifications');
             const notes = res.data.data.map(n => ({
                 id: n._id,
-                ...n,
-                timestamp: n.createdAt
+                message: n.message,
+                type: n.type,
+                timestamp: n.createdAt,
+                read: n.read,
+                relatedId: n.relatedId
             }));
             setNotifications(notes);
         } catch (err) {
@@ -69,8 +84,10 @@ export const NotificationProvider = ({ children }) => {
 
     const addNotification = (data) => {
         setNotifications((prev) => {
-            // Avoid duplicates if socket sends event for something we just fetched?
-            // Usually socket is real-time.
+            // Check if this ID already exists (to prevent duplicates from race conditions between fetch and socket)
+            if (prev.some(n => n.id === data.id)) {
+                return prev;
+            }
             return [data, ...prev].slice(0, 50);
         });
     };

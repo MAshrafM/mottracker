@@ -37,7 +37,6 @@ const MaintenanceHistory = () => {
   const fetchMotorDetails = useCallback(async () => {
     try {
       const response = await api.get(`/motors/${motorId}`);
-      console.log('Motor details response:', response.data);
       setMotor(response.data.data);
       if (response.data.data.status === 'active') {
         setIsActive(true);
