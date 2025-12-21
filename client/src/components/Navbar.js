@@ -80,24 +80,22 @@ const Navbar = () => {
                         </div>
 
                         <div className="overflow-y-auto custom-scrollbar flex-1 p-2 space-y-2">
-                          {notifications.length === 0 ? (
+                          {notifications.filter(n => !n.read).length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-8 text-blue-300/50">
                               <Bell className="w-8 h-8 mb-2 opacity-50" />
                               <p className="text-sm">No new notifications</p>
                             </div>
                           ) : (
-                            notifications.map(notification => (
-                              <div key={notification.id} className={`p-3 rounded-lg border ${notification.read ? 'bg-slate-700/30 border-white/5' : 'bg-blue-500/10 border-blue-500/30'} relative group transition-all duration-200`}>
+                            notifications.filter(n => !n.read).map(notification => (
+                              <div key={notification.id} className={`p-3 rounded-lg border bg-blue-500/10 border-blue-500/30 relative group transition-all duration-200`}>
                                 <div className="flex justify-between items-start">
                                   <div className="flex-1 pr-6">
-                                    <p className={`text-sm ${notification.read ? 'text-gray-300' : 'text-white font-medium'}`}>{notification.message}</p>
+                                    <p className="text-sm text-white font-medium">{notification.message}</p>
                                     <p className="text-xs text-blue-300/70 mt-1">{new Date(notification.timestamp).toLocaleString()}</p>
                                   </div>
-                                  {!notification.read && (
-                                    <button onClick={() => markAsRead(notification.id)} className="absolute top-2 right-2 p-1 text-blue-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <Check className="w-3 h-3" />
-                                    </button>
-                                  )}
+                                  <button onClick={() => markAsRead(notification.id)} className="absolute top-2 right-2 p-1 text-blue-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Check className="w-3 h-3" />
+                                  </button>
                                   <button onClick={() => removeNotification(notification.id)} className="absolute bottom-2 right-2 p-1 text-red-300/50 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <X className="w-3 h-3" />
                                   </button>

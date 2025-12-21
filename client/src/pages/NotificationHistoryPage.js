@@ -98,7 +98,7 @@ const NotificationHistoryPage = () => {
                 {/* List */}
                 <div className="space-y-3 pb-10">
                     {filteredNotifications.length === 0 ? (
-                        <div className="text-center py-20 bg-slate-800/30 rounded-2xl border border-white/5 flex flex-col items-center">
+                        <div className="text-center p-20 bg-slate-800/30 rounded-2xl border border-white/5 flex flex-col items-center">
                             <Archive className="w-16 h-16 text-slate-700 mb-4" />
                             <h3 className="text-xl font-medium text-slate-400">No notifications found</h3>
                             <p className="text-slate-500 mt-2">Try adjusting your filters or search terms.</p>
@@ -108,7 +108,7 @@ const NotificationHistoryPage = () => {
                             <div
                                 key={note.id}
                                 className={`
-                  relative group p - 5 rounded - xl border transition - all duration - 200
+                  relative-group p-5 rounded-xl border transition-all duration-200
                   ${note.read
                                         ? 'bg-slate-800/40 border-white/5 hover:bg-slate-800/60'
                                         : 'bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10 shadow-[0_0_15px_-3px_rgba(59,130,246,0.1)]'
@@ -118,7 +118,7 @@ const NotificationHistoryPage = () => {
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <span className={`text - xs font - bold px - 2 py - 0.5 rounded - full uppercase tracking - wide border ${note.type === 'success' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border ${note.type === 'success' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
                                                 note.type === 'warning' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
                                                     note.type === 'error' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
                                                         'bg-blue-500/10 text-blue-400 border-blue-500/20'
