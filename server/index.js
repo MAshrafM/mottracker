@@ -15,6 +15,7 @@ const userRoutes = require('./routes/userRoutes');
 const motorRoutes = require('./routes/motorRoutes');
 const plantEquipmentRoutes = require('./routes/plantEquipmentRoutes');
 const motorActiveReportRoutes = require('./routes/reportRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Connect to MongoDB
 connectDB();
@@ -77,6 +78,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/motors', motorRoutes);
 app.use('/api/equipment', plantEquipmentRoutes);
 app.use('/api/reports', motorActiveReportRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 
 // A simple test route to make sure everything is working

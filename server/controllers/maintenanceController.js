@@ -1,6 +1,7 @@
 // server/controllers/maintenanceController.js
 
 const Motor = require('../models/motorModel');
+const { createNotification } = require('./notificationController');
 
 // @desc    Get all maintenance events for a motor
 // @route   GET /api/motors/:motorId/maintenance
@@ -48,12 +49,12 @@ exports.addMaintenanceEvent = async (req, res) => {
 
     await motor.save();
 
+
     // Notify all clients
-    const io = req.app.get('socketio');
-    io.emit('notification', {
+    await createNotification(req.app.get('socketio'), {
       type: 'info',
       message: `Maintenance Added: ${motor.serialNumber} - ${description}`,
-      timestamp: new Date()
+      relatedId: motor._id
     });
 
     res.status(201).json({ success: true, data: motor });
@@ -88,12 +89,12 @@ exports.updateMaintenanceEvent = async (req, res) => {
 
     await motor.save();
 
+
     // Notify all clients
-    const io = req.app.get('socketio');
-    io.emit('notification', {
+    await createNotification(req.app.get('socketio'), {
       type: 'info',
       message: `Maintenance Updated: ${motor.serialNumber}`,
-      timestamp: new Date()
+      relatedId: motor._id
     });
 
     res.status(200).json({ success: true, data: motor });
@@ -127,12 +128,12 @@ exports.deleteMaintenanceEvent = async (req, res) => {
 
     await motor.save();
 
+
     // Notify all clients
-    const io = req.app.get('socketio');
-    io.emit('notification', {
+    await createNotification(req.app.get('socketio'), {
       type: 'warning',
       message: `Maintenance Deleted for Motor: ${motor.serialNumber}`,
-      timestamp: new Date()
+      relatedId: motor._id
     });
 
     res.status(200).json({ success: true, data: motor });

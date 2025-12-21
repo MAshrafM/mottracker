@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import { BASE_API_URL } from '../config/api';
+import api from '../services/api';
 
 const NotificationContext = createContext();
 
@@ -12,6 +13,9 @@ export const NotificationProvider = ({ children }) => {
     const [showLog, setShowLog] = useState(false);
 
     useEffect(() => {
+        // Fetch initial notifications
+        fetchNotifications();
+
         // Derive socket URL from BASE_API_URL
         // If BASE_API_URL is 'http://localhost:5001/api', we want 'http://localhost:5001'
         let socketUrl = BASE_API_URL;
@@ -31,36 +35,74 @@ export const NotificationProvider = ({ children }) => {
         });
 
         newSocket.on('notification', (data) => {
-            addNotification(data);
+            // Create a local notification object from the socket data
+            // For persistent ones, standardise structure:
+            // If data comes from DB create, it has _id. Use that as id.
+            const newNote = {
+                id: data._id || Date.now(),
+                ...data,
+                message: data.message,
+                type: data.type,
+                timestamp: data.createdAt || new Date(),
+                read: false
+            };
+
+            addNotification(newNote);
         });
 
         return () => newSocket.close();
     }, []);
 
+    const fetchNotifications = async () => {
+        try {
+            const res = await api.get('/notifications');
+            const notes = res.data.data.map(n => ({
+                id: n._id,
+                ...n,
+                timestamp: n.createdAt
+            }));
+            setNotifications(notes);
+        } catch (err) {
+            console.error("Failed to fetch notifications", err);
+        }
+    };
+
     const addNotification = (data) => {
-        const id = Date.now();
-        // Keep a log of notifications, limited to last 20 for example, to show in the dropdown
         setNotifications((prev) => {
-            const newNote = { id, ...data, read: false };
-            return [newNote, ...prev].slice(0, 50);
+            // Avoid duplicates if socket sends event for something we just fetched?
+            // Usually socket is real-time.
+            return [data, ...prev].slice(0, 50);
         });
-
-        // We don't auto-remove them entirely from the state anymore if we want a log.
-        // Instead, we can have a separate "toasts" state if we want transient toasts + persistent log,
-        // OR we just use one list and the Toast component only shows recent/unread ones.
-        // simpler: use one main list. Valid "Toast" notifications could be just the unread ones or recent ones.
     };
 
-    const markAsRead = (id) => {
+    const markAsRead = async (id) => {
+        // Optimistic update
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+        try {
+            await api.put(`/notifications/${id}/read`);
+        } catch (err) {
+            console.error("Failed to mark as read", err);
+        }
     };
 
-    const clearAll = () => {
+    const clearAll = async () => {
         setNotifications([]);
+        try {
+            await api.delete('/notifications');
+        } catch (err) {
+            console.error("Failed to clear notifications", err);
+            // Revert? simpler to just log error
+            fetchNotifications();
+        }
     };
 
-    const removeNotification = (id) => {
+    const removeNotification = async (id) => {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
+        try {
+            await api.delete(`/notifications/${id}`);
+        } catch (err) {
+            console.error("Failed to delete notification", err);
+        }
     };
 
     const toggleLog = () => setShowLog(prev => !prev);

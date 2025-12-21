@@ -1,6 +1,7 @@
 // server/controllers/motorController.js
 
 const Motor = require('../models/motorModel');
+const { createNotification } = require('./notificationController');
 
 // @desc    Get all motors
 // @route   GET /api/motors
@@ -50,12 +51,12 @@ exports.createMotor = async (req, res) => {
   try {
     const motor = await Motor.create(req.body);
 
-    // Notify all clients
-    const io = req.app.get('socketio');
-    io.emit('notification', {
+
+    // Notify all clients (system wide)
+    await createNotification(req.app.get('socketio'), {
       type: 'success',
       message: `New Motor Created: ${motor.serialNumber}`,
-      timestamp: new Date()
+      relatedId: motor._id
     });
 
     res.status(201).json({ success: true, data: motor });
@@ -81,12 +82,12 @@ exports.updateMotor = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Motor not found' });
     }
 
+
     // Notify all clients
-    const io = req.app.get('socketio');
-    io.emit('notification', {
+    await createNotification(req.app.get('socketio'), {
       type: 'info',
       message: `Motor Updated: ${motor.serialNumber}`,
-      timestamp: new Date()
+      relatedId: motor._id
     });
 
     res.status(200).json({ success: true, data: motor });
@@ -110,12 +111,12 @@ exports.deleteMotor = async (req, res) => {
     }
     await motor.deleteOne();
 
+
     // Notify all clients
-    const io = req.app.get('socketio');
-    io.emit('notification', {
+    await createNotification(req.app.get('socketio'), {
       type: 'warning',
       message: `Motor Deleted: ${motor.serialNumber}`,
-      timestamp: new Date()
+      relatedId: motor._id
     });
 
     res.status(200).json({ success: true, data: {} });
