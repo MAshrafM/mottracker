@@ -44,6 +44,16 @@ return (
             <h3 className="text-xl font-semibold mb-2 text-white">Bearing Report</h3>
             <p className="text-sm text-slate-300">View and export a report of all Active motors Bearing in service.</p>
             </Link>
+
+            <Link to="/reports/motor-maintenance" className="group flex flex-col items-center p-6 text-center
+                         bg-white/5 backdrop-blur-md rounded-xl 
+                         border border-white/10 
+                         shadow-lg transition-all duration-300 
+                         hover:bg-white/20 hover:border-white/30 hover:shadow-xl">
+            <Settings className="w-12 h-12 mb-4 text-white opacity-70 transition-opacity group-hover:opacity-100" />
+            <h3 className="text-xl font-semibold mb-2 text-white">Motor Maintenance Report</h3>
+            <p className="text-sm text-slate-300">Generate a technical maintenance report for a specific motor.</p>
+            </Link>
           </div>
         </div>
         </div>

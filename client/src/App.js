@@ -11,6 +11,7 @@ import NotificationHistoryPage from './pages/NotificationHistoryPage';
 import ActiveMotorReport from './pages/ActiveMotorReport';
 import SpareMotorsReport from './pages/SpareMotorReport';
 import BearingReport from './pages/BearingReport';
+import MotorMaintenanceReportPage from './pages/MotorMaintenanceReportPage';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
 import './App.css';
@@ -43,6 +44,7 @@ function App() {
               <Route path="/reports/active-motors" element={<ActiveMotorReport />} />
               <Route path="/reports/spare-motors" element={<SpareMotorsReport />} />
               <Route path="/reports/bearings" element={<BearingReport />} />
+              <Route path="/reports/motor-maintenance" element={<MotorMaintenanceReportPage />} />
               {/* Add other private routes for motors, equipment etc. here */}
             </Route>
           </Routes>
