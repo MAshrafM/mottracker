@@ -9,8 +9,15 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
-  const { login } = useContext(AuthContext);
+  const { login, user } = useContext(AuthContext); // Destructure user
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,7 +58,7 @@ const LoginPage = () => {
         <div className="absolute inset-0" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
         }}></div>
-        
+
         <div className="relative z-10 flex flex-col justify-center px-12 py-24">
           {/* Logo */}
           <div className="flex items-center space-x-3 mb-12">
@@ -73,7 +80,7 @@ const LoginPage = () => {
               </span>
             </h2>
             <p className="text-xl text-blue-100 leading-relaxed">
-              Professional maintenance tracking for Motor and Equipment. 
+              Professional maintenance tracking for Motor and Equipment.
               Stay ahead of repairs, reduce downtime, and maximize performance.
             </p>
           </div>
@@ -125,21 +132,19 @@ const LoginPage = () => {
             <div className="flex bg-white/5 rounded-lg p-1 mb-6 border border-white/10">
               <button
                 onClick={() => setIsLogin(true)}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                  isLogin 
-                    ? 'bg-blue-500 text-white shadow-lg' 
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${isLogin
+                    ? 'bg-blue-500 text-white shadow-lg'
                     : 'text-blue-200 hover:text-white'
-                }`}
+                  }`}
               >
                 Sign In
               </button>
               <button
                 onClick={() => setIsLogin(false)}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                  !isLogin 
-                    ? 'bg-blue-500 text-white shadow-lg' 
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${!isLogin
+                    ? 'bg-blue-500 text-white shadow-lg'
                     : 'text-blue-200 hover:text-white'
-                }`}
+                  }`}
               >
                 Call Admin
               </button>
@@ -147,68 +152,68 @@ const LoginPage = () => {
 
             {/* Form */}
             {isLogin ? (
-            <div className="space-y-6">
-              {/* Email Field */}
-              <div>
-                <label className="block text-sm font-medium text-blue-100 mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all"
-                  placeholder="Enter your email"
-                />
-              </div>
-
-              {/* Password Field */}
-              <div>
-                <label className="block text-sm font-medium text-blue-100 mb-2">
-                  Password
-                </label>
-                <div className="relative">
+              <div className="space-y-6">
+                {/* Email Field */}
+                <div>
+                  <label className="block text-sm font-medium text-blue-100 mb-2">
+                    Email Address
+                  </label>
                   <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full px-4 py-3 pr-12 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all"
-                    placeholder="Enter your password"
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all"
+                    placeholder="Enter your email"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-white transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
                 </div>
+
+                {/* Password Field */}
+                <div>
+                  <label className="block text-sm font-medium text-blue-100 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full px-4 py-3 pr-12 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all"
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-white transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                  <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                    <p className="text-red-200 text-sm">{error}</p>
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  onClick={handleSubmit}
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent transform hover:scale-[1.02] transition-all duration-200 shadow-lg flex items-center justify-center space-x-2"
+                >
+                  <span>{isLogin ? 'Sign In' : 'Call Admin'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-                  <p className="text-red-200 text-sm">{error}</p>
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                onClick={handleSubmit}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent transform hover:scale-[1.02] transition-all duration-200 shadow-lg flex items-center justify-center space-x-2"
-              >
-                <span>{isLogin ? 'Sign In' : 'Call Admin'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
             ) : (
-            <div className="space-y-6">
-              <p className="text-blue-200 text-sm">
-                Please contact your administrator to create an account.
-              </p>
+              <div className="space-y-6">
+                <p className="text-blue-200 text-sm">
+                  Please contact your administrator to create an account.
+                </p>
               </div>
             )}
 

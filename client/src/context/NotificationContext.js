@@ -2,17 +2,31 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import { BASE_API_URL } from '../config/api';
 import api from '../services/api';
+import AuthContext from './AuthContext';
 
 const NotificationContext = createContext();
 
 export const useNotifications = () => useContext(NotificationContext);
 
+
+
 export const NotificationProvider = ({ children }) => {
+    const { user } = useContext(AuthContext); // Get user from AuthContext
     const [socket, setSocket] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [showLog, setShowLog] = useState(false);
 
     useEffect(() => {
+        // Only fetch/connect if user is logged in
+        if (!user) {
+            if (socket) {
+                socket.close();
+                setSocket(null);
+            }
+            setNotifications([]); // Clear notifications on logout
+            return;
+        }
+
         // Fetch initial notifications
         fetchNotifications();
 
@@ -63,7 +77,7 @@ export const NotificationProvider = ({ children }) => {
         });
 
         return () => newSocket.close();
-    }, []);
+    }, [user]); // Add user dependency
 
     const fetchNotifications = async () => {
         try {
