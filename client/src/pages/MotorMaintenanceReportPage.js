@@ -3,7 +3,7 @@ import api from '../services/api';
 import { useMotorData } from '../context/MotorContext';
 import { Loader, Printer, ArrowLeft, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import logo from '../logo.svg';
+import logo from '../logo_ar.gif';
 
 const MotorMaintenanceReportPage = () => {
     const { motors, refreshData } = useMotorData();
@@ -83,19 +83,19 @@ const MotorMaintenanceReportPage = () => {
 
     if (selectedMotor) {
         return (
-            <div className="min-h-screen bg-white text-black p-8">
+            <div className="min-h-screen bg-white text-black p-4 md:p-8">
                 {/* Navigation & Actions - Hidden when printing */}
-                <div className="print:hidden flex justify-between items-center mb-8">
+                <div className="print:hidden flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
                     <button
                         onClick={handleBack}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         Back to List
                     </button>
                     <button
                         onClick={handlePrint}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
                     >
                         <Printer size={20} />
                         Print Report
@@ -108,7 +108,7 @@ const MotorMaintenanceReportPage = () => {
                         <Loader className="w-8 h-8 text-blue-600 animate-spin" />
                     </div>
                 ) : (
-                    <div className="max-w-[210mm] mx-auto bg-white relative min-h-[297mm] p-8 shadow-2xl print:shadow-none print:p-0 print:m-0">
+                    <div className="w-full md:max-w-[210mm] mx-auto bg-white relative min-h-[297mm] p-4 md:p-8 shadow-none md:shadow-2xl print:shadow-none print:p-0 print:m-0 print:w-full print:max-w-none">
                         {/* Watermark */}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.03]">
                             <img src={logo} alt="Watermark" className="w-[80%] h-auto grayscale" />
@@ -123,27 +123,31 @@ const MotorMaintenanceReportPage = () => {
                                     body {
                                         -webkit-print-color-adjust: exact;
                                     }
+                                    /* Hide global elements */
+                                    nav, header, .navbar, .sidebar { 
+                                        display: none !important; 
+                                    }
                                 }
                             `}
                         </style>
 
                         <div className="relative z-10">
                             {/* Header */}
-                            <div className="flex justify-between items-center border-b-2 border-slate-800 pb-6 mb-8">
+                            <div className="flex flex-col md:flex-row print:flex-row justify-between items-center border-b-2 border-slate-800 pb-6 mb-8 gap-4 text-center md:text-left print:text-left">
                                 <div>
-                                    <h1 className="text-3xl font-bold text-slate-900 uppercase tracking-wider">Maintenance Report</h1>
+                                    <h1 className="text-2xl md:text-3xl print:text-3xl font-bold text-slate-900 uppercase tracking-wider">Maintenance Report</h1>
                                     <p className="text-slate-500 mt-1">Generated on {new Date().toLocaleDateString()}</p>
                                 </div>
-                                <img src={logo} alt="Company Logo" className="h-16 w-auto" />
+                                <img src={logo} alt="Company Logo" className="h-12 md:h-16 print:h-16 w-auto" />
                             </div>
 
                             {/* Section 1: Motor Information */}
                             <section className="mb-10">
-                                <h2 className="text-xl font-bold text-slate-800 uppercase border-l-4 border-blue-600 pl-3 mb-6">
+                                <h2 className="text-lg md:text-xl print:text-xl font-bold text-slate-800 uppercase border-l-4 border-blue-600 pl-3 mb-6">
                                     Motor Information
                                 </h2>
 
-                                <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-sm">
+                                <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-12 gap-y-4 text-sm">
                                     <div className="flex justify-between border-b border-slate-200 pb-2">
                                         <span className="font-semibold text-slate-600">Serial Number</span>
                                         <span className="font-bold text-slate-900">{selectedMotor.serialNumber}</span>
@@ -201,31 +205,33 @@ const MotorMaintenanceReportPage = () => {
 
                             {/* Section 2: History Log */}
                             <section>
-                                <h2 className="text-xl font-bold text-slate-800 uppercase border-l-4 border-blue-600 pl-3 mb-6">
+                                <h2 className="text-lg md:text-xl print:text-xl font-bold text-slate-800 uppercase border-l-4 border-blue-600 pl-3 mb-6">
                                     Maintenance History Log
                                 </h2>
 
                                 {maintenanceHistory.length > 0 ? (
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="text-xs text-slate-500 uppercase bg-slate-100 border-b border-slate-300">
-                                            <tr>
-                                                <th scope="col" className="px-6 py-3 w-1/4">Date</th>
-                                                <th scope="col" className="px-6 py-3">Description</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {maintenanceHistory.map((log, index) => (
-                                                <tr key={log._id || index} className="border-b border-slate-200 hover:bg-slate-50">
-                                                    <td className="px-6 py-4 font-medium text-slate-900 align-top">
-                                                        {new Date(log.date).toLocaleDateString()}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-slate-700 whitespace-pre-wrap">
-                                                        {log.description}
-                                                    </td>
+                                    <div className="overflow-x-auto print:overflow-visible">
+                                        <table className="w-full text-sm text-left min-w-[600px] print:min-w-0">
+                                            <thead className="text-xs text-slate-500 uppercase bg-slate-100 border-b border-slate-300">
+                                                <tr>
+                                                    <th scope="col" className="px-6 py-3 w-1/4">Date</th>
+                                                    <th scope="col" className="px-6 py-3">Description</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                {maintenanceHistory.map((log, index) => (
+                                                    <tr key={log._id || index} className="border-b border-slate-200 hover:bg-slate-50">
+                                                        <td className="px-6 py-4 font-medium text-slate-900 align-top">
+                                                            {new Date(log.date).toLocaleDateString()}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-slate-700 whitespace-pre-wrap">
+                                                            {log.description}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 ) : (
                                     <div className="text-center py-8 text-slate-500 italic border border-dashed border-slate-300 rounded-lg">
                                         No maintenance history recorded for this motor.
