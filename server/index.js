@@ -18,30 +18,9 @@ const motorActiveReportRoutes = require('./routes/reportRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 
 // Connect to MongoDB
+// Connect to MongoDB
 connectDB();
 const app = express();
-const http = require('http');
-const { Server } = require("socket.io");
-
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*", // Allow all origins for simplicity, tighten in production if needed
-    methods: ["GET", "POST", "PUT", "DELETE"]
-  }
-});
-
-// Make io accessible globally via app
-app.set('socketio', io);
-
-// Socket.io connection handler
-io.on('connection', (socket) => {
-  console.log(`New client connected: ${socket.id}`);
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
-  });
-});
 
 // Middleware
 // --- CORS CONFIGURATION ---
@@ -88,6 +67,6 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5001; // Use port from .env or default to 5001
 
-server.listen(PORT, () => {
-  console.log(`Server and Socket.IO running on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
