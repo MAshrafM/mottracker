@@ -37,4 +37,7 @@ const sparePartSchema = new mongoose.Schema({
 // Text index for high-speed fuzzy searching on descriptions and SAP numbers
 sparePartSchema.index({ description: 'text', sapNumber: 'text' });
 
+// Compound index for efficient filtering by location and sorting by update time
+sparePartSchema.index({ storageLocation: 1, updatedAt: -1 });
+
 module.exports = mongoose.model('SparePart', sparePartSchema);

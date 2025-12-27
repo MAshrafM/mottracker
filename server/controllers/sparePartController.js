@@ -5,7 +5,7 @@ const SparePart = require('../models/sparePartModel');
 // @access  Private (Needs Authentication Middleware usage in routes)
 const getSpareParts = async (req, res) => {
     try {
-        const { location, search } = req.query;
+        const { location, search, page = 1, limit = 50 } = req.query;
 
         let query = {};
 
@@ -39,11 +39,29 @@ const getSpareParts = async (req, res) => {
             }
         }
 
-        const spareParts = await SparePart.find(query).sort({ updatedAt: -1 }); // Recently updated first
+        // Pagination Calculations
+        const pageNum = parseInt(page, 10);
+        const limitNum = parseInt(limit, 10);
+        const skip = (pageNum - 1) * limitNum;
+
+        // Execute Query with Pagination
+        const spareParts = await SparePart.find(query)
+            .sort({ updatedAt: -1 }) // Recently updated first
+            .skip(skip)
+            .limit(limitNum);
+
+        // Get total count for pagination UI (optional, but good for "Load More" logic)
+        // Optimization: For very large datasets, countDocuments can be slow. 
+        // If > 1M records, estimatedDocumentCount is better, but here we have filters, so countDocuments is needed.
+        // For 6000 records, this is negligible.
+        const totalCount = await SparePart.countDocuments(query);
 
         res.status(200).json({
             success: true,
             count: spareParts.length,
+            totalCount,
+            totalPages: Math.ceil(totalCount / limitNum),
+            currentPage: pageNum,
             data: spareParts
         });
 

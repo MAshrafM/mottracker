@@ -15,36 +15,66 @@ const SparePartsPage = () => {
     const [error, setError] = useState('');
     const [showUpload, setShowUpload] = useState(false); // Toggle for upload section (Power User / Dev)
 
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
     // Initial Load
     // useEffect(() => {
     //     fetchStats();
     // }, []); // Removed as per user request to avoid separate endpoint
 
+    // Reset pagination when search or location changes
+    useEffect(() => {
+        setPage(1);
+        setHasMore(true);
+        setSpareParts([]); // Clear current list to avoid confusion
+    }, [searchQuery, location]);
+
     // Debounce Search
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchParts();
+            fetchParts(1);
         }, 500);
 
         return () => clearTimeout(timer);
     }, [searchQuery, location]);
 
-    const fetchParts = async () => {
-        setIsLoading(true);
+    const fetchParts = async (pageNum = 1) => {
+        if (pageNum === 1) setIsLoading(true);
+        else setIsLoadingMore(true);
+
         setError('');
+
         try {
             const response = await SparePartService.getSpareParts({
                 location,
-                search: searchQuery
+                search: searchQuery,
+                page: pageNum,
+                limit: 50
             });
-            setSpareParts(response.data.data);
+
+            const newData = response.data.data;
+
+            if (pageNum === 1) {
+                setSpareParts(newData);
+            } else {
+                setSpareParts(prev => [...prev, ...newData]);
+            }
+
+            // Check if there are more pages
+            setHasMore(pageNum < response.data.totalPages);
 
             // Lazy update stats for current location
-            // This relies on the 'count' property from the API response
-            if (response.data.count !== undefined) {
+            // This relies on the 'count' property from the API response (if provided for filtered total)
+            // Note: The totalCount from backend is the filtered count.
+            // If search is empty, this "totalCount" effectively represents the count for the location.
+            if (!searchQuery && response.data.totalCount !== undefined) {
+                // Or use response.data.count if your existing logic preferred the count per request, 
+                // but 'totalCount' is better for the badge.
                 setStats(prev => ({
                     ...prev,
-                    [location]: response.data.count
+                    [location]: response.data.totalCount
                 }));
             }
 
@@ -52,7 +82,14 @@ const SparePartsPage = () => {
             setError('Failed to fetch spare parts. ' + (err.response?.data?.message || err.message));
         } finally {
             setIsLoading(false);
+            setIsLoadingMore(false);
         }
+    };
+
+    const handleLoadMore = () => {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        fetchParts(nextPage);
     };
 
     const calculateFreshness = (dateString) => {
@@ -78,15 +115,15 @@ const SparePartsPage = () => {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 space-y-4 md:space-y-0">
                     <div className="flex items-center space-x-4">
-                        <Link to="/dashboard" className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-blue-300 hover:text-white transition-colors">
+                        <Link to="/dashboard" className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-blue-300 hover:text-white transition-colors shrink-0">
                             <ArrowLeft className="w-6 h-6" />
                         </Link>
-                        <div>
-                            <h1 className="text-3xl font-bold text-white flex items-center">
-                                <Database className="w-8 h-8 mr-3 text-blue-400" />
-                                Spare Parts Inventory
+                        <div className="min-w-0">
+                            <h1 className="text-2xl md:text-3xl font-bold text-white flex flex-wrap items-center">
+                                <Database className="w-6 h-6 md:w-8 md:h-8 mr-2 md:mr-3 text-blue-400 shrink-0" />
+                                <span>Spare Parts Inventory</span>
                             </h1>
-                            <p className="text-blue-200/60 text-sm mt-1">Search motors and electrical components</p>
+                            <p className="text-blue-200/60 text-sm mt-1 truncate">Search motors and electrical components</p>
                         </div>
                     </div>
 
@@ -97,10 +134,11 @@ const SparePartsPage = () => {
                             <button
                                 onClick={() => setShowUpload(!showUpload)}
                                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${showUpload ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-white/5 text-blue-300 border border-white/10 hover:bg-white/10'
-                                    }`}
+                                    } shrink-0`}
                             >
                                 <RefreshCw className="w-4 h-4" />
-                                <span>{showUpload ? 'Hide Upload' : 'Sync Data'}</span>
+                                <span className="hidden sm:inline">{showUpload ? 'Hide Upload' : 'Sync Data'}</span>
+                                <span className="sm:hidden">{showUpload ? 'Hide' : 'Sync'}</span>
                             </button>
                         )}
                     </div>
@@ -114,30 +152,30 @@ const SparePartsPage = () => {
                 )}
 
                 {/* Search & Filter Bar */}
-                <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6 shadow-xl mb-8">
+                <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-4 md:p-6 shadow-xl mb-8">
                     <div className="flex flex-col md:flex-row gap-4">
                         {/* Location Toggle (High Contrast) */}
                         <div className="flex w-full md:w-auto bg-slate-800/80 p-1.5 rounded-xl border border-white/10 shrink-0">
                             <button
                                 onClick={() => setLocation(13)}
-                                className={`flex-1 md:flex-none justify-center px-4 py-2 md:px-6 md:py-2.5 rounded-lg flex items-center space-x-2 font-medium text-sm md:text-base transition-all duration-300 ${location === 13
+                                className={`flex-1 md:flex-none justify-center px-2 py-2 md:px-6 md:py-2.5 rounded-lg flex items-center space-x-2 font-medium text-sm md:text-base transition-all duration-300 ${location === 13
                                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
                                     : 'text-blue-400 hover:text-blue-200 hover:bg-white/5'
                                     }`}
                             >
-                                <span>Motors (13)</span>
+                                <span>Motors <span className="hidden sm:inline">(13)</span></span>
                                 <span className={`ml-2 px-2 py-0.5 rounded text-xs ${location === 13 ? 'bg-white/20 text-white' : 'bg-white/10 text-blue-300'}`}>
                                     {stats[13] || 0}
                                 </span>
                             </button>
                             <button
                                 onClick={() => setLocation(12)}
-                                className={`flex-1 md:flex-none justify-center px-4 py-2 md:px-6 md:py-2.5 rounded-lg flex items-center space-x-2 font-medium text-sm md:text-base transition-all duration-300 ${location === 12
+                                className={`flex-1 md:flex-none justify-center px-2 py-2 md:px-6 md:py-2.5 rounded-lg flex items-center space-x-2 font-medium text-sm md:text-base transition-all duration-300 ${location === 12
                                     ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/25'
                                     : 'text-blue-400 hover:text-blue-200 hover:bg-white/5'
                                     }`}
                             >
-                                <span>Electrical (12)</span>
+                                <span>Electrical <span className="hidden sm:inline">(12)</span></span>
                                 <span className={`ml-2 px-2 py-0.5 rounded text-xs ${location === 12 ? 'bg-white/20 text-white' : 'bg-white/10 text-blue-300'}`}>
                                     {stats[12] || 0}
                                 </span>
@@ -145,7 +183,7 @@ const SparePartsPage = () => {
                         </div>
 
                         {/* Smart Search Input */}
-                        <div className="flex-1 relative group">
+                        <div className="flex-1 relative group min-w-0">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <Search className="h-5 w-5 text-blue-300/50 group-focus-within:text-blue-400 transition-colors" />
                             </div>
@@ -188,14 +226,14 @@ const SparePartsPage = () => {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid gap-3">
+                        <div className="flex flex-col gap-3">
                             {spareParts.map((part) => (
                                 <div
                                     key={part._id}
-                                    className="bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-4 transition-all duration-200 group flex flex-col md:flex-row md:items-center justify-between gap-4"
+                                    className="bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-4 transition-all duration-200 group flex flex-col md:flex-row md:items-center justify-between gap-4 w-full"
                                 >
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center space-x-3 mb-1">
+                                        <div className="flex flex-wrap items-center gap-2 mb-2">
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/20">
                                                 SAP: {part.sapNumber}
                                             </span>
@@ -208,7 +246,7 @@ const SparePartsPage = () => {
                                         <h3 className="text-lg font-medium text-white truncate pr-4" title={part.description}>
                                             {part.description}
                                         </h3>
-                                        <div className="flex items-center space-x-4 mt-2 text-sm text-blue-200/60">
+                                        <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-blue-200/60">
                                             <span className="flex items-center">
                                                 <MapPin className="w-4 h-4 mr-1 opacity-70" />
                                                 Loc: {part.storageLocation}
@@ -234,6 +272,23 @@ const SparePartsPage = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Load More Button */}
+                {!isLoading && !error && hasMore && spareParts.length > 0 && (
+                    <div className="mt-8 text-center">
+                        <button
+                            onClick={handleLoadMore}
+                            disabled={isLoadingMore}
+                            className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-blue-300 transition-all flex items-center justify-center mx-auto space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isLoadingMore ? (
+                                <RefreshCw className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <span>Load More</span>
+                            )}
+                        </button>
+                    </div>
+                )}
 
             </div>
         </div>
