@@ -1,5 +1,5 @@
 // client/src/pages/DashboardPage.js
-import React, { useState, useEffect,useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import { useMotorData } from '../context/MotorContext';
@@ -17,7 +17,7 @@ const DashboardPage = () => {
   const [oServiceMotors, setOServiceMotors] = useState(0);
   const [totalPower, setTotalPower] = useState(0);
   const [totalEq, setTotalEq] = useState(0);
-  
+
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -34,30 +34,30 @@ const DashboardPage = () => {
   }, [motors]);
 
   const calculateStats = (motorData) => {
-      let totalMotors = motorData.length;
-      let activeMotors = motorData.filter(f => f.status === "active").length;
-      let spareMotors = motorData.filter(f => f.status === "spare").length;
-      let oServiceMotors = motorData.filter(f => f.status === "out of service").length;
-      let totalPower = motorData.reduce((sum, i) => Number(i.power || 0) + sum, 0);
-      setActiveMotors(activeMotors);
-      setSpareMotors(spareMotors);
-      setOServiceMotors(oServiceMotors);
-      setTotalMotors(totalMotors);
-      setTotalPower(totalPower);
-      setIsLoading(false);
+    let totalMotors = motorData.length;
+    let activeMotors = motorData.filter(f => f.status === "active").length;
+    let spareMotors = motorData.filter(f => f.status === "spare").length;
+    let oServiceMotors = motorData.filter(f => f.status === "out of service").length;
+    let totalPower = motorData.reduce((sum, i) => Number(i.power || 0) + sum, 0);
+    setActiveMotors(activeMotors);
+    setSpareMotors(spareMotors);
+    setOServiceMotors(oServiceMotors);
+    setTotalMotors(totalMotors);
+    setTotalPower(totalPower);
+    setIsLoading(false);
   };
 
   const fetchEquipments = async () => {
-      try {
-        const response = await api.get('/equipment');
-        let eqData = response.data.data;
-        setTotalEq(eqData.length);
-      } catch (err) {
-        setError('Failed to fetch equipment.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    try {
+      const response = await api.get('/equipment');
+      let eqData = response.data.data;
+      setTotalEq(eqData.length);
+    } catch (err) {
+      setError('Failed to fetch equipment.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -82,26 +82,26 @@ const DashboardPage = () => {
 
 
 
-  return(
-  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
       {/* Background Pattern */}
       <div className="absolute inset-0" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
       }}></div>
-      
+
       <div className="relative z-10 p-6 max-w-4xl mx-auto pt-12">
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-8 shadow-2xl">
           <h2 className="text-4xl font-bold text-white mb-6 text-center">Dashboard</h2>
-          
+
           <div className="space-y-4">
             <p className="text-xl text-blue-100 text-center">
               Welcome to the Motor Maintenance Tracker, <span className="text-blue-300 font-semibold">{user?.username}</span>!
             </p>
-            
+
             <p className="text-lg text-blue-200 text-center">
               Your role is: <strong className="text-white capitalize px-3 py-1 bg-blue-500/20 rounded-lg border border-blue-500/30">{user?.role}</strong>
             </p>
-            
+
             {/* Future content placeholder */}
             <div className="mt-8 pt-6 border-t border-white/20">
               <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group">
@@ -152,7 +152,7 @@ const DashboardPage = () => {
                       <Activity className="w-4 h-4 text-green-400" />
                       <span className="text-blue-200">System Efficiency</span>
                     </div>
-                    <span className="text-white font-medium">{(activeMotors/(totalMotors || 1)*100).toFixed(2)}%</span>
+                    <span className="text-white font-medium">{(activeMotors / (totalMotors || 1) * 100).toFixed(2)}%</span>
                   </div>
                   <div className="w-full bg-slate-700/50 rounded-full h-2">
                     <div className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full" style={{ width: `${(activeMotors / (totalMotors || 1)) * 100}%` }}></div>
@@ -181,6 +181,9 @@ const DashboardPage = () => {
                   </div>
                   <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 hover:border-amber-400/50 w-full md:w-auto">
                     <Link to="/reports" className="text-amber-200 hover:text-white text-sm font-medium block">Reports</Link>
+                  </div>
+                  <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 border border-blue-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 hover:border-blue-400/50 w-full md:w-auto">
+                    <Link to="/spare-parts" className="text-blue-200 hover:text-white text-sm font-medium block">Spare Parts</Link>
                   </div>
                 </div>
               </div>

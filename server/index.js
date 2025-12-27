@@ -16,6 +16,7 @@ const motorRoutes = require('./routes/motorRoutes');
 const plantEquipmentRoutes = require('./routes/plantEquipmentRoutes');
 const motorActiveReportRoutes = require('./routes/reportRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const sparePartRoutes = require('./routes/sparePartRoutes');
 
 // Connect to MongoDB
 // Connect to MongoDB
@@ -49,7 +50,8 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 */
 app.use(cors()); // Allow all origins for development; adjust in production
-app.use(express.json()); // Enable parsing of JSON in request body
+app.use(express.json({ limit: '50mb' })); // Enable parsing of JSON in request body and increase limit for bulk uploads
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // --- Mount routers ---
 app.use('/api/auth', authRoutes);
@@ -58,6 +60,7 @@ app.use('/api/motors', motorRoutes);
 app.use('/api/equipment', plantEquipmentRoutes);
 app.use('/api/reports', motorActiveReportRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/spare-parts', sparePartRoutes);
 
 
 // A simple test route to make sure everything is working
