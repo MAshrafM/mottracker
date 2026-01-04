@@ -498,22 +498,25 @@ const PlantEquipmentPage = () => {
 
               {/* Equipment Header */}
               <div className="mb-6">
-                <h3 className="text-xl font-bold text-white mb-3 pr-20">{eq.designation}</h3>
-                <div className="flex items-center space-x-2">
-                  <span className="text-blue-300 font-semibold">TON:</span>
-                  <span className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-sm font-mono border border-blue-500/30">
-                    {eq.tonNumber}
-                  </span>
+                <h3 className="text-xl font-bold text-white mb-3 pr-20 break-words">{eq.designation}</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center space-x-2 bg-blue-500/10 rounded-full px-2 py-1 border border-blue-500/20">
+                    <span className="text-blue-300 font-semibold text-sm">TON:</span>
+                    <span className="text-blue-200 text-sm font-mono">
+                      {eq.tonNumber}
+                    </span>
+                  </div>
+
                   <button
                     onClick={() => handleOpenImage(eq.tonNumber)}
-                    className="group flex items-center space-x-1.5 px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200
-                              bg-blue-500/10 text-blue-300 border-blue-500/30 
-                              hover:bg-blue-500/30 hover:text-white hover:border-blue-400/60"
+                    className="group flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-all duration-200
+                              bg-indigo-500/20 text-indigo-200 border-indigo-500/30 
+                              hover:bg-indigo-500/40 hover:text-white hover:border-indigo-400/60
+                              whitespace-nowrap"
                   >
-                    <ImageIcon size={14} className="group-hover:scale-110 transition-transform" />
-                    <span>View Datasheet</span>
-                    {/* Tiny arrow to indicate opening new tab */}
-                    <ExternalLink size={10} className="opacity-60 ml-1" />
+                    <ImageIcon size={12} className="group-hover:scale-110 transition-transform" />
+                    <span>Datasheet</span>
+                    <ExternalLink size={10} className="opacity-60 ml-0.5" />
                   </button>
                 </div>
 
