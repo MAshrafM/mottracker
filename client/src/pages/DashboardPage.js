@@ -122,26 +122,26 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-5 gap-3 mb-4">
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-white">{totalEq}</div>
-                    <div className="text-xs text-blue-200">All Equip.</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
+                  <div className="glass-light rounded-lg p-3 text-center border border-white/5 bg-white/5">
+                    <div className="text-2xl font-bold text-white">{totalEq}</div>
+                    <div className="text-xs text-blue-200 uppercase tracking-wider">All Equip.</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-white">{totalMotors}</div>
-                    <div className="text-xs text-blue-200">Total Motors</div>
+                  <div className="glass-light rounded-lg p-3 text-center border border-white/5 bg-white/5">
+                    <div className="text-2xl font-bold text-white">{totalMotors}</div>
+                    <div className="text-xs text-blue-200 uppercase tracking-wider">Total Motors</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-green-400">{activeMotors}</div>
-                    <div className="text-xs text-blue-200">On Service</div>
+                  <div className="glass-light rounded-lg p-3 text-center border border-white/5 bg-white/5">
+                    <div className="text-2xl font-bold text-green-400">{activeMotors}</div>
+                    <div className="text-xs text-blue-200 uppercase tracking-wider">On Service</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-red-400">{spareMotors}</div>
-                    <div className="text-xs text-blue-200">Spare</div>
+                  <div className="glass-light rounded-lg p-3 text-center border border-white/5 bg-white/5">
+                    <div className="text-2xl font-bold text-red-400">{spareMotors}</div>
+                    <div className="text-xs text-blue-200 uppercase tracking-wider">Spare</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-red-400">{oServiceMotors}</div>
-                    <div className="text-xs text-blue-200">Out of Service</div>
+                  <div className="glass-light rounded-lg p-3 text-center border border-white/5 bg-white/5">
+                    <div className="text-2xl font-bold text-red-400">{oServiceMotors}</div>
+                    <div className="text-xs text-blue-200 uppercase tracking-wider">Out of Service</div>
                   </div>
                 </div>
 
@@ -172,19 +172,26 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Action Button */}
-                <div className="flex flex-col md:flex-row md:items-center gap-3 md:space-x-4 mt-4 pt-4 border-t border-white/10">
-                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 hover:border-amber-400/50 w-full md:w-auto">
-                    <Link to="/motors" className="text-amber-200 hover:text-white text-sm font-medium block">View All Motors</Link>
-                  </div>
-                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 hover:border-amber-400/50 w-full md:w-auto">
-                    <Link to="/equipment" className="text-amber-200 hover:text-white text-sm font-medium block">View All Equipments</Link>
-                  </div>
-                  <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 hover:border-amber-400/50 w-full md:w-auto">
-                    <Link to="/reports" className="text-amber-200 hover:text-white text-sm font-medium block">Reports</Link>
-                  </div>
-                  <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 border border-blue-500/30 rounded-lg px-4 py-2 text-center transition-all duration-300 hover:border-blue-400/50 w-full md:w-auto">
-                    <Link to="/spare-parts" className="text-blue-200 hover:text-white text-sm font-medium block">Spare Parts</Link>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 pt-4 border-t border-white/10">
+                  <Link to="/motors" className="group relative overflow-hidden bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3 text-center hover:border-amber-400/50 transition-all duration-300">
+                    <span className="relative z-10 text-amber-200 group-hover:text-white text-sm font-medium">View All Motors</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </Link>
+
+                  <Link to="/equipment" className="group relative overflow-hidden bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3 text-center hover:border-amber-400/50 transition-all duration-300">
+                    <span className="relative z-10 text-amber-200 group-hover:text-white text-sm font-medium">View All Equipments</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </Link>
+
+                  <Link to="/reports" className="group relative overflow-hidden bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3 text-center hover:border-amber-400/50 transition-all duration-300">
+                    <span className="relative z-10 text-amber-200 group-hover:text-white text-sm font-medium">Reports</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </Link>
+
+                  <Link to="/spare-parts" className="group relative overflow-hidden bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-lg p-3 text-center hover:border-blue-400/50 transition-all duration-300">
+                    <span className="relative z-10 text-blue-200 group-hover:text-white text-sm font-medium">Spare Parts</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </Link>
                 </div>
               </div>
             </div>

@@ -35,7 +35,20 @@ const getSpareParts = async (req, res) => {
                 ];
             } else {
                 // Text/Alphanumeric -> Search Description
-                query.description = { $regex: search, $options: 'i' };
+                // Smart Search: specific words don't need to be adjacent.
+                // "Motor 6309" should match "Motor SKF 6309"
+
+                const terms = search.trim().split(/\s+/); // Split by whitespace
+
+                if (terms.length > 1) {
+                    // AND logic: Description must contain ALL terms
+                    query.$and = terms.map(term => ({
+                        description: { $regex: term, $options: 'i' }
+                    }));
+                } else {
+                    // Single term: simple regex
+                    query.description = { $regex: search, $options: 'i' };
+                }
             }
         }
 

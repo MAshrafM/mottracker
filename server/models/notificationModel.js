@@ -15,10 +15,10 @@ const NotificationSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    read: {
-        type: Boolean,
-        default: false
-    },
+    readBy: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     relatedId: {
         type: String, // ID of the motor or maintenance record
         default: null

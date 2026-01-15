@@ -14,14 +14,14 @@ exports.getNotifications = async (req, res) => {
             ]
         }).sort({ createdAt: -1 }).limit(100);
 
-        // If we want to track 'read' status for global notifications per user, it's complex.
-        // For simplicity in this v1:
-        // Global notifications are 'read' if the user has marked them read locally? 
-        // No, that doesn't persist.
-        // Better approach: We clone global notifications for each user? OR we just store a list of 'readBy' users.
-        // Simpler V1: Just show them. We will handle 'read' status updates for specific notifications.
+        // Transform notifications to include 'read' property for the current user
+        const mappedNotifications = notifications.map(notif => {
+            const notifObj = notif.toObject();
+            notifObj.read = notif.readBy ? notif.readBy.some(id => id.toString() === req.user._id.toString()) : false;
+            return notifObj;
+        });
 
-        res.status(200).json({ success: true, count: notifications.length, data: notifications });
+        res.status(200).json({ success: true, count: mappedNotifications.length, data: mappedNotifications });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -38,11 +38,17 @@ exports.markAsRead = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Notification not found' });
         }
 
-        // Update read status
-        notification.read = true;
-        await notification.save();
+        // Add user to readBy array if not already present
+        if (!notification.readBy.includes(req.user._id)) {
+            notification.readBy.push(req.user._id);
+            await notification.save();
+        }
 
-        res.status(200).json({ success: true, data: notification });
+        // Return the notification with 'read' set to true for the response
+        const notifObj = notification.toObject();
+        notifObj.read = true;
+
+        res.status(200).json({ success: true, data: notifObj });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
