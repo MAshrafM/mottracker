@@ -7,6 +7,7 @@ const {
   getMotorWithEquipment,
   getMotor,
   createMotor,
+  createBulkMotors,
   updateMotor,
   deleteMotor,
 } = require('../controllers/motorController');
@@ -20,6 +21,9 @@ router.use(protect);
 router.route('/')
   .get(getMotors)
   .post(authorize('admin'), createMotor); // Only admin can create
+
+router.route('/bulk')
+  .post(authorize('admin'), createBulkMotors);
 
 router.route('/with-equipment')
   .get(getMotorWithEquipment);

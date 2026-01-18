@@ -28,6 +28,7 @@ const MotorManagementPage = () => {
   // Handle Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(null);
+  const [isBulk, setIsBulk] = useState(false); // Add bulk mode state
   const [formData, setFormData] = useState({
     serialNumber: '', type: '', power: '', current: '', speed: '', IM: '', frameSize: '',
     manufacturer: '', bearingDE: '', bearingNDE: '', status: 'spare', lastMaintenanceDate: '', SAP: '', Note: '', Warehouse: ''
@@ -41,7 +42,7 @@ const MotorManagementPage = () => {
     }
   }, [motors]);
 
-  
+
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -52,7 +53,26 @@ const MotorManagementPage = () => {
       if (isEditing) {
         await api.put(`/motors/${isEditing}`, formData);
       } else {
-        await api.post('/motors', formData);
+        if (isBulk) {
+          // Bulk Create
+          const serials = formData.serialNumber.split('\n').map(s => s.trim()).filter(s => s);
+          if (serials.length === 0) {
+            setError('Please provide at least one serial number.');
+            return;
+          }
+          const { serialNumber, ...commonDetails } = formData;
+          const res = await api.post('/motors/bulk', {
+            serialNumbers: serials,
+            ...commonDetails
+          });
+          // Optional: show info about partial success if needed
+          if (res.data.errors && res.data.errors.length > 0) {
+            alert(res.data.message); // Simple alert for now or use a toast
+          }
+        } else {
+          // Single Create
+          await api.post('/motors', formData);
+        }
       }
       refreshData();
       closeModal();
@@ -97,7 +117,7 @@ const MotorManagementPage = () => {
     return (
       (filters.power === '' || motors.power.toString().toLowerCase().includes(filters.power.toLowerCase())) &&
       (filters.speed === '' || motors.speed.toString().toLowerCase().includes(filters.speed.toLowerCase())) &&
-      (filters.status === '' || motors.status === filters.status) && 
+      (filters.status === '' || motors.status === filters.status) &&
       (filters.serialNumber === '' || motors.serialNumber.toString().toLowerCase().includes(filters.serialNumber.toLowerCase())) &&
       (filters.manufacturer === '' || motors.manufacturer.toString().toLowerCase().includes(filters.manufacturer.toLowerCase()))
     );
@@ -105,6 +125,7 @@ const MotorManagementPage = () => {
 
   const openCreateModal = () => {
     setIsEditing(null);
+    setIsBulk(false); // Default to single
     setFormData({
       serialNumber: '', type: '', power: '', current: '', speed: '', IM: '', frameSize: '',
       manufacturer: '', bearingDE: '', bearingNDE: '', status: 'spare', lastMaintenanceDate: '', SAP: '', Note: '', Warehouse: ''
@@ -145,7 +166,7 @@ const MotorManagementPage = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-bold text-white tracking-tight">Motor Inventory</h2>
           {user.role === 'admin' && (
-            <button 
+            <button
               onClick={openCreateModal}
               className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
                          text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all duration-300 
@@ -219,16 +240,15 @@ const MotorManagementPage = () => {
       {/* Select View */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-white">Motors</h2>
-        
+
         {/* Toggle Slider */}
         <div className="relative bg-white/10 border border-white/20 rounded-full p-1 w-20 h-10">
           {/* Sliding Background */}
-          <div 
-            className={`absolute top-1 w-8 h-8 bg-white/20 rounded-full transition-transform duration-300 ease-in-out ${
-              viewMode === 'grid' ? 'translate-x-0' : 'translate-x-10'
-            }`}
+          <div
+            className={`absolute top-1 w-8 h-8 bg-white/20 rounded-full transition-transform duration-300 ease-in-out ${viewMode === 'grid' ? 'translate-x-0' : 'translate-x-10'
+              }`}
           />
-          
+
           {/* Toggle Button */}
           <button
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
@@ -236,16 +256,14 @@ const MotorManagementPage = () => {
             aria-label={`Switch to ${viewMode === 'grid' ? 'list' : 'grid'} view`}
           >
             {/* Grid Icon */}
-            <div className={`flex items-center justify-center w-8 h-8 transition-colors duration-300 ${
-              viewMode === 'grid' ? 'text-white' : 'text-white/50'
-            }`}>
+            <div className={`flex items-center justify-center w-8 h-8 transition-colors duration-300 ${viewMode === 'grid' ? 'text-white' : 'text-white/50'
+              }`}>
               <Grid3X3 size={16} />
             </div>
-            
+
             {/* List Icon */}
-            <div className={`flex items-center justify-center w-8 h-8 transition-colors duration-300 ${
-              viewMode === 'list' ? 'text-white' : 'text-white/50'
-            }`}>
+            <div className={`flex items-center justify-center w-8 h-8 transition-colors duration-300 ${viewMode === 'list' ? 'text-white' : 'text-white/50'
+              }`}>
               <List size={16} />
             </div>
           </button>
@@ -253,185 +271,184 @@ const MotorManagementPage = () => {
       </div>
 
       {viewMode === "grid" ? (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-        {filteredMotors.map((motor) => (
-          <div key={motor._id} className="glass rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-            {/* Header with Status and Title */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-            {/* Status Badge - Centered on mobile, left on desktop */}
-              <div className="flex justify-center md:justify-start">
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                  motor.status === 'active' 
-                      ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
-                      : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
-                  }`}>
-                  {motor.status}
-                </span>
-              </div>
-
-              {/* Motor Title - Centered on both screens */}
-              <div className="text-center md:text-left md:flex-1 md:px-4">
-                <h3 className="text-xl font-bold text-white">
-                  {motor.manufacturer} | {motor.type}
-                </h3>
-              </div>
-
-              {/* Empty div to balance flex layout on desktop */}
-              <div className="hidden md:block w-20"></div>
-            </div>
-
-            {/* Equipment info if active */}
-            {motor.eq && motor.status === 'active' && (
-              <h4 className="text-lg text-white mb-4 border-b border-white/20 pb-2 text-center md:text-left">
-                {motor.eq.tonNumber} - {motor.eq.designation}
-              </h4>
-            )}
-
-            {/* Motor Details */}
-            <div className="space-y-3 text-gray-300">
-              {/* Serial Number */}
-              <div className="bg-white/5 rounded-lg p-3">
-                <p className="flex justify-between items-center">
-                  <strong className="text-blue-300 text-base">S/N:</strong> 
-                  <span className="font-bold text-base">{motor.serialNumber}</span>
-                </p>
-              </div>
-          
-              {/* Technical Specs Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="flex justify-between items-center">
-                    <strong className="text-blue-300 text-base">Power:</strong> 
-                    <span className="text-base">{motor.power} KW</span>
-                  </p>
-                </div>
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="flex justify-between items-center">
-                    <strong className="text-blue-300 text-base">Current:</strong> 
-                    <span className="text-base">{motor.current} A</span>
-                  </p>
-                </div>
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="flex justify-between items-center">
-                    <strong className="text-blue-300 text-base">Speed:</strong> 
-                    <span className="text-base">{motor.speed} rpm</span>
-                  </p>
-                </div>
-              </div>
-            
-              {/* Mounting and Frame Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="flex justify-between items-center">
-                    <strong className="text-blue-300 text-base">Mounting:</strong> 
-                    <span className="text-base">{motor.IM}</span>
-                  </p>
-                </div>
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="flex justify-between items-center">
-                    <strong className="text-blue-300 text-base">Frame Size:</strong> 
-                    <span className="text-base">{motor.frameSize}</span>
-                  </p>
-                </div>
-              </div>
-          
-              {/* Bearings Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="flex justify-between items-center">
-                    <strong className="text-blue-300 text-base">Bearing NDE:</strong> 
-                    <span className="text-base">{motor.bearingNDE}</span>
-                  </p>
-                </div>
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="flex justify-between items-center">
-                    <strong className="text-blue-300 text-base">Bearing DE:</strong> 
-                    <span className="text-base">{motor.bearingDE}</span>
-                  </p>
-                </div>
-              </div>
-          
-              {/* Warehouse and SAP Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="flex md:flex-col justify-between items-center">
-                    <strong className="text-blue-300 text-base">Warehouse:</strong> 
-                    <span className="text-base">{motor.Warehouse}</span>
-                  </p>
-                </div>
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="flex justify-between items-center">
-                    <strong className="text-blue-300 text-base">SAP ID:</strong> 
-                    <span className="text-base">{motor.SAP}</span>
-                  </p>
-                </div>
-              </div>
-            
-              {/* Last Maintenance */}
-              <div className="bg-white/5 rounded-lg p-3">
-                <p className="flex justify-between items-center">
-                  <strong className="text-blue-300 text-base">Last Maintenance:</strong> 
-                  <span className={`text-base ${!motor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
-                    {motor.lastMaintenanceDate ? new Date(motor.lastMaintenanceDate).toLocaleDateString() : 'N/A'}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+          {filteredMotors.map((motor) => (
+            <div key={motor._id} className="glass rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+              {/* Header with Status and Title */}
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+                {/* Status Badge - Centered on mobile, left on desktop */}
+                <div className="flex justify-center md:justify-start">
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${motor.status === 'active'
+                    ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                    : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                    }`}>
+                    {motor.status}
                   </span>
-                </p>
-              </div>
-              {/* Notes */}
-              {motor.Note && (
-                <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                  <strong className="text-blue-300 text-base">Notes:</strong>
-                  <p className="text-base mt-2 text-gray-300">{motor.Note}</p>
                 </div>
-              )}
-            </div>
-          
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-white/20">
-              {(user.role === 'admin' || user.role === 'manager') && (
-                <>
-                  <button 
-                    onClick={() => handleEdit(motor)}
-                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 
+                {/* Motor Title - Centered on both screens */}
+                <div className="text-center md:text-left md:flex-1 md:px-4">
+                  <h3 className="text-xl font-bold text-white">
+                    {motor.manufacturer} | {motor.type}
+                  </h3>
+                </div>
+
+                {/* Empty div to balance flex layout on desktop */}
+                <div className="hidden md:block w-20"></div>
+              </div>
+
+              {/* Equipment info if active */}
+              {motor.eq && motor.status === 'active' && (
+                <h4 className="text-lg text-white mb-4 border-b border-white/20 pb-2 text-center md:text-left">
+                  {motor.eq.tonNumber} - {motor.eq.designation}
+                </h4>
+              )}
+
+              {/* Motor Details */}
+              <div className="space-y-3 text-gray-300">
+                {/* Serial Number */}
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="flex justify-between items-center">
+                    <strong className="text-blue-300 text-base">S/N:</strong>
+                    <span className="font-bold text-base">{motor.serialNumber}</span>
+                  </p>
+                </div>
+
+                {/* Technical Specs Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="flex justify-between items-center">
+                      <strong className="text-blue-300 text-base">Power:</strong>
+                      <span className="text-base">{motor.power} KW</span>
+                    </p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="flex justify-between items-center">
+                      <strong className="text-blue-300 text-base">Current:</strong>
+                      <span className="text-base">{motor.current} A</span>
+                    </p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="flex justify-between items-center">
+                      <strong className="text-blue-300 text-base">Speed:</strong>
+                      <span className="text-base">{motor.speed} rpm</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Mounting and Frame Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="flex justify-between items-center">
+                      <strong className="text-blue-300 text-base">Mounting:</strong>
+                      <span className="text-base">{motor.IM}</span>
+                    </p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="flex justify-between items-center">
+                      <strong className="text-blue-300 text-base">Frame Size:</strong>
+                      <span className="text-base">{motor.frameSize}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bearings Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="flex justify-between items-center">
+                      <strong className="text-blue-300 text-base">Bearing NDE:</strong>
+                      <span className="text-base">{motor.bearingNDE}</span>
+                    </p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="flex justify-between items-center">
+                      <strong className="text-blue-300 text-base">Bearing DE:</strong>
+                      <span className="text-base">{motor.bearingDE}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Warehouse and SAP Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="flex md:flex-col justify-between items-center">
+                      <strong className="text-blue-300 text-base">Warehouse:</strong>
+                      <span className="text-base">{motor.Warehouse}</span>
+                    </p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="flex justify-between items-center">
+                      <strong className="text-blue-300 text-base">SAP ID:</strong>
+                      <span className="text-base">{motor.SAP}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Last Maintenance */}
+                <div className="bg-white/5 rounded-lg p-3">
+                  <p className="flex justify-between items-center">
+                    <strong className="text-blue-300 text-base">Last Maintenance:</strong>
+                    <span className={`text-base ${!motor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
+                      {motor.lastMaintenanceDate ? new Date(motor.lastMaintenanceDate).toLocaleDateString() : 'N/A'}
+                    </span>
+                  </p>
+                </div>
+                {/* Notes */}
+                {motor.Note && (
+                  <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                    <strong className="text-blue-300 text-base">Notes:</strong>
+                    <p className="text-base mt-2 text-gray-300">{motor.Note}</p>
+                  </div>
+                )}
+              </div>
+
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-white/20">
+                {(user.role === 'admin' || user.role === 'manager') && (
+                  <>
+                    <button
+                      onClick={() => handleEdit(motor)}
+                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 
                               text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
                               transform hover:scale-105 shadow-md hover:shadow-lg"
-                  >
-                    Edit
-                  </button>
-                  {motor.status === 'out of service' && (
-                    <button
-                      onClick={() => handleSpare(motor)}
-                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 
+                    >
+                      Edit
+                    </button>
+                    {motor.status === 'out of service' && (
+                      <button
+                        onClick={() => handleSpare(motor)}
+                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 
                                 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
                                 transform hover:scale-105 shadow-md hover:shadow-lg"
-                    >
-                      Set Spare
-                    </button>
-                  )}
-                </>
-              )}
-              {user.role === 'admin' && (
-                <button 
-                  onClick={() => handleDelete(motor._id)}
-                  className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 
+                      >
+                        Set Spare
+                      </button>
+                    )}
+                  </>
+                )}
+                {user.role === 'admin' && (
+                  <button
+                    onClick={() => handleDelete(motor._id)}
+                    className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 
                              text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
                              transform hover:scale-105 shadow-md hover:shadow-lg"
-                >
-                  Delete
-                </button>
-              )}
-              <Link 
-                to={`/motors/${motor._id}/maintenance`}
-                className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 
+                  >
+                    Delete
+                  </button>
+                )}
+                <Link
+                  to={`/motors/${motor._id}/maintenance`}
+                  className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 
                            text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
                            transform hover:scale-105 shadow-md hover:shadow-lg inline-block"
-              >
-                Motor History
-              </Link>
+                >
+                  Motor History
+                </Link>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
       ) : (
         <div className="space-y-4">
           {filteredMotors.map((motor) => (
@@ -439,17 +456,16 @@ const MotorManagementPage = () => {
               <div className="flex justify-between">
                 <Link to={`/motors/${motor._id}/maintenance`} className='w-4/5'>
                   <div className="flex justify-between mb-4">
-                  <h4 className="text-lg font-semibold text-white">{motor.serialNumber}</h4>
-                  <div className="flex justify-between items-start">
-                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        motor.status === 'active' 
-                          ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
-                          : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
-                      }`}>
+                    <h4 className="text-lg font-semibold text-white">{motor.serialNumber}</h4>
+                    <div className="flex justify-between items-start">
+                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${motor.status === 'active'
+                        ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                        : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                        }`}>
                         {motor.status}
                       </span>
                     </div>
-                    </div>
+                  </div>
                   <div className="flex justify-between">
                     {motor.status === 'active' && (
                       <h4 className="text-l font-semibold text-white pr-2">
@@ -463,7 +479,7 @@ const MotorManagementPage = () => {
                 </Link>
                 <div className="flex flex-wrap gap-2">
                   {(user.role === 'admin' || user.role === 'manager') && (
-                    <button 
+                    <button
                       onClick={() => handleEdit(motor)}
                       className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 
                                 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
@@ -473,7 +489,7 @@ const MotorManagementPage = () => {
                     </button>
                   )}
                   {user.role === 'admin' && (
-                    <button 
+                    <button
                       onClick={() => handleDelete(motor._id)}
                       className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 
                                 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
@@ -489,38 +505,71 @@ const MotorManagementPage = () => {
         </div>
       )
       }
-      
+
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="glass-dark rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <h2 className="text-3xl font-bold text-white mb-6 border-b border-white/20 pb-4">
-                {isEditing ? 'Edit Motor' : 'Create New Motor'}
+              <h2 className="text-3xl font-bold text-white mb-6 border-b border-white/20 pb-4 flex justify-between items-center">
+                <span>{isEditing ? 'Edit Motor' : 'Create New Motor'}</span>
+                {!isEditing && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    <span className={!isBulk ? 'text-white font-bold' : 'text-gray-400'}>Single</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsBulk(!isBulk)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${isBulk ? 'bg-blue-600' : 'bg-gray-700'
+                        }`}
+                    >
+                      <span
+                        className={`${isBulk ? 'translate-x-6' : 'translate-x-1'
+                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                      />
+                    </button>
+                    <span className={isBulk ? 'text-white font-bold' : 'text-gray-400'}>Bulk</span>
+                  </div>
+                )}
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-blue-300 text-sm font-semibold">Serial Number*</label>
-                  <input 
-                    name="serialNumber" 
-                    value={formData.serialNumber} 
-                    onChange={handleInputChange} 
-                    placeholder="Serial Number*" 
-                    required 
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
-                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
-                               focus:ring-blue-400/50 transition-all duration-300"
-                  />
+                <div className={`space-y-2 ${isBulk ? 'md:col-span-3' : ''}`}>
+                  <label className="text-blue-300 text-sm font-semibold">
+                    {isBulk ? 'Serial Numbers (One per line)*' : 'Serial Number*'}
+                  </label>
+                  {isBulk ? (
+                    <textarea
+                      name="serialNumber"
+                      value={formData.serialNumber}
+                      onChange={handleInputChange}
+                      placeholder={`BSN-001\nBSN-002\nBSN-003`}
+                      required
+                      rows={4}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                                   placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                                   focus:ring-blue-400/50 transition-all duration-300 font-mono"
+                    />
+                  ) : (
+                    <input
+                      name="serialNumber"
+                      value={formData.serialNumber}
+                      onChange={handleInputChange}
+                      placeholder="Serial Number*"
+                      required={!isBulk}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                                   placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                                   focus:ring-blue-400/50 transition-all duration-300"
+                    />
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Manufacturer</label>
-                  <input 
-                    name="manufacturer" 
-                    value={formData.manufacturer} 
-                    onChange={handleInputChange} 
-                    placeholder="Manufacturer" 
+                  <input
+                    name="manufacturer"
+                    value={formData.manufacturer}
+                    onChange={handleInputChange}
+                    placeholder="Manufacturer"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
@@ -529,11 +578,11 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Type</label>
-                  <input 
-                    name="type" 
-                    value={formData.type} 
-                    onChange={handleInputChange} 
-                    placeholder="Type" 
+                  <input
+                    name="type"
+                    value={formData.type}
+                    onChange={handleInputChange}
+                    placeholder="Type"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
@@ -542,11 +591,11 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Power</label>
-                  <input 
-                    name="power" 
-                    value={formData.power} 
-                    onChange={handleInputChange} 
-                    placeholder="Power (e.g., 10 HP)" 
+                  <input
+                    name="power"
+                    value={formData.power}
+                    onChange={handleInputChange}
+                    placeholder="Power (e.g., 10 HP)"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
@@ -555,11 +604,11 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Current</label>
-                  <input 
-                    name="current" 
-                    value={formData.current} 
-                    onChange={handleInputChange} 
-                    placeholder="Current (e.g., 15 A)" 
+                  <input
+                    name="current"
+                    value={formData.current}
+                    onChange={handleInputChange}
+                    placeholder="Current (e.g., 15 A)"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
@@ -568,12 +617,12 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Speed (RPM)</label>
-                  <input 
-                    name="speed" 
-                    type="number" 
-                    value={formData.speed} 
-                    onChange={handleInputChange} 
-                    placeholder="Speed (RPM)" 
+                  <input
+                    name="speed"
+                    type="number"
+                    value={formData.speed}
+                    onChange={handleInputChange}
+                    placeholder="Speed (RPM)"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
@@ -582,12 +631,12 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Mounting</label>
-                  <input 
-                    name="IM" 
-                    type="text" 
-                    value={formData.IM} 
-                    onChange={handleInputChange} 
-                    placeholder="B3" 
+                  <input
+                    name="IM"
+                    type="text"
+                    value={formData.IM}
+                    onChange={handleInputChange}
+                    placeholder="B3"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
@@ -596,11 +645,11 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Frame Size</label>
-                  <input 
-                    name="frameSize" 
-                    value={formData.frameSize} 
-                    onChange={handleInputChange} 
-                    placeholder="Frame Size" 
+                  <input
+                    name="frameSize"
+                    value={formData.frameSize}
+                    onChange={handleInputChange}
+                    placeholder="Frame Size"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
@@ -609,11 +658,11 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Bearing DE</label>
-                  <input 
-                    name="bearingDE" 
-                    value={formData.bearingDE} 
-                    onChange={handleInputChange} 
-                    placeholder="Bearing DE" 
+                  <input
+                    name="bearingDE"
+                    value={formData.bearingDE}
+                    onChange={handleInputChange}
+                    placeholder="Bearing DE"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
@@ -622,11 +671,11 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Bearing NDE</label>
-                  <input 
-                    name="bearingNDE" 
-                    value={formData.bearingNDE} 
-                    onChange={handleInputChange} 
-                    placeholder="Bearing NDE" 
+                  <input
+                    name="bearingNDE"
+                    value={formData.bearingNDE}
+                    onChange={handleInputChange}
+                    placeholder="Bearing NDE"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
@@ -635,10 +684,10 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Status</label>
-                  <select 
-                    name="status" 
-                    value={formData.status} 
-                    onChange={handleInputChange} 
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
                     disabled={isEditing && formData.status === 'active'}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 
@@ -651,11 +700,11 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Last Maintenance Date</label>
-                  <input 
-                    name="lastMaintenanceDate" 
-                    type="date" 
-                    value={formData.lastMaintenanceDate} 
-                    onChange={handleInputChange} 
+                  <input
+                    name="lastMaintenanceDate"
+                    type="date"
+                    value={formData.lastMaintenanceDate}
+                    onChange={handleInputChange}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 
                                transition-all duration-300"
@@ -664,11 +713,11 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Warehouse Location</label>
-                  <input 
-                    name="Warehouse" 
-                    value={formData.Warehouse} 
-                    onChange={handleInputChange} 
-                    placeholder="Warehouse Location" 
+                  <input
+                    name="Warehouse"
+                    value={formData.Warehouse}
+                    onChange={handleInputChange}
+                    placeholder="Warehouse Location"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
@@ -677,11 +726,11 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">SAP ID</label>
-                  <input 
-                    name="SAP" 
-                    value={formData.SAP} 
-                    onChange={handleInputChange} 
-                    placeholder="SAP" 
+                  <input
+                    name="SAP"
+                    value={formData.SAP}
+                    onChange={handleInputChange}
+                    placeholder="SAP"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
@@ -691,10 +740,10 @@ const MotorManagementPage = () => {
 
               <div className="space-y-2">
                 <label className="text-blue-300 text-sm font-semibold">Notes</label>
-                <textarea 
-                  name="Note" 
-                  value={formData.Note} 
-                  onChange={handleInputChange} 
+                <textarea
+                  name="Note"
+                  value={formData.Note}
+                  onChange={handleInputChange}
                   placeholder="Notes"
                   rows="4"
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
@@ -702,17 +751,17 @@ const MotorManagementPage = () => {
                              focus:ring-blue-400/50 transition-all duration-300 resize-vertical"
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-4 pt-6 border-t border-white/20">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={closeModal}
                   className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold 
                              transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
                   className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
                              text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 

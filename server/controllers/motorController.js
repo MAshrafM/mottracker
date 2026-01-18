@@ -50,15 +50,6 @@ exports.getMotorWithEquipment = async (req, res) => {
 exports.createMotor = async (req, res) => {
   try {
     const motor = await Motor.create(req.body);
-
-
-    // Notify all clients (system wide)
-    await createNotification(req.app.get('socketio'), {
-      type: 'success',
-      message: `New Motor Created: ${motor.serialNumber}`,
-      relatedId: motor._id
-    });
-
     res.status(201).json({ success: true, data: motor });
   } catch (error) {
     // Handle duplicate serial number error
@@ -66,6 +57,76 @@ exports.createMotor = async (req, res) => {
       return res.status(400).json({ success: false, message: 'A motor with this serial number already exists.' });
     }
     res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Create multiple motors
+// @route   POST /api/motors/bulk
+// @access  Private/Admin
+exports.createBulkMotors = async (req, res) => {
+  try {
+    const { serialNumbers, ...commonDetails } = req.body;
+
+    if (!serialNumbers || !Array.isArray(serialNumbers) || serialNumbers.length === 0) {
+      return res.status(400).json({ success: false, message: 'Please provide an array of serial numbers.' });
+    }
+
+    // Create array of motor objects
+    const motorsToCreate = serialNumbers.map(serial => ({
+      ...commonDetails,
+      serialNumber: serial
+    }));
+
+    let createdMotors = [];
+    let errors = [];
+
+    try {
+      createdMotors = await Motor.insertMany(motorsToCreate, { ordered: false });
+    } catch (e) {
+      if (e.insertedDocs) {
+        createdMotors = e.insertedDocs;
+      }
+      if (e.writeErrors) {
+        errors = e.writeErrors.map(err => ({
+          index: err.index,
+          code: err.code,
+          errmsg: err.errmsg,
+          serial: motorsToCreate[err.index].serialNumber
+        }));
+      }
+    }
+
+    if (createdMotors.length > 0) {
+      // Notify all clients (system wide)
+      await createNotification(req.app.get('socketio'), {
+        type: 'success',
+        message: `Bulk Create: ${createdMotors.length} motors added.`,
+        relatedId: createdMotors[0]._id
+      });
+    }
+
+    const response = {
+      success: true,
+      count: createdMotors.length,
+      data: createdMotors,
+      errors: errors.length > 0 ? errors : undefined,
+      message: errors.length > 0
+        ? `Created ${createdMotors.length} motors. ${errors.length} failed (likely duplicates).`
+        : `Successfully created ${createdMotors.length} motors.`
+    };
+
+    if (createdMotors.length === 0 && errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to create any motors. All serial numbers might be duplicates.',
+        errors
+      });
+    }
+
+    res.status(201).json(response);
+
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 

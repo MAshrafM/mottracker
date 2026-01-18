@@ -2,11 +2,12 @@
 
 const express = require('express');
 // We need mergeParams: true to access :motorId from the parent router
-const router = express.Router({ mergeParams: true }); 
+const router = express.Router({ mergeParams: true });
 
 const {
-    getMaintenanceEvents,
+  getMaintenanceEvents,
   addMaintenanceEvent,
+  addBulkMaintenanceEvents,
   updateMaintenanceEvent,
   deleteMaintenanceEvent
 } = require('../controllers/maintenanceController');
@@ -17,10 +18,13 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 router.use(protect);
 
 router.route('/')
-    .get(getMaintenanceEvents); // Get all maintenance events for a motor
+  .get(getMaintenanceEvents); // Get all maintenance events for a motor
 
 router.route('/')
   .post(authorize('admin', 'manager'), addMaintenanceEvent);
+
+router.route('/bulk')
+  .post(authorize('admin'), addBulkMaintenanceEvents);
 
 router.route('/:eventId')
   .put(authorize('admin', 'manager'), updateMaintenanceEvent)

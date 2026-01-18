@@ -4,6 +4,7 @@ import api from '../services/api';
 import { Loader } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import { useParams } from 'react-router-dom';
+import MassMaintenanceEntry from '../components/MassMaintenanceEntry';
 
 const MaintenanceHistory = () => {
   const { motorId } = useParams();
@@ -17,6 +18,7 @@ const MaintenanceHistory = () => {
 
   // State for edit modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isMassEntryOpen, setIsMassEntryOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   // Loading and error states
   const [isLoading, setIsLoading] = useState(true);
@@ -357,12 +359,26 @@ const MaintenanceHistory = () => {
       {/* Form Section for admin/manager */}
       {(user.role === 'admin' || user.role === 'manager') && (
         <div className="glass rounded-xl p-6 mb-8 shadow-xl">
-          <h5 className="text-lg font-semibold text-blue-300 mb-4 flex items-center space-x-2">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <span>Add New Maintenance Event</span>
-          </h5>
+          <div className="flex justify-between items-center mb-4">
+            <h5 className="text-lg font-semibold text-blue-300 flex items-center space-x-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              <span>Add New Maintenance Event</span>
+            </h5>
+
+            {user.role === 'admin' && (
+              <button
+                onClick={() => setIsMassEntryOpen(true)}
+                className="text-sm bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                <span>Mass Import</span>
+              </button>
+            )}
+          </div>
 
           <form onSubmit={handleAddEvent} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -408,6 +424,20 @@ const MaintenanceHistory = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Mass Entry Modal */}
+      {isMassEntryOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <MassMaintenanceEntry
+            motorId={motorId}
+            onClose={() => setIsMassEntryOpen(false)}
+            onSuccess={() => {
+              fetchMotorHistory();
+              fetchMotorDetails();
+            }}
+          />
         </div>
       )}
 
