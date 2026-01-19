@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import Papa from 'papaparse';
 import { Upload, FileText, Check, AlertTriangle, X, RefreshCw } from 'lucide-react';
 import SparePartService from '../../services/sparePartService';

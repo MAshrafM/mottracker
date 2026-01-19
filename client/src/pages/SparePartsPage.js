@@ -38,9 +38,9 @@ const SparePartsPage = () => {
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [searchQuery, location]);
+    }, [fetchParts]);
 
-    const fetchParts = async (pageNum = 1) => {
+    const fetchParts = useCallback(async (pageNum = 1) => {
         if (pageNum === 1) setIsLoading(true);
         else setIsLoadingMore(true);
 
@@ -84,7 +84,7 @@ const SparePartsPage = () => {
             setIsLoading(false);
             setIsLoadingMore(false);
         }
-    };
+    }, [location, searchQuery]);
 
     const handleLoadMore = () => {
         const nextPage = page + 1;

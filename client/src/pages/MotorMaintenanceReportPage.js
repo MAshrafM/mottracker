@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useMotorData } from '../context/MotorContext';
-import { Loader, Printer, ArrowLeft, Search } from 'lucide-react';
+import { Loader, Printer, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import logo from '../logo_ar.gif';
 

@@ -72,7 +72,7 @@ const MassMaintenanceEntry = ({ motorId, onClose, onSuccess }) => {
                     .filter(line => line.length > 0)
                     .map(line => {
                         // Remove various bullet points and leading symbols
-                        return line.replace(/^[·•\-\*\s]+/, '').trim();
+                        return line.replace(/^[·•\-*\s]+/, '').trim();
                     })
                     .filter(line => line.length > 0)
                     .join(' ')
