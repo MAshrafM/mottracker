@@ -32,13 +32,7 @@ const SparePartsPage = () => {
     }, [searchQuery, location]);
 
     // Debounce Search
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchParts(1);
-        }, 500);
 
-        return () => clearTimeout(timer);
-    }, [fetchParts]);
 
     const fetchParts = useCallback(async (pageNum = 1) => {
         if (pageNum === 1) setIsLoading(true);
@@ -85,6 +79,15 @@ const SparePartsPage = () => {
             setIsLoadingMore(false);
         }
     }, [location, searchQuery]);
+
+    // Debounce Search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchParts(1);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [fetchParts]);
 
     const handleLoadMore = () => {
         const nextPage = page + 1;
