@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { useNotifications } from '../context/NotificationContext';
 import AuthContext from '../context/AuthContext';
 import { Archive, Bell, Check, Trash2, Calendar, Filter } from 'lucide-react';
@@ -131,7 +132,17 @@ const NotificationHistoryPage = () => {
                                             </span>
                                         </div>
                                         <p className={`text - lg leading - relaxed ${note.read ? 'text-slate-300' : 'text-white'} `}>
-                                            {note.message}
+                                            {note.type === 'info' && note.relatedId ? (
+                                                <Link
+                                                    to={`/motors/${note.relatedId}/maintenance`}
+                                                    className="hover:text-blue-400 hover:underline transition-colors"
+                                                    onClick={() => !note.read && markAsRead(note.id)}
+                                                >
+                                                    {note.message}
+                                                </Link>
+                                            ) : (
+                                                note.message
+                                            )}
                                         </p>
                                     </div>
 
