@@ -546,6 +546,16 @@ const PlantEquipmentPage = () => {
                       <p className="text-gray-300">
                         <span className="font-semibold">{eq.currentMotor.manufacturer}</span> - {eq.currentMotor.type}
                       </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-400 mt-2 border-t border-white/10 pt-2">
+                        <p>Power: <span className="text-white">{eq.currentMotor.power} kW</span></p>
+                        <p>Current: <span className="text-white">{eq.currentMotor.current} A</span></p>
+                        <p>Speed: <span className="text-white">{eq.currentMotor.speed} RPM</span></p>
+                        <p>Maintained: <span className={`text-white ${!eq.currentMotor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
+                          {eq.currentMotor.lastMaintenanceDate
+                            ? new Date(eq.currentMotor.lastMaintenanceDate).toLocaleDateString()
+                            : 'N/A'}
+                        </span></p>
+                      </div>
                     </div>
                   </div>
                 ) : (
