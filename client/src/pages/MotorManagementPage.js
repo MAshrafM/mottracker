@@ -467,9 +467,9 @@ const MotorManagementPage = () => {
                     </div>
                   </div>
                   <div className="flex justify-between">
-                    {motor.status === 'active' && (
+                    {motor.status === 'active' && motor.eq && (
                       <h4 className="text-l font-semibold text-white pr-2">
-                        {motor.motorEq.tonNumber} - {motor.motorEq.designation}
+                        {motor.eq.tonNumber} - {motor.eq.designation}
                       </h4>
                     )}
                     <p className="text-sm text-gray-300">
