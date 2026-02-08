@@ -338,14 +338,24 @@ const MaintenanceHistory = () => {
             </div>
           </div>
 
-          {/* Last Maintenance */}
-          <div className="bg-white/5 rounded-lg p-3">
-            <p className="flex justify-between items-center">
-              <strong className="text-blue-300 text-base">Last Maintenance:</strong>
-              <span className={`text-base ${!motor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
-                {motor.lastMaintenanceDate ? new Date(motor.lastMaintenanceDate).toLocaleDateString() : 'N/A'}
-              </span>
-            </p>
+          {/* Last Maintenance and Greasing */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">Last Maintenance:</strong>
+                <span className={`text-base ${!motor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
+                  {motor.lastMaintenanceDate ? new Date(motor.lastMaintenanceDate).toLocaleDateString() : 'N/A'}
+                </span>
+              </p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">Last Greasing:</strong>
+                <span className={`text-base ${!motor.lastGreasingDate ? 'text-red-300' : 'text-green-300'}`}>
+                  {motor.lastGreasingDate ? new Date(motor.lastGreasingDate).toLocaleDateString() : 'N/A'}
+                </span>
+              </p>
+            </div>
           </div>
 
           {/* Notes */}

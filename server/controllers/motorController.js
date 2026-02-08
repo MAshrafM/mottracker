@@ -185,3 +185,31 @@ exports.deleteMotor = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+// @desc    Update last greasing date to now
+// @route   POST /api/motors/:id/grease
+// @access  Private/Manager or Admin
+exports.updateLastGreasingDate = async (req, res) => {
+  try {
+    const motor = await Motor.findByIdAndUpdate(req.params.id, {
+      lastGreasingDate: new Date()
+    }, {
+      new: true
+    });
+
+    if (!motor) {
+      return res.status(404).json({ success: false, message: 'Motor not found' });
+    }
+
+    // Notify all clients (optional but good)
+    await createNotification(req.app.get('socketio'), {
+      type: 'info',
+      message: `Motor Greased: ${motor.serialNumber}`,
+      relatedId: motor._id
+    });
+
+    res.status(200).json({ success: true, data: motor });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

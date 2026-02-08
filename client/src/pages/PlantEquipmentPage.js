@@ -255,6 +255,17 @@ const PlantEquipmentPage = () => {
     }
   };
 
+  const handleGrease = async (motorId) => {
+    if (window.confirm('Mark this motor as greased today?')) {
+      try {
+        await api.post(`/motors/${motorId}/grease`);
+        fetchEquipments(); // Refresh to show new date
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to update greasing date.');
+      }
+    }
+  };
+
   const handlePlantSelection = (plant) => {
     setSelectedPlant(plant);
     setTonFilter(''); // Reset search filter when changing plants
@@ -555,6 +566,24 @@ const PlantEquipmentPage = () => {
                             ? new Date(eq.currentMotor.lastMaintenanceDate).toLocaleDateString()
                             : 'N/A'}
                         </span></p>
+                        <div className="col-span-2 flex justify-between items-center border-t border-white/10 pt-2 mt-1">
+                          <p>Greased: <span className={`text-white ${!eq.currentMotor.lastGreasingDate ? 'text-red-300' : 'text-green-300'}`}>
+                            {eq.currentMotor.lastGreasingDate
+                              ? new Date(eq.currentMotor.lastGreasingDate).toLocaleDateString()
+                              : 'N/A'}
+                          </span></p>
+
+                          {(user.role === 'admin' || user.role === 'manager') && (
+                            <button
+                              onClick={() => handleGrease(eq.currentMotor._id)}
+                              className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30
+                                         px-2 py-1 rounded text-xs transition-colors"
+                              title="Update Last Greasing Date to Today"
+                            >
+                              Grease Now
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -20,8 +20,8 @@ const AssignmentHistorySchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'PlantEquipment',
   },
-  ton: {type: String},
-  plant: {type: String},
+  ton: { type: String },
+  plant: { type: String },
   dateInstalled: { type: Date },
   dateRemoved: { type: Date }
 });
@@ -43,6 +43,7 @@ const MotorSchema = new Schema({
   bearingNDE: { type: String }, // Non-Drive End
   bearingDE: { type: String }, // Drive End
   lastMaintenanceDate: { type: Date },
+  lastGreasingDate: { type: Date },
   Warehouse: { type: String },
   SAP: { type: String }, // SAP ID
   Note: { type: String },

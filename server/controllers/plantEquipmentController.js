@@ -10,7 +10,7 @@ exports.getEquipments = async (req, res) => {
   try {
     // Populate both the current motor and the history
     const equipments = await PlantEquipment.find()
-      .populate('currentMotor', 'serialNumber manufacturer type power current speed lastMaintenanceDate')
+      .populate('currentMotor', 'serialNumber manufacturer type power current speed lastMaintenanceDate lastGreasingDate')
       .populate('motorHistory.motor', 'serialNumber manufacturer type');
     res.status(200).json({ success: true, count: equipments.length, data: equipments });
   } catch (error) {
@@ -122,7 +122,7 @@ exports.assignMotor = async (req, res) => {
 
     // Populate the response to send back full data
     const updatedEquipment = await PlantEquipment.findById(req.params.id)
-      .populate('currentMotor', 'serialNumber manufacturer type power current speed lastMaintenanceDate')
+      .populate('currentMotor', 'serialNumber manufacturer type power current speed lastMaintenanceDate lastGreasingDate')
       .populate('motorHistory.motor', 'serialNumber manufacturer type');
 
     res.status(200).json({ success: true, data: updatedEquipment });
