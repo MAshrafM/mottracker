@@ -11,6 +11,7 @@ const MaintenanceHistory = () => {
   const { user } = useContext(AuthContext);
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
+  const [updateLastMaintenance, setUpdateLastMaintenance] = useState(true);
   const [history, setHistory] = useState([]);
   const [motor, setMotor] = useState(null);
   const [eq, setEq] = useState(null);
@@ -79,10 +80,11 @@ const MaintenanceHistory = () => {
       return;
     }
     try {
-      await api.post(`/motors/${motorId}/maintenance`, { date, description });
+      await api.post(`/motors/${motorId}/maintenance`, { date, description, updateLastMaintenance });
       fetchMotorHistory(); // Refresh motor history
       setDescription(''); // Reset form
       setDate(new Date().toISOString().split('T')[0]); // Reset date
+      setUpdateLastMaintenance(true); // Reset checkbox
     } catch (err) {
       console.error('Error adding maintenance event:', err);
       setError('Failed to add maintenance event.');
@@ -407,6 +409,19 @@ const MaintenanceHistory = () => {
                              placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                              focus:ring-blue-400/50 transition-all duration-300"
                 />
+              </div>
+
+              <div className="flex items-center space-x-2 md:col-span-3">
+                <input
+                  type="checkbox"
+                  id="updateLastMaintenance"
+                  checked={updateLastMaintenance}
+                  onChange={(e) => setUpdateLastMaintenance(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <label htmlFor="updateLastMaintenance" className="text-blue-300 text-sm font-semibold select-none cursor-pointer">
+                  Update Motor Last Maintenance Date
+                </label>
               </div>
             </div>
 

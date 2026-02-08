@@ -25,7 +25,7 @@ exports.getMaintenanceEvents = async (req, res) => {
 // @access  Private/Manager or Admin
 exports.addMaintenanceEvent = async (req, res) => {
   try {
-    const { date, description } = req.body;
+    const { date, description, updateLastMaintenance } = req.body;
     if (!date || !description) {
       return res.status(400).json({ success: false, message: 'Please provide a date and description.' });
     }
@@ -44,8 +44,10 @@ exports.addMaintenanceEvent = async (req, res) => {
     // Add to the beginning of the array so newest events are first
     motor.maintenanceHistory.unshift(newEvent);
 
-    // Also update the last maintenance date on the motor
-    motor.lastMaintenanceDate = date;
+    // Only update the last maintenance date on the motor if the flag is true
+    if (updateLastMaintenance) {
+      motor.lastMaintenanceDate = date;
+    }
 
     await motor.save();
 
