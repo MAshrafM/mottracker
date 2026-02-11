@@ -600,253 +600,252 @@ const PlantEquipmentPage = () => {
                   </div>
                 ) : (
                   <p className="text-red-300 font-medium">No motor installed</p>
-                  </div>
                 )}
 
-              {/* Unassign Motor Button (Small X) */}
-              {user.role === 'admin' && eq.currentMotor && (
-                <button
-                  onClick={() => handleUnassignMotor(eq)}
-                  className="absolute top-4 right-4 bg-red-500/20 hover:bg-red-500/30 text-red-300 p-1.5 rounded-full 
+                {/* Unassign Motor Button (Small X) */}
+                {user.role === 'admin' && eq.currentMotor && (
+                  <button
+                    onClick={() => handleUnassignMotor(eq)}
+                    className="absolute top-4 right-4 bg-red-500/20 hover:bg-red-500/30 text-red-300 p-1.5 rounded-full 
                               transition-all duration-300 opacity-0 group-hover:opacity-100"
-                  title="Unassign Motor (Set to Out of Service)"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
+                    title="Unassign Motor (Set to Out of Service)"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
 
-              {/* Assign/Replace Motor Button */}
-              {(user.role === 'admin' || user.role === 'manager') && (
-                <button
-                  onClick={() => openAssignModal(eq)}
-                  className="w-full mt-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 
+                {/* Assign/Replace Motor Button */}
+                {(user.role === 'admin' || user.role === 'manager') && (
+                  <button
+                    onClick={() => openAssignModal(eq)}
+                    className="w-full mt-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 
                                text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 
                                transform hover:scale-105 shadow-md hover:shadow-lg flex items-center justify-center space-x-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                  <span>Assign / Replace Motor</span>
-                </button>
-              )}
-            </div>
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    <span>Assign / Replace Motor</span>
+                  </button>
+                )}
+              </div>
 
-              {/* Divider */ }
-            < div className = "w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-6" ></div>
+              {/* Divider */}
+              < div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-6" ></div>
 
               {/* Motor History Section */}
-      <div className="mt-auto">
-        {(() => {
-          const uniqueHistory = eq.motorHistory?.reduce((acc, current) => {
-            if (current.motor && !acc.some(x => x.motor?.serialNumber === current.motor?.serialNumber)) {
-              acc.push(current);
-            }
-            return acc;
-          }, []) || [];
+              <div className="mt-auto">
+                {(() => {
+                  const uniqueHistory = eq.motorHistory?.reduce((acc, current) => {
+                    if (current.motor && !acc.some(x => x.motor?.serialNumber === current.motor?.serialNumber)) {
+                      acc.push(current);
+                    }
+                    return acc;
+                  }, []) || [];
 
-          return (
-            <>
-              <h4 className="text-lg font-semibold text-blue-300 mb-4 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Motor History</span>
-                </div>
-                <span className="bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full text-xs font-semibold border border-purple-500/30">
-                  {uniqueHistory.length} total
-                </span>
-              </h4>
-
-              {uniqueHistory.length > 0 ? (
-                <div className="space-y-2">
-                  {uniqueHistory.map((h, index) => (
-                    <div key={h._id || index} className="bg-white/5 rounded-lg p-3 border border-white/10 hover:border-white/20 transition-all duration-300">
-                      <Link
-                        to={`/motors/${h.motor._id}/maintenance`}
-                        className="flex items-center justify-between text-sm hover:text-blue-300 transition-colors duration-300 group"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full"></div>
-                          <span className="font-mono">S/N: {h.motor.serialNumber}</span>
+                  return (
+                    <>
+                      <h4 className="text-lg font-semibold text-blue-300 mb-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Motor History</span>
                         </div>
-                        <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
-                    </div>
-                  ))}
+                        <span className="bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full text-xs font-semibold border border-purple-500/30">
+                          {uniqueHistory.length} total
+                        </span>
+                      </h4>
+
+                      {uniqueHistory.length > 0 ? (
+                        <div className="space-y-2">
+                          {uniqueHistory.map((h, index) => (
+                            <div key={h._id || index} className="bg-white/5 rounded-lg p-3 border border-white/10 hover:border-white/20 transition-all duration-300">
+                              <Link
+                                to={`/motors/${h.motor._id}/maintenance`}
+                                className="flex items-center justify-between text-sm hover:text-blue-300 transition-colors duration-300 group"
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full"></div>
+                                  <span className="font-mono">S/N: {h.motor.serialNumber}</span>
+                                </div>
+                                <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                              </Link>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6">
+                          <div className="w-12 h-12 bg-gray-600/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <p className="text-gray-400 text-sm">No motor history available</p>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          ))
+          }
+        </div >
+      )}
+
+      {/* CRUD Modal (Add/Edit Equipment) */}
+      {
+        isCrudModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="glass-dark rounded-2xl p-8 max-w-md w-full shadow-2xl">
+              <form onSubmit={handleCrudSubmit} className="space-y-6">
+                <h2 className="text-2xl font-bold text-white mb-6 border-b border-white/20 pb-4">
+                  {isEditing ? 'Edit Equipment' : 'Add New Equipment'}
+                </h2>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">TON Number</label>
+                  <input
+                    name="tonNumber"
+                    value={formData.tonNumber}
+                    onChange={(e) => setFormData({ ...formData, tonNumber: e.target.value })}
+                    placeholder="e.g., E-12345"
+                    required
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                             focus:ring-blue-400/50 transition-all duration-300"
+                  />
                 </div>
-              ) : (
-                <div className="text-center py-6">
-                  <div className="w-12 h-12 bg-gray-600/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Designation</label>
+                  <input
+                    name="designation"
+                    value={formData.designation}
+                    onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                    placeholder="e.g., Main Conveyor Belt"
+                    required
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                             focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Plant</label>
+                  <input
+                    name="plant"
+                    value={formData.plant}
+                    onChange={(e) => setFormData({ ...formData, plant: e.target.value })}
+                    placeholder="AFC 3"
+                    required
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                             focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-4 pt-6 border-t border-white/20">
+                  <button
+                    type="button"
+                    onClick={closeCrudModal}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold 
+                             transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 
+                             text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 
+                             transform hover:scale-105 shadow-md hover:shadow-lg"
+                  >
+                    Save Equipment
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Assign Motor Modal */}
+      {
+        isAssignModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="glass-dark rounded-2xl p-8 max-w-lg w-full shadow-2xl">
+              <form onSubmit={handleAssignMotor} className="space-y-6">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
                   </div>
-                  <p className="text-gray-400 text-sm">No motor history available</p>
+                  <h2 className="text-2xl font-bold text-white">
+                    Assign Motor to {selectedEquipment.designation}
+                  </h2>
+                  <p className="text-gray-300 mt-2">
+                    Select a spare motor from the inventory to install on this equipment.
+                  </p>
                 </div>
-              )}
-            </>
-          );
-        })()}
-      </div>
-    </div>
-  ))
-}
-</div >
-)}
 
-{/* CRUD Modal (Add/Edit Equipment) */ }
-{
-  isCrudModalOpen && (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="glass-dark rounded-2xl p-8 max-w-md w-full shadow-2xl">
-        <form onSubmit={handleCrudSubmit} className="space-y-6">
-          <h2 className="text-2xl font-bold text-white mb-6 border-b border-white/20 pb-4">
-            {isEditing ? 'Edit Equipment' : 'Add New Equipment'}
-          </h2>
-
-          <div className="space-y-2">
-            <label className="text-blue-300 text-sm font-semibold">TON Number</label>
-            <input
-              name="tonNumber"
-              value={formData.tonNumber}
-              onChange={(e) => setFormData({ ...formData, tonNumber: e.target.value })}
-              placeholder="e.g., E-12345"
-              required
-              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
-                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
-                             focus:ring-blue-400/50 transition-all duration-300"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-blue-300 text-sm font-semibold">Designation</label>
-            <input
-              name="designation"
-              value={formData.designation}
-              onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-              placeholder="e.g., Main Conveyor Belt"
-              required
-              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
-                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
-                             focus:ring-blue-400/50 transition-all duration-300"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-blue-300 text-sm font-semibold">Plant</label>
-            <input
-              name="plant"
-              value={formData.plant}
-              onChange={(e) => setFormData({ ...formData, plant: e.target.value })}
-              placeholder="AFC 3"
-              required
-              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
-                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
-                             focus:ring-blue-400/50 transition-all duration-300"
-            />
-          </div>
-
-          <div className="flex justify-end space-x-4 pt-6 border-t border-white/20">
-            <button
-              type="button"
-              onClick={closeCrudModal}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold 
-                             transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 
-                             text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 
-                             transform hover:scale-105 shadow-md hover:shadow-lg"
-            >
-              Save Equipment
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-{/* Assign Motor Modal */ }
-{
-  isAssignModalOpen && (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="glass-dark rounded-2xl p-8 max-w-lg w-full shadow-2xl">
-        <form onSubmit={handleAssignMotor} className="space-y-6">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-white">
-              Assign Motor to {selectedEquipment.designation}
-            </h2>
-            <p className="text-gray-300 mt-2">
-              Select a spare motor from the inventory to install on this equipment.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-blue-300 text-sm font-semibold">Search Spare Motors</label>
-            <input
-              type="text"
-              placeholder="Search by Serial Number..."
-              value={motorSearch}
-              onChange={(e) => setMotorSearch(e.target.value)}
-              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white 
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Search Spare Motors</label>
+                  <input
+                    type="text"
+                    placeholder="Search by Serial Number..."
+                    value={motorSearch}
+                    onChange={(e) => setMotorSearch(e.target.value)}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white 
                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                             focus:ring-blue-400/50 transition-all duration-300"
-            />
-            <label className="text-blue-300 text-sm font-semibold">Available Spare Motors</label>
-            <select
-              value={selectedMotorId}
-              onChange={(e) => setSelectedMotorId(e.target.value)}
-              required
-              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                  />
+                  <label className="text-blue-300 text-sm font-semibold">Available Spare Motors</label>
+                  <select
+                    value={selectedMotorId}
+                    onChange={(e) => setSelectedMotorId(e.target.value)}
+                    required
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                              focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 
                              transition-all duration-300"
-            >
-              <option value="" className="bg-gray-800">-- Select a Spare Motor --</option>
-              {filteredSpareMotors.map(motor => (
-                <option key={motor._id} value={motor._id} className="bg-gray-800">
-                  {motor.serialNumber} ({motor.manufacturer} - {motor.type})
-                </option>
-              ))}
-            </select>
-          </div>
+                  >
+                    <option value="" className="bg-gray-800">-- Select a Spare Motor --</option>
+                    {filteredSpareMotors.map(motor => (
+                      <option key={motor._id} value={motor._id} className="bg-gray-800">
+                        {motor.serialNumber} ({motor.manufacturer} - {motor.type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-          <div className="flex justify-end space-x-4 pt-6 border-t border-white/20">
-            <button
-              type="button"
-              onClick={closeAssignModal}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold 
+                <div className="flex justify-end space-x-4 pt-6 border-t border-white/20">
+                  <button
+                    type="button"
+                    onClick={closeAssignModal}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold 
                              transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 
                              text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 
                              transform hover:scale-105 shadow-md hover:shadow-lg"
-            >
-              Confirm Assignment
-            </button>
+                  >
+                    Confirm Assignment
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </form>
-      </div>
-    </div>
-  )
-}
+        )
+      }
     </div >
   );
 };
