@@ -266,6 +266,18 @@ const PlantEquipmentPage = () => {
     }
   };
 
+  const handleUnassignMotor = async (equipment) => {
+    if (window.confirm(`Are you sure you want to remove the motor from ${equipment.designation}? The motor will be set to 'Out of Service'.`)) {
+      try {
+        await api.put('/equipment/unassign', { equipmentId: equipment._id });
+        fetchEquipments();
+        fetchSpareMotors();
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to unassign motor.');
+      }
+    }
+  };
+
   const handlePlantSelection = (plant) => {
     setSelectedPlant(plant);
     setTonFilter(''); // Reset search filter when changing plants
