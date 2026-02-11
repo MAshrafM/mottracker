@@ -152,3 +152,47 @@ exports.activeMotor = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+// @desc    Unassign the current motor from equipment and set it to out of service
+// @route   PUT /api/equipment/:id/unassign
+// @access  Private/Admin
+exports.unassignMotor = async (req, res) => {
+  try {
+    const equipment = await PlantEquipment.findById(req.params.id);
+
+    if (!equipment) {
+      return res.status(404).json({ success: false, message: 'Equipment not found' });
+    }
+
+    if (!equipment.currentMotor) {
+      return res.status(400).json({ success: false, message: 'No motor assigned to this equipment' });
+    }
+
+    // Update the motor status to 'out of service' and record removal in its history
+    await Motor.findByIdAndUpdate(equipment.currentMotor, {
+      status: 'out of service',
+      $push: {
+        assignmentHistory: {
+          equipment: equipment._id,
+          ton: equipment.tonNumber,
+          plant: equipment.plant || 'AFC-3', // Default or handle appropriately
+          dateRemoved: new Date()
+        }
+      }
+    });
+
+    // Update equipment history to mark removal
+    const historyEntry = equipment.motorHistory.find(h => h.motor.equals(equipment.currentMotor) && !h.dateRemoved);
+    if (historyEntry) {
+      historyEntry.dateRemoved = new Date();
+    }
+
+    // Clear current motor from equipment
+    equipment.currentMotor = null;
+    await equipment.save();
+
+    res.status(200).json({ success: true, data: {} });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

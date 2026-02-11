@@ -9,6 +9,7 @@ const {
   deleteEquipment,
   assignMotor,
   activeMotor,
+  unassignMotor,
 } = require('../controllers/plantEquipmentController');
 const { openImageByTon } = require('../controllers/driveController');
 const { protect, authorize } = require('../middleware/authMiddleware');
@@ -25,9 +26,12 @@ router.route('/:id')
 
 router.route('/:motorId')
   .get(activeMotor)
-  
+
 router.route('/:id/assign-motor')
   .post(authorize('admin', 'manager'), assignMotor);
+
+router.route('/:id/unassign')
+  .put(authorize('admin'), unassignMotor);
 
 router.route('/drive/:tonNumber')
   .get(openImageByTon);
