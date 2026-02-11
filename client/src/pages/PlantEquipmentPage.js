@@ -269,7 +269,7 @@ const PlantEquipmentPage = () => {
   const handleUnassignMotor = async (equipment) => {
     if (window.confirm(`Are you sure you want to remove the motor from ${equipment.designation}? The motor will be set to 'Out of Service'.`)) {
       try {
-        await api.put('/equipment/unassign', { equipmentId: equipment._id });
+        await api.put(`/equipment/${equipment._id}/unassign`);
         fetchEquipments();
         fetchSpareMotors();
       } catch (err) {
