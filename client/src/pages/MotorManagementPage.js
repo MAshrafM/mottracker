@@ -113,13 +113,13 @@ const MotorManagementPage = () => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
-  const filteredMotors = updatedMotors.filter((motors) => {
+  const filteredMotors = updatedMotors.filter((motor) => {
     return (
-      (filters.power === '' || motors.power.toString().toLowerCase().includes(filters.power.toLowerCase())) &&
-      (filters.speed === '' || motors.speed.toString().toLowerCase().includes(filters.speed.toLowerCase())) &&
-      (filters.status === '' || motors.status === filters.status) &&
-      (filters.serialNumber === '' || motors.serialNumber.toString().toLowerCase().includes(filters.serialNumber.toLowerCase())) &&
-      (filters.manufacturer === '' || motors.manufacturer.toString().toLowerCase().includes(filters.manufacturer.toLowerCase()))
+      (filters.power === '' || (motor.power?.toString() || '').toLowerCase().includes(filters.power.toLowerCase())) &&
+      (filters.speed === '' || (motor.speed?.toString() || '').toLowerCase().includes(filters.speed.toLowerCase())) &&
+      (filters.status === '' || motor.status === filters.status) &&
+      (filters.serialNumber === '' || (motor.serialNumber?.toString() || '').toLowerCase().includes(filters.serialNumber.toLowerCase())) &&
+      (filters.manufacturer === '' || (motor.manufacturer?.toString() || '').toLowerCase().includes(filters.manufacturer.toLowerCase()))
     );
   });
 
