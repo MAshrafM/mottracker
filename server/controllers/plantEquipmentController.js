@@ -57,9 +57,19 @@ exports.deleteEquipment = async (req, res) => {
     if (!equipment) {
       return res.status(404).json({ success: false, message: 'Equipment not found' });
     }
-    // Business rule: Cannot delete equipment if a motor is currently installed
+    // Business rule: If motor is installed, set it to 'out of service' before deleting equipment
     if (equipment.currentMotor) {
-      return res.status(400).json({ success: false, message: 'Cannot delete equipment with an active motor. Please remove it first.' });
+      await Motor.findByIdAndUpdate(equipment.currentMotor, {
+        status: 'out of service',
+        $push: {
+          assignmentHistory: {
+            equipment: equipment._id,
+            ton: equipment.tonNumber,
+            plant: equipment.plant || 'AFC-3',
+            dateRemoved: new Date()
+          }
+        }
+      });
     }
     await equipment.deleteOne();
     res.status(200).json({ success: true, data: {} });

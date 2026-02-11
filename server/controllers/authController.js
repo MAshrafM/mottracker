@@ -1,7 +1,7 @@
 // server/controllers/authController.js
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs'); 
+const bcrypt = require('bcryptjs');
 
 // @desc    Login user
 // @route   POST /api/auth/login
@@ -29,6 +29,11 @@ exports.login = async (req, res, next) => {
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
+
+    // Update last login
+    user.lastLogin = Date.now();
+    await user.save({ validateBeforeSave: false }); // Skip validation to avoid re-hashing password if validation rules are strict
+
     // 3. If everything is ok, send token to client
     sendTokenResponse(user, 200, res);
 
@@ -52,7 +57,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     console.error('JWT sign error:', err);
     return res.status(500).json({ success: false, message: 'Failed to create token' });
   }
-  
+
 
   const options = {
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
@@ -60,7 +65,7 @@ const sendTokenResponse = (user, statusCode, res) => {
   };
 
   res
-    .status(statusCode )
+    .status(statusCode)
     .cookie('token', token, options)
     .json({
       success: true,

@@ -133,7 +133,7 @@ const UserManagementPage = () => {
       <div className="absolute inset-0" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
       }}></div>
-      
+
       <div className="relative z-10 p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 p-6 shadow-xl mb-8">
@@ -232,8 +232,8 @@ const UserManagementPage = () => {
             </div>
           </div>
         </div>
-      
-      {/* Table of Users */}
+
+        {/* Table of Users */}
         <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -242,6 +242,7 @@ const UserManagementPage = () => {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-blue-100 uppercase tracking-wider">Username</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-blue-100 uppercase tracking-wider">Email</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-blue-100 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-blue-100 uppercase tracking-wider">Last Login</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-blue-100 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -259,7 +260,12 @@ const UserManagementPage = () => {
                         {getRoleIcon(user.role)}
                         <span className="capitalize">{user.role}</span>
                       </span>
-                    </td>      
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-300">
+                        {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <button
                         onClick={() => handleEdit(user)}
@@ -271,11 +277,10 @@ const UserManagementPage = () => {
                       <button
                         onClick={() => handleDelete(user._id)}
                         disabled={loggedInUser._id === user._id}
-                        className={`inline-flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 border ${
-                          loggedInUser._id === user._id
+                        className={`inline-flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 border ${loggedInUser._id === user._id
                             ? 'bg-gray-500/20 text-gray-400 cursor-not-allowed border-gray-500/30'
                             : 'bg-red-500/20 text-red-300 hover:text-white hover:bg-red-500/30 border-red-500/30'
-                        }`}
+                          }`}
                       >
                         <Trash2 className="w-4 h-4" />
                         <span>Delete</span>
@@ -298,5 +303,5 @@ const UserManagementPage = () => {
     </div>
   );
 };
-      
+
 export default UserManagementPage;

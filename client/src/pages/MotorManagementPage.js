@@ -98,6 +98,17 @@ const MotorManagementPage = () => {
     }
   };
 
+  const handleOutOfService = async (motor) => {
+    if (window.confirm('Are you sure you want to set this motor to Out of Service?')) {
+      try {
+        await api.put(`/motors/${motor._id}`, { status: 'out of service' });
+        refreshData();
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to update motor status.');
+      }
+    }
+  };
+
   const handleDelete = async (motorId) => {
     if (window.confirm('Are you sure you want to delete this motor?')) {
       try {
@@ -425,6 +436,16 @@ const MotorManagementPage = () => {
                         Set Spare
                       </button>
                     )}
+                    {user.role === 'admin' && motor.status === 'spare' && (
+                      <button
+                        onClick={() => handleOutOfService(motor)}
+                        className="bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 
+                                text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                                transform hover:scale-105 shadow-md hover:shadow-lg"
+                      >
+                        Set Out of Service
+                      </button>
+                    )}
                   </>
                 )}
                 {user.role === 'admin' && (
@@ -486,6 +507,16 @@ const MotorManagementPage = () => {
                                 transform hover:scale-105 shadow-md hover:shadow-lg"
                     >
                       Edit
+                    </button>
+                  )}
+                  {user.role === 'admin' && motor.status === 'spare' && (
+                    <button
+                      onClick={() => handleOutOfService(motor)}
+                      className="bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 
+                              text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                              transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      Set Out of Service
                     </button>
                   )}
                   {user.role === 'admin' && (

@@ -30,6 +30,9 @@ const UserSchema = new mongoose.Schema({
     enum: ['user', 'manager', 'admin'],
     default: 'user',
   },
+  lastLogin: {
+    type: Date,
+  },
 }, {
   timestamps: true // Adds createdAt and updatedAt timestamps
 });
