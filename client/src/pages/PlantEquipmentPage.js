@@ -25,7 +25,7 @@ const PlantEquipmentPage = () => {
   // State for the CRUD modal
   const [isCrudModalOpen, setIsCrudModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(null); // Will hold equipment ID when editing
-  const [formData, setFormData] = useState({ tonNumber: '', designation: '' });
+  const [formData, setFormData] = useState({ tonNumber: '', designation: '', plant: '', supplySource: '', mccType: '' });
 
   // State for the 'Assign Motor' modal
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -184,10 +184,16 @@ const PlantEquipmentPage = () => {
     setError('');
     if (equipment) {
       setIsEditing(equipment._id);
-      setFormData({ tonNumber: equipment.tonNumber, designation: equipment.designation, plant: equipment.plant });
+      setFormData({ 
+        tonNumber: equipment.tonNumber, 
+        designation: equipment.designation, 
+        plant: equipment.plant,
+        supplySource: equipment.supplySource || '',
+        mccType: equipment.mccType || ''
+      });
     } else {
       setIsEditing(null);
-      setFormData({ tonNumber: '', designation: '', plant: '' });
+      setFormData({ tonNumber: '', designation: '', plant: '', supplySource: '', mccType: '' });
     }
     setIsCrudModalOpen(true);
   };
@@ -195,7 +201,7 @@ const PlantEquipmentPage = () => {
   const closeCrudModal = () => {
     setIsCrudModalOpen(false);
     setIsEditing(null);
-    setFormData({ tonNumber: '', designation: '', plant: '' });
+    setFormData({ tonNumber: '', designation: '', plant: '', supplySource: '', mccType: '' });
     setError('');
   };
 
@@ -530,6 +536,20 @@ const PlantEquipmentPage = () => {
                     </span>
                   </div>
 
+                  <div className="flex items-center space-x-2 bg-green-500/10 rounded-full px-2 py-1 border border-green-500/20">
+                    <span className="text-green-300 font-semibold text-sm">Source:</span>
+                    <span className="text-green-200 text-sm font-mono">
+                      {eq.supplySource || 'N/A'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center space-x-2 bg-purple-500/10 rounded-full px-2 py-1 border border-purple-500/20">
+                    <span className="text-purple-300 font-semibold text-sm">MCC Type:</span>
+                    <span className="text-purple-200 text-sm font-mono">
+                      {eq.mccType || 'N/A'}
+                    </span>
+                  </div>
+
                   <button
                     onClick={() => handleOpenImage(eq.tonNumber)}
                     className="group flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-all duration-200
@@ -756,6 +776,32 @@ const PlantEquipmentPage = () => {
                     onChange={(e) => setFormData({ ...formData, plant: e.target.value })}
                     placeholder="AFC 3"
                     required
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                             focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Supply Source (Optional)</label>
+                  <input
+                    name="supplySource"
+                    value={formData.supplySource}
+                    onChange={(e) => setFormData({ ...formData, supplySource: e.target.value })}
+                    placeholder="e.g., MCC-1A"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                             focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">MCC Type (Optional)</label>
+                  <input
+                    name="mccType"
+                    value={formData.mccType}
+                    onChange={(e) => setFormData({ ...formData, mccType: e.target.value })}
+                    placeholder="e.g., Drawout"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                              placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                              focus:ring-blue-400/50 transition-all duration-300"

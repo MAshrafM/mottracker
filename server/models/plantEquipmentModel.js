@@ -39,7 +39,13 @@ const PlantEquipmentSchema = new Schema({
   plant: {
     type: String,
     required: [true, 'Please add a plant name'],
-    },
+  },
+  supplySource: {
+    type: String,
+  },
+  mccType: {
+    type: String,
+  },
   // A log of all motors ever installed on this equipment
   motorHistory: [MotorHistorySchema],
 }, {
