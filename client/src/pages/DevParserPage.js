@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Terminal, Download, FileText, AlertCircle, ChevronRight, ListPlus, Trash2, Table as TableIcon, Database } from 'lucide-react';
+import { Terminal, Download, FileText, AlertCircle, ListPlus, Trash2, Table as TableIcon, Database } from 'lucide-react';
 import api from '../services/api';
 
 const DevParserPage = () => {
@@ -69,7 +69,7 @@ const DevParserPage = () => {
             .filter(line => line.length > 0)
             .map(line => {
               // Remove various bullet points and leading symbols
-              return line.replace(/^[·•\-\*\s]+/, '').trim();
+              return line.replace(/^[·•\-*\s]+/, '').trim();
             })
             .filter(line => line.length > 0)
             .join(' ')
