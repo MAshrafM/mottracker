@@ -13,6 +13,7 @@ import SpareMotorsReport from './pages/SpareMotorReport';
 import BearingReport from './pages/BearingReport';
 import MotorMaintenanceReportPage from './pages/MotorMaintenanceReportPage';
 import SparePartsPage from './pages/SparePartsPage';
+import DevParserPage from './pages/DevParserPage';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
 import './App.css';
@@ -49,6 +50,11 @@ function App() {
               <Route path="/spare-parts" element={<SparePartsPage />} />
               {/* Add other private routes for motors, equipment etc. here */}
             </Route>
+
+            {/* Development Only Routes */}
+            {process.env.NODE_ENV === 'development' && (
+              <Route path="/dev/parser" element={<DevParserPage />} />
+            )}
           </Routes>
         </main>
       </NotificationProvider>

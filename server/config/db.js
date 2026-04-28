@@ -4,8 +4,18 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
+    const environment = process.env.NODE_ENV || 'development';
+    let mongoURI = process.env.MONGO_URI;
+
+    /*
+    if (environment !== 'production') {
+      mongoURI = process.env.LOCAL_MONGO_URI || 'mongodb://127.0.0.1:27017/motortracker';
+      console.log('Using local MongoDB database for development...');
+    }
+      */
+
     // Mongoose.connect returns a promise, so we await it
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
+    const conn = await mongoose.connect(mongoURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
