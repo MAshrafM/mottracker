@@ -13,6 +13,7 @@ import SpareMotorsReport from './pages/SpareMotorReport';
 import BearingReport from './pages/BearingReport';
 import MotorMaintenanceReportPage from './pages/MotorMaintenanceReportPage';
 import SparePartsPage from './pages/SparePartsPage';
+import EquipmentByPowerPage from './pages/EquipmentByPowerPage';
 import DevParserPage from './pages/DevParserPage';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
@@ -41,6 +42,7 @@ function App() {
               <Route path="/motors" element={<MotorManagementPage />} />
               <Route path="/motors/:motorId/maintenance" element={<MotorHistoryPage />} />
               <Route path="/equipment" element={<PlantEquipmentPage />} />
+              <Route path="/equipment-by-power" element={<EquipmentByPowerPage />} />
               <Route path="/notifications" element={<NotificationHistoryPage />} />
               <Route path="/reports/*" element={<ReportsPage />} />
               <Route path="/reports/active-motors" element={<ActiveMotorReport />} />

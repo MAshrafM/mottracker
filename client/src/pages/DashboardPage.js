@@ -183,6 +183,11 @@ const DashboardPage = () => {
                     <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </Link>
 
+                  <Link to="/equipment-by-power" className="group relative overflow-hidden bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 rounded-lg p-3 text-center hover:border-emerald-400/50 transition-all duration-300">
+                    <span className="relative z-10 text-emerald-200 group-hover:text-white text-sm font-medium">Equipments by Power</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </Link>
+
                   <Link to="/reports" className="group relative overflow-hidden bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg p-3 text-center hover:border-amber-400/50 transition-all duration-300">
                     <span className="relative z-10 text-amber-200 group-hover:text-white text-sm font-medium">Reports</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
