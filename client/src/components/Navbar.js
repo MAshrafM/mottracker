@@ -2,7 +2,7 @@
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
-import { Car, User, LogOut, Users, ChevronDown, Bell, Check, Trash2, X } from 'lucide-react';
+import { Car, User, LogOut, Users, ChevronDown, Bell, Check, Trash2, X, ArrowLeft } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
 
 
@@ -29,7 +29,15 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo Section */}
-            <Link to="/dashboard">
+            <div className="flex items-center">
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2 mr-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 flex items-center justify-center"
+                title="Go Back"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <Link to="/dashboard">
               <div className="flex items-center space-x-3 hover:opacity-90 transition-opacity duration-200 cursor-pointer">
                 <div className="p-2 bg-blue-500 rounded-lg shadow-lg">
                   <Car className="w-6 h-6 text-white" />
@@ -39,7 +47,8 @@ const Navbar = () => {
                   <p className="text-xs text-blue-200 -mt-1 hidden sm:block">Motor Maintenance</p>
                 </div>
               </div>
-            </Link>
+              </Link>
+            </div>
 
             {/* Right Side Content */}
             <div className="flex items-center space-x-4">
