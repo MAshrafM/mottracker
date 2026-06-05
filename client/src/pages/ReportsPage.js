@@ -1,7 +1,7 @@
 // client/src/pages/ReportPage.js
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, Archive, Disc, ClipboardList } from 'lucide-react';
+import { Activity, Archive, Disc, ClipboardList, Boxes } from 'lucide-react';
 
 const ReportsPage = () => {
 
@@ -53,6 +53,16 @@ const ReportsPage = () => {
               <ClipboardList className="w-12 h-12 mb-4 text-white opacity-70 transition-opacity group-hover:opacity-100" />
               <h3 className="text-xl font-semibold mb-2 text-white">Motor Maintenance Report</h3>
               <p className="text-sm text-slate-300">Generate a technical maintenance report for a specific motor.</p>
+            </Link>
+
+            <Link to="/reports/unit-motor" className="group flex flex-col items-center p-6 text-center
+                         bg-white/5 backdrop-blur-md rounded-xl 
+                         border border-white/10 
+                         shadow-lg transition-all duration-300 
+                         hover:bg-white/20 hover:border-white/30 hover:shadow-xl">
+              <Boxes className="w-12 h-12 mb-4 text-white opacity-70 transition-opacity group-hover:opacity-100" />
+              <h3 className="text-xl font-semibold mb-2 text-white">Unit Motor Report</h3>
+              <p className="text-sm text-slate-300">View and export active and historical motors by unit/plant category.</p>
             </Link>
           </div>
         </div>

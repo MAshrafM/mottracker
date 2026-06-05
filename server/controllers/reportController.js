@@ -1,9 +1,120 @@
 // server/controllers/reportController.js
 const Motor = require('../models/motorModel');
+const PlantEquipment = require('../models/plantEquipmentModel');
 const { generateTablePDF } = require('../utils/pdfService'); // Import the service
 const { formatDate } = require('../utils/helpers'); // Your date formatter
 const ExcelJS = require('exceljs');
 const { PDFDocument, rgb, StandardFonts, PageSizes, degrees } = require('pdf-lib');
+
+const UNIT_CONFIGS = {
+  ammonia: {
+    name: 'Ammonia',
+    prefixes: ['301', '303', '305', '310', '380', '381', '382', '383', '384', '386']
+  },
+  compressor: {
+    name: 'Compressor',
+    prefixes: ['302', '305', '307', '309', '320', '385']
+  },
+  urea: {
+    name: 'Urea',
+    prefixes: ['321', '322', '323', '328', '329']
+  },
+  granulation: {
+    name: 'Granulation',
+    prefixes: ['335']
+  },
+  water: {
+    name: 'Water',
+    prefixes: ['388', '389', '390', '392']
+  },
+  bl: {
+    name: 'BL',
+    prefixes: ['37']
+  },
+  uan: {
+    name: 'UAN',
+    prefixes: ['34']
+  },
+  zld: {
+    name: 'ZLD',
+    prefixes: ['Z']
+  }
+};
+
+const getUnitMotorData = async (unitId) => {
+  const config = UNIT_CONFIGS[unitId.toLowerCase()];
+  if (!config) {
+    throw new Error(`Invalid unit identifier. Valid units are: ${Object.keys(UNIT_CONFIGS).join(', ')}`);
+  }
+
+  // Find equipment whose tonNumber starts with any of the prefixes
+  const regexes = config.prefixes.map(prefix => new RegExp(`^${prefix}`, 'i'));
+  const query = {
+    $or: regexes.map(r => ({ tonNumber: r }))
+  };
+
+  const equipments = await PlantEquipment.find(query)
+    .populate('currentMotor')
+    .populate('motorHistory.motor')
+    .lean();
+
+  const rows = [];
+  for (const eq of equipments) {
+    // Collect from history
+    if (eq.motorHistory && eq.motorHistory.length > 0) {
+      for (const history of eq.motorHistory) {
+        if (!history.motor) continue;
+
+        const isCurrent = eq.currentMotor && eq.currentMotor._id.toString() === history.motor._id.toString() && !history.dateRemoved;
+
+        rows.push({
+          tonNumber: eq.tonNumber,
+          designation: eq.designation,
+          serialNumber: history.motor.serialNumber,
+          power: history.motor.power || 'N/A',
+          speed: history.motor.speed || 'N/A',
+          lastMaintenanceDate: history.motor.lastMaintenanceDate,
+          status: isCurrent ? 'Active' : 'Historical',
+          dateAssigned: history.dateAssigned,
+          dateRemoved: history.dateRemoved
+        });
+      }
+    }
+
+    // Fallback if currentMotor is set but somehow not in history (to avoid database inconsistency missing active motor)
+    if (eq.currentMotor) {
+      const alreadyInHistory = eq.motorHistory && eq.motorHistory.some(
+        h => h.motor && h.motor._id.toString() === eq.currentMotor._id.toString()
+      );
+      if (!alreadyInHistory) {
+        rows.push({
+          tonNumber: eq.tonNumber,
+          designation: eq.designation,
+          serialNumber: eq.currentMotor.serialNumber,
+          power: eq.currentMotor.power || 'N/A',
+          speed: eq.currentMotor.speed || 'N/A',
+          lastMaintenanceDate: eq.currentMotor.lastMaintenanceDate,
+          status: 'Active',
+          dateAssigned: null,
+          dateRemoved: null
+        });
+      }
+    }
+  }
+
+  // Sort rows: first by tonNumber alphabetically, then by dateAssigned descending (newest first)
+  rows.sort((a, b) => {
+    const tonCompare = a.tonNumber.localeCompare(b.tonNumber);
+    if (tonCompare !== 0) return tonCompare;
+
+    if (!a.dateAssigned) return 1;
+    if (!b.dateAssigned) return -1;
+    return new Date(b.dateAssigned) - new Date(a.dateAssigned);
+  });
+
+  return { unitName: config.name, data: rows };
+};
+
 
 exports.getReports = async (req, res) => {
   res.status(200).json({ message: 'Reports endpoint' });
@@ -319,5 +430,140 @@ exports.exportBearingsReportToPDF = async (req, res) => {
   }  catch (error) {    
     console.error('Error exporting bearings report to PDF:', error);
     res.status(500).json({ message: 'Server error while generating bearings report.', error: error.message });
+  }
+};
+
+exports.getUnitMotorReport = async (req, res) => {
+  try {
+    const { unit } = req.query;
+    if (!unit) {
+      // Return list of available units for dropdown
+      const unitsList = Object.keys(UNIT_CONFIGS).map(key => ({
+        id: key,
+        name: UNIT_CONFIGS[key].name
+      }));
+      return res.status(200).json({ success: true, units: unitsList });
+    }
+
+    const { unitName, data } = await getUnitMotorData(unit);
+    res.status(200).json({ success: true, unitName, data });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+exports.exportUnitMotorReportToExcel = async (req, res) => {
+  try {
+    const { unit } = req.query;
+    if (!unit) {
+      return res.status(400).json({ message: 'Unit parameter is required.' });
+    }
+
+    const { unitName, data } = await getUnitMotorData(unit);
+
+    // Create workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(`${unitName} Unit Motors`);
+
+    // Define columns
+    worksheet.columns = [
+      { header: 'TON Number', key: 'tonNumber', width: 15 },
+      { header: 'Designation', key: 'designation', width: 25 },
+      { header: 'Serial Number', key: 'serialNumber', width: 18 },
+      { header: 'Power', key: 'power', width: 12 },
+      { header: 'Speed (RPM)', key: 'speed', width: 12 },
+      { header: 'Last Maintenance', key: 'lastMaintenanceDate', width: 18 },
+      { header: 'Status', key: 'status', width: 12 },
+      { header: 'Date Assigned', key: 'dateAssigned', width: 18 },
+      { header: 'Date Removed', key: 'dateRemoved', width: 18 }
+    ];
+
+    // Style header row
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' }
+    };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+    // Add data
+    data.forEach(row => {
+      worksheet.addRow({
+        tonNumber: row.tonNumber,
+        designation: row.designation,
+        serialNumber: row.serialNumber,
+        power: row.power,
+        speed: row.speed,
+        lastMaintenanceDate: formatDate(row.lastMaintenanceDate),
+        status: row.status,
+        dateAssigned: formatDate(row.dateAssigned),
+        dateRemoved: formatDate(row.dateRemoved)
+      });
+    });
+
+    // Set response headers
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=${unit.toLowerCase()}_motor_report_${new Date().toISOString().split('T')[0]}.xlsx`
+    );
+
+    // Write to response
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Error exporting Unit Motor Report to Excel:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+exports.exportUnitMotorReportToPDF = async (req, res) => {
+  try {
+    const { unit } = req.query;
+    if (!unit) {
+      return res.status(400).json({ message: 'Unit parameter is required.' });
+    }
+
+    const { unitName, data } = await getUnitMotorData(unit);
+
+    // Flatten the data for the PDF service
+    const flatData = data.map(row => ({
+      ...row,
+      dateAssignedFormatted: row.dateAssigned ? formatDate(row.dateAssigned) : 'N/A',
+      dateRemovedFormatted: row.dateRemoved ? formatDate(row.dateRemoved) : 'N/A'
+    }));
+
+    // Column definitions for landscape page
+    const columns = [
+      { label: 'TON Number', key: 'tonNumber', width: 70 },
+      { label: 'Designation', key: 'designation', width: 140 },
+      { label: 'Serial Number', key: 'serialNumber', width: 85 },
+      { label: 'Power', key: 'power', width: 50 },
+      { label: 'Speed', key: 'speed', width: 50 },
+      { label: 'Last Maint.', key: 'lastMaintenanceDate', width: 75 },
+      { label: 'Status', key: 'status', width: 55 },
+      { label: 'Assigned', key: 'dateAssignedFormatted', width: 75 },
+      { label: 'Removed', key: 'dateRemovedFormatted', width: 75 }
+    ];
+
+    // Generate PDF
+    const pdfBytes = await generateTablePDF({
+      title: `${unitName} Unit Motor Report`,
+      columns: columns,
+      data: flatData,
+      orientation: 'landscape'
+    });
+
+    // Send response
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${unit.toLowerCase()}_motor_report.pdf`);
+    res.status(200).send(Buffer.from(pdfBytes));
+  } catch (error) {
+    console.error('Error exporting Unit Motor Report to PDF:', error);
+    res.status(500).json({ message: 'Server error while generating PDF.', error: error.message });
   }
 };

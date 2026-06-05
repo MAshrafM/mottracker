@@ -10,7 +10,10 @@ const { getActiveMotorReport,
     exportSpareMotorsToPDF,
     getBearingsReport,
     exportBearingsReportToExcel,
-    exportBearingsReportToPDF
+    exportBearingsReportToPDF,
+    getUnitMotorReport,
+    exportUnitMotorReportToExcel,
+    exportUnitMotorReportToPDF
 } = require('../controllers/reportController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -43,4 +46,11 @@ router.route('/bearings/export-excel')
     .get(authorize('admin', 'manager'), exportBearingsReportToExcel); // Adjust to call the appropriate export function
 router.route('/bearings/export-pdf')
     .get(authorize('admin', 'manager'), exportBearingsReportToPDF); // Adjust to call the appropriate export function
+
+router.route('/unit-motor')
+    .get(authorize('admin', 'manager', 'user'), getUnitMotorReport);
+router.route('/unit-motor/export-excel')
+    .get(authorize('admin', 'manager'), exportUnitMotorReportToExcel);
+router.route('/unit-motor/export-pdf')
+    .get(authorize('admin', 'manager'), exportUnitMotorReportToPDF);
 module.exports = router;
