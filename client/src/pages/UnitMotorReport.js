@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { FileDown, FileSpreadsheet, Loader, ArrowLeft, Layers, Calendar, CheckCircle2, History } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Loader, ArrowLeft, Layers, CheckCircle2, History } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 
 const UnitMotorReport = () => {
@@ -94,13 +94,8 @@ const UnitMotorReport = () => {
     }
   ];
 
-  useEffect(() => {
-    if (selectedUnit) {
-      fetchReportData();
-    }
-  }, [selectedUnit]);
-
-  const fetchReportData = async () => {
+  const fetchReportData = useCallback(async () => {
+    if (!selectedUnit) return;
     setLoading(true);
     setError('');
     try {
@@ -116,7 +111,13 @@ const UnitMotorReport = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedUnit]);
+
+  useEffect(() => {
+    if (selectedUnit) {
+      fetchReportData();
+    }
+  }, [selectedUnit, fetchReportData]);
 
   const exportToExcel = async () => {
     if (!selectedUnit) return;
