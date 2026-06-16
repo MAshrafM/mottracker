@@ -120,7 +120,7 @@ const ActiveMotorDetailedReport = () => {
                 {/* Category Header */}
                 <div className="bg-gradient-to-r from-blue-900/60 to-indigo-900/60 px-6 py-4 border-b border-white/10 flex justify-between items-center">
                   <h2 className="text-xl font-bold text-blue-200 tracking-wider">
-                    {group.unitName.toUpperCase()} UNIT
+                    {group.unitName === 'H.T.' ? 'H.T. MOTORS' : `${group.unitName.toUpperCase()} UNIT`}
                   </h2>
                   <span className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-xs font-bold border border-blue-500/30">
                     {group.motors.length} active motor(s)

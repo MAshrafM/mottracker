@@ -305,14 +305,35 @@ const getActiveMotorDetailedData = async () => {
     { id: 'zld', name: 'ZLD', prefixes: ['Z'] }
   ];
 
+  const parsePower = (powerStr) => {
+    if (!powerStr) return 0;
+    const match = String(powerStr).match(/([0-9.]+)/);
+    return match ? parseFloat(match[1]) : 0;
+  };
+
   const groupedData = [];
   const matchedMotorIds = new Set();
 
+  // Filter H.T. motors first (power > 160)
+  const htMotors = activeMotorData.filter(item => {
+    return parsePower(item.power) > 160;
+  });
+
+  if (htMotors.length > 0) {
+    htMotors.sort((a, b) => compareTons(a.tonNumber, b.tonNumber));
+    htMotors.forEach(row => matchedMotorIds.add(row.motorId.toString()));
+    groupedData.push({
+      unitName: 'H.T.',
+      motors: htMotors
+    });
+  }
+
   units.forEach(unit => {
     const unitMotors = activeMotorData.filter(item => {
-      return unit.prefixes.some(prefix =>
-        item.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
-      );
+      return !matchedMotorIds.has(item.motorId.toString()) &&
+             unit.prefixes.some(prefix =>
+               item.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
+             );
     });
 
     if (unitMotors.length > 0) {
@@ -378,7 +399,8 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
     worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
     groupedData.forEach(group => {
-      const catRow = worksheet.addRow({ tonNumber: `--- ${group.unitName.toUpperCase()} UNIT ---` });
+      const headerText = group.unitName === 'H.T.' ? '--- H.T. MOTORS ---' : `--- ${group.unitName.toUpperCase()} UNIT ---`;
+      const catRow = worksheet.addRow({ tonNumber: headerText });
       worksheet.mergeCells(`A${catRow.number}:M${catRow.number}`);
       catRow.font = { bold: true, size: 12, color: { argb: 'FF1F497D' } };
       catRow.fill = {
