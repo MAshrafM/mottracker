@@ -4,6 +4,8 @@ const router = express.Router();
 const { getActiveMotorReport, 
     exportActiveMotorsToExcel, 
     exportActiveMotorsToPDF,
+    exportActiveMotorsDetailedToExcel,
+    getActiveMotorDetailedReport,
     getReports,
     getSpareMotorReport,
     exportSpareMotorsToExcel,
@@ -24,9 +26,15 @@ router.route('/')
 
 router.route('/active-motors')
     .get(authorize('admin', 'manager', 'user'), getActiveMotorReport);
+
+router.route('/active-motors-detailed')
+    .get(authorize('admin', 'manager', 'user'), getActiveMotorDetailedReport);
     
 router.route('/active-motors/export-excel')
     .get(authorize('admin', 'manager'), exportActiveMotorsToExcel); // Adjust to call the appropriate export function
+
+router.route('/active-motors-detailed/export-excel')
+    .get(authorize('admin', 'manager'), exportActiveMotorsDetailedToExcel);
 
 router.route('/active-motors/export-pdf')
     .get(authorize('admin', 'manager'), exportActiveMotorsToPDF); // Adjust to call the appropriate export function

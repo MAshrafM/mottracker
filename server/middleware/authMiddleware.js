@@ -22,6 +22,19 @@ exports.protect = async (req, res, next) => {
       // We exclude the password field from being attached
       req.user = await User.findById(decoded.id).select('-password');
 
+      if (req.user) {
+        try {
+          const now = new Date();
+          const oneDay = 24 * 60 * 60 * 1000;
+          if (!req.user.last_seen_at || (now - new Date(req.user.last_seen_at)) > oneDay) {
+            req.user.last_seen_at = now;
+            await req.user.save({ validateBeforeSave: false });
+          }
+        } catch (saveError) {
+          console.error('Failed to update last_seen_at:', saveError);
+        }
+      }
+
       next(); // Proceed to the next middleware/controller
     } catch (error) {
       console.error(error);

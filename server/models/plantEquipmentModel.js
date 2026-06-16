@@ -46,6 +46,9 @@ const PlantEquipmentSchema = new Schema({
   mccType: {
     type: String,
   },
+  greaseInterval: {
+    type: Number,
+  },
   // A log of all motors ever installed on this equipment
   motorHistory: [MotorHistorySchema],
 }, {

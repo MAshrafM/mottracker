@@ -242,7 +242,7 @@ const UserManagementPage = () => {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-blue-100 uppercase tracking-wider">Username</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-blue-100 uppercase tracking-wider">Email</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-blue-100 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-blue-100 uppercase tracking-wider">Last Login</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-blue-100 uppercase tracking-wider">Last Seen</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-blue-100 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -263,7 +263,7 @@ const UserManagementPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-300">
-                        {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
+                        {user.last_seen_at ? new Date(user.last_seen_at).toLocaleString() : 'Never'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">

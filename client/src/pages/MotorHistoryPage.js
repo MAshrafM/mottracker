@@ -25,6 +25,19 @@ const MaintenanceHistory = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const formatMTBM = (days) => {
+    if (days === null || days === undefined || isNaN(days)) return 'N/A';
+    const months = days / 30;
+    if (months > 12) {
+      const years = months / 12;
+      const formattedYears = Number(years.toFixed(1));
+      return `${formattedYears} ${formattedYears === 1 ? 'year' : 'years'}`;
+    } else {
+      const formattedMonths = Number(months.toFixed(1));
+      return `${formattedMonths} ${formattedMonths === 1 ? 'month' : 'months'}`;
+    }
+  };
+
   const fetchMotorHistory = useCallback(async () => {
     try {
       setError('');
@@ -82,6 +95,7 @@ const MaintenanceHistory = () => {
     try {
       await api.post(`/motors/${motorId}/maintenance`, { date, description, updateLastMaintenance });
       fetchMotorHistory(); // Refresh motor history
+      fetchMotorDetails(); // Refresh motor details (MTBM & last maintenance date)
       setDescription(''); // Reset form
       setDate(new Date().toISOString().split('T')[0]); // Reset date
       setUpdateLastMaintenance(true); // Reset checkbox
@@ -95,7 +109,8 @@ const MaintenanceHistory = () => {
     if (window.confirm('Are you sure you want to delete this maintenance record?')) {
       try {
         await api.delete(`/motors/${motorId}/maintenance/${eventId}`);
-        fetchMotorHistory(); // Refresh the motor details
+        fetchMotorHistory(); // Refresh motor history
+        fetchMotorDetails(); // Refresh motor details (MTBM)
       } catch (err) {
         setError('Failed to delete maintenance event.');
       }
@@ -144,7 +159,8 @@ const MaintenanceHistory = () => {
         description: editingEvent.description,
       });
       closeEditModal();
-      fetchMotorDetails(); // Refresh the list to show the updated event
+      fetchMotorDetails(); // Refresh motor details (MTBM)
+      fetchMotorHistory(); // Refresh motor history
     } catch (err) {
       setError('Failed to update maintenance event.');
       console.error(err);
@@ -170,6 +186,19 @@ const MaintenanceHistory = () => {
         </div>
       </div>
     );
+  }
+
+  let displayMTBM = motor ? motor.meanTimeBetweenMaintenance : null;
+  let isCalculated = false;
+
+  if (motor && (displayMTBM === null || displayMTBM === undefined || isNaN(displayMTBM)) && motor.lastMaintenanceDate) {
+    const today = new Date();
+    const lastMaint = new Date(motor.lastMaintenanceDate);
+    if (!isNaN(lastMaint.getTime())) {
+      const diffTime = Math.abs(today.getTime() - lastMaint.getTime());
+      displayMTBM = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      isCalculated = true;
+    }
   }
 
   return (
@@ -338,8 +367,8 @@ const MaintenanceHistory = () => {
             </div>
           </div>
 
-          {/* Last Maintenance and Greasing */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Last Maintenance, Greasing, and MTBM */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="bg-white/5 rounded-lg p-3">
               <p className="flex justify-between items-center">
                 <strong className="text-blue-300 text-base">Last Maintenance:</strong>
@@ -356,7 +385,21 @@ const MaintenanceHistory = () => {
                 </span>
               </p>
             </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">MTBM:</strong>
+                <span className={`text-base ${isCalculated ? 'text-amber-400 italic' : (displayMTBM === null || displayMTBM === undefined ? 'text-gray-400' : 'text-cyan-300 font-bold')}`}>
+                  {formatMTBM(displayMTBM)}
+                  {isCalculated && ' *'}
+                </span>
+              </p>
+            </div>
           </div>
+          {isCalculated && (
+            <p className="text-xs text-amber-400/80 italic mt-1 text-right">
+              * MTBM is dynamically calculated from the last maintenance date.
+            </p>
+          )}
 
           {/* Notes */}
           {motor.Note && (

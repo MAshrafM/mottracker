@@ -25,7 +25,7 @@ const PlantEquipmentPage = () => {
   // State for the CRUD modal
   const [isCrudModalOpen, setIsCrudModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(null); // Will hold equipment ID when editing
-  const [formData, setFormData] = useState({ tonNumber: '', designation: '', plant: '', supplySource: '', mccType: '' });
+  const [formData, setFormData] = useState({ tonNumber: '', designation: '', plant: '', supplySource: '', mccType: '', greaseInterval: '' });
 
   // State for the 'Assign Motor' modal
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -189,11 +189,12 @@ const PlantEquipmentPage = () => {
         designation: equipment.designation, 
         plant: equipment.plant,
         supplySource: equipment.supplySource || '',
-        mccType: equipment.mccType || ''
+        mccType: equipment.mccType || '',
+        greaseInterval: equipment.greaseInterval || ''
       });
     } else {
       setIsEditing(null);
-      setFormData({ tonNumber: '', designation: '', plant: '', supplySource: '', mccType: '' });
+      setFormData({ tonNumber: '', designation: '', plant: '', supplySource: '', mccType: '', greaseInterval: '' });
     }
     setIsCrudModalOpen(true);
   };
@@ -201,7 +202,7 @@ const PlantEquipmentPage = () => {
   const closeCrudModal = () => {
     setIsCrudModalOpen(false);
     setIsEditing(null);
-    setFormData({ tonNumber: '', designation: '', plant: '', supplySource: '', mccType: '' });
+    setFormData({ tonNumber: '', designation: '', plant: '', supplySource: '', mccType: '', greaseInterval: '' });
     setError('');
   };
 
@@ -550,6 +551,15 @@ const PlantEquipmentPage = () => {
                     </span>
                   </div>
 
+                  {eq.greaseInterval !== undefined && eq.greaseInterval !== null && (
+                    <div className="flex items-center space-x-2 bg-amber-500/10 rounded-full px-2 py-1 border border-amber-500/20">
+                      <span className="text-amber-300 font-semibold text-sm">Grease:</span>
+                      <span className="text-amber-200 text-sm font-mono">
+                        {eq.greaseInterval} hrs
+                      </span>
+                    </div>
+                  )}
+
                   <button
                     onClick={() => handleOpenImage(eq.tonNumber)}
                     className="group flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-all duration-200
@@ -802,6 +812,20 @@ const PlantEquipmentPage = () => {
                     value={formData.mccType}
                     onChange={(e) => setFormData({ ...formData, mccType: e.target.value })}
                     placeholder="e.g., Drawout"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                             focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Grease Interval (hours, Optional)</label>
+                  <input
+                    type="number"
+                    name="greaseInterval"
+                    value={formData.greaseInterval}
+                    onChange={(e) => setFormData({ ...formData, greaseInterval: e.target.value })}
+                    placeholder="e.g., 4000"
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
                              placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                              focus:ring-blue-400/50 transition-all duration-300"

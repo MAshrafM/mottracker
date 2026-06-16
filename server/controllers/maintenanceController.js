@@ -46,6 +46,30 @@ exports.addMaintenanceEvent = async (req, res) => {
 
     // Only update the last maintenance date on the motor if the flag is true
     if (updateLastMaintenance) {
+      if (motor.lastMaintenanceDate) {
+        const diffTime = Math.abs(new Date(date) - new Date(motor.lastMaintenanceDate));
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        motor.meanTimeBetweenMaintenance = diffDays;
+      } else {
+        // If there's no lastMaintenanceDate set, search history for a previous complete maintenance event
+        const completeEvents = motor.maintenanceHistory
+          .filter(event => {
+            const desc = (event.description || '').toLowerCase();
+            const hasText = desc.includes('compelet maintainance') ||
+                            desc.includes('complete maintenance') ||
+                            desc.includes('complete maint') ||
+                            desc.includes('motor complete maint');
+            return hasText && event.date && !isNaN(new Date(event.date).getTime());
+          })
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        if (completeEvents.length >= 1) {
+          const latestEvent = completeEvents[completeEvents.length - 1];
+          const diffTime = Math.abs(new Date(date) - new Date(latestEvent.date));
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          motor.meanTimeBetweenMaintenance = diffDays;
+        }
+      }
       motor.lastMaintenanceDate = date;
     }
 

@@ -16,4 +16,18 @@ const formatDate = (dateString) => {
   return `${day}/${month}/${year}`;
 };
 
-module.exports = { formatDate };
+// --- Helper function to format MTBM ---
+const formatMTBM = (days) => {
+  if (days === null || days === undefined || isNaN(days)) return 'N/A';
+  const months = days / 30;
+  if (months > 12) {
+    const years = months / 12;
+    const formattedYears = Number(years.toFixed(1));
+    return `${formattedYears} ${formattedYears === 1 ? 'year' : 'years'}`;
+  } else {
+    const formattedMonths = Number(months.toFixed(1));
+    return `${formattedMonths} ${formattedMonths === 1 ? 'month' : 'months'}`;
+  }
+};
+
+module.exports = { formatDate, formatMTBM };
