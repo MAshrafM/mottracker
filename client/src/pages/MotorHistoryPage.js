@@ -21,6 +21,12 @@ const MaintenanceHistory = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isMassEntryOpen, setIsMassEntryOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
+  // State for motor edit modal
+  const [isEditMotorOpen, setIsEditMotorOpen] = useState(false);
+  const [motorFormData, setMotorFormData] = useState({
+    serialNumber: '', type: '', power: '', current: '', speed: '', IM: '', frameSize: '',
+    manufacturer: '', bearingDE: '', bearingNDE: '', status: 'spare', lastMaintenanceDate: '', SAP: '', Note: '', Warehouse: ''
+  });
   // Loading and error states
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -127,6 +133,57 @@ const MaintenanceHistory = () => {
     }
   };
 
+  const openEditMotorModal = () => {
+    setMotorFormData({
+      serialNumber: motor.serialNumber || '',
+      type: motor.type || '',
+      power: motor.power || '',
+      current: motor.current || '',
+      speed: motor.speed || '',
+      IM: motor.IM || '',
+      frameSize: motor.frameSize || '',
+      manufacturer: motor.manufacturer || '',
+      bearingDE: motor.bearingDE || '',
+      bearingNDE: motor.bearingNDE || '',
+      status: motor.status || 'spare',
+      lastMaintenanceDate: motor.lastMaintenanceDate 
+        ? new Date(motor.lastMaintenanceDate).toISOString().split('T')[0] 
+        : '',
+      SAP: motor.SAP || '',
+      Note: motor.Note || '',
+      Warehouse: motor.Warehouse || ''
+    });
+    setIsEditMotorOpen(true);
+    setError('');
+  };
+
+  const closeEditMotorModal = () => {
+    setIsEditMotorOpen(false);
+  };
+
+  const handleMotorInputChange = (e) => {
+    setMotorFormData({
+      ...motorFormData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleUpdateMotor = async (e) => {
+    e.preventDefault();
+    try {
+      const cleanedData = { ...motorFormData };
+      if (cleanedData.speed === '') cleanedData.speed = null;
+      if (cleanedData.lastMaintenanceDate === '') cleanedData.lastMaintenanceDate = null;
+
+      await api.put(`/motors/${motorId}`, cleanedData);
+      closeEditMotorModal();
+      fetchMotorDetails(); // Refresh motor details
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update motor details.');
+      console.error(err);
+    }
+  };
+
   const openEditModal = (event) => {
     // The date from MongoDB is a full ISO string, we need to format it to YYYY-MM-DD for the input field
     const formattedDate = new Date(event.date).toISOString().split('T')[0];
@@ -190,14 +247,18 @@ const MaintenanceHistory = () => {
 
   let displayMTBM = motor ? motor.meanTimeBetweenMaintenance : null;
   let isCalculated = false;
+  if (motor && (displayMTBM === null || displayMTBM === undefined || isNaN(displayMTBM))) {
+    isCalculated = true;
+    displayMTBM = null;
+  }
 
-  if (motor && (displayMTBM === null || displayMTBM === undefined || isNaN(displayMTBM)) && motor.lastMaintenanceDate) {
+  let timeFromLastMaintenance = null;
+  if (motor && motor.lastMaintenanceDate) {
     const today = new Date();
     const lastMaint = new Date(motor.lastMaintenanceDate);
     if (!isNaN(lastMaint.getTime())) {
       const diffTime = Math.abs(today.getTime() - lastMaint.getTime());
-      displayMTBM = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      isCalculated = true;
+      timeFromLastMaintenance = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
   }
 
@@ -234,8 +295,8 @@ const MaintenanceHistory = () => {
               {motor.manufacturer} - {motor.type}
             </h3>
           </div>
-          {/* Handle Spare Button */}
-          <div className="text-center md:text-left md:flex-1 md:px-4">
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
             {motor.status === 'out of service' && (
               <button
                 onClick={() => handleSpare(motor)}
@@ -244,6 +305,19 @@ const MaintenanceHistory = () => {
                                 transform hover:scale-105 shadow-md hover:shadow-lg"
               >
                 Set Spare
+              </button>
+            )}
+            {(user.role === 'admin' || user.role === 'manager') && (
+              <button
+                onClick={openEditMotorModal}
+                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
+                           text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                           transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Edit Motor Details</span>
               </button>
             )}
           </div>
@@ -367,8 +441,8 @@ const MaintenanceHistory = () => {
             </div>
           </div>
 
-          {/* Last Maintenance, Greasing, and MTBM */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Last Maintenance, Greasing, MTBM, and Time From Last Maint. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="bg-white/5 rounded-lg p-3">
               <p className="flex justify-between items-center">
                 <strong className="text-blue-300 text-base">Last Maintenance:</strong>
@@ -388,16 +462,24 @@ const MaintenanceHistory = () => {
             <div className="bg-white/5 rounded-lg p-3">
               <p className="flex justify-between items-center">
                 <strong className="text-blue-300 text-base">MTBM:</strong>
-                <span className={`text-base ${isCalculated ? 'text-amber-400 italic' : (displayMTBM === null || displayMTBM === undefined ? 'text-gray-400' : 'text-cyan-300 font-bold')}`}>
+                <span className="text-base text-cyan-300 font-bold">
                   {formatMTBM(displayMTBM)}
-                  {isCalculated && ' *'}
+                </span>
+              </p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="flex justify-between items-center">
+                <strong className="text-blue-300 text-base">Time From Last Maint.:</strong>
+                <span className={`text-base ${isCalculated ? 'text-amber-400 font-semibold italic' : 'text-white'}`}>
+                  {formatMTBM(timeFromLastMaintenance)}
+                  {isCalculated && timeFromLastMaintenance !== null && ' *'}
                 </span>
               </p>
             </div>
           </div>
-          {isCalculated && (
+          {isCalculated && timeFromLastMaintenance !== null && (
             <p className="text-xs text-amber-400/80 italic mt-1 text-right">
-              * MTBM is dynamically calculated from the last maintenance date.
+              * Time From Last Maint. is dynamically calculated because no historical maintenance log exists in the database.
             </p>
           )}
 
@@ -666,6 +748,243 @@ const MaintenanceHistory = () => {
                   className="ml-4 bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                 >
                   Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Motor Details Modal */}
+      {isEditMotorOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="glass-dark rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <form onSubmit={handleUpdateMotor} className="space-y-6">
+              <h2 className="text-3xl font-bold text-white mb-6 border-b border-white/20 pb-4">
+                Edit Motor Details
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Serial Number*</label>
+                  <input
+                    name="serialNumber"
+                    value={motorFormData.serialNumber}
+                    onChange={handleMotorInputChange}
+                    placeholder="Serial Number*"
+                    required
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                                 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                                 focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Manufacturer</label>
+                  <input
+                    name="manufacturer"
+                    value={motorFormData.manufacturer}
+                    onChange={handleMotorInputChange}
+                    placeholder="Manufacturer"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                               focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Type</label>
+                  <input
+                    name="type"
+                    value={motorFormData.type}
+                    onChange={handleMotorInputChange}
+                    placeholder="Type"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                               focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Power</label>
+                  <input
+                    name="power"
+                    value={motorFormData.power}
+                    onChange={handleMotorInputChange}
+                    placeholder="Power (e.g., 10 HP)"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                               focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Current</label>
+                  <input
+                    name="current"
+                    value={motorFormData.current}
+                    onChange={handleMotorInputChange}
+                    placeholder="Current (e.g., 15 A)"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                               focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Speed (RPM)</label>
+                  <input
+                    name="speed"
+                    type="number"
+                    value={motorFormData.speed}
+                    onChange={handleMotorInputChange}
+                    placeholder="Speed (RPM)"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                               focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Mounting</label>
+                  <input
+                    name="IM"
+                    type="text"
+                    value={motorFormData.IM}
+                    onChange={handleMotorInputChange}
+                    placeholder="B3"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                               focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Frame Size</label>
+                  <input
+                    name="frameSize"
+                    value={motorFormData.frameSize}
+                    onChange={handleMotorInputChange}
+                    placeholder="Frame Size"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                               focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Bearing DE</label>
+                  <input
+                    name="bearingDE"
+                    value={motorFormData.bearingDE}
+                    onChange={handleMotorInputChange}
+                    placeholder="Bearing DE"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                               focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Bearing NDE</label>
+                  <input
+                    name="bearingNDE"
+                    value={motorFormData.bearingNDE}
+                    onChange={handleMotorInputChange}
+                    placeholder="Bearing NDE"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                               focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Status</label>
+                  <select
+                    name="status"
+                    value={motorFormData.status}
+                    onChange={handleMotorInputChange}
+                    disabled={motorFormData.status === 'active'}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 
+                               transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="spare" className="bg-gray-800">Spare</option>
+                    <option value="active" className="bg-gray-800">Active</option>
+                    <option value="out of service" className="bg-gray-800">Out of Service</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Last Maintenance Date</label>
+                  <input
+                    name="lastMaintenanceDate"
+                    type="date"
+                    value={motorFormData.lastMaintenanceDate}
+                    onChange={handleMotorInputChange}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 
+                               transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Warehouse Location</label>
+                  <input
+                    name="Warehouse"
+                    value={motorFormData.Warehouse}
+                    onChange={handleMotorInputChange}
+                    placeholder="Warehouse Location"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                               focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">SAP ID</label>
+                  <input
+                    name="SAP"
+                    value={motorFormData.SAP}
+                    onChange={handleMotorInputChange}
+                    placeholder="SAP"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                               focus:ring-blue-400/50 transition-all duration-300"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-blue-300 text-sm font-semibold">Notes</label>
+                <textarea
+                  name="Note"
+                  value={motorFormData.Note}
+                  onChange={handleMotorInputChange}
+                  placeholder="Notes"
+                  rows="4"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
+                             focus:ring-blue-400/50 transition-all duration-300 resize-vertical"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-4 pt-6 border-t border-white/20">
+                <button
+                  type="button"
+                  onClick={closeEditMotorModal}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold 
+                             transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
+                             text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 
+                             transform hover:scale-105 shadow-md hover:shadow-lg"
+                >
+                  Save Changes
                 </button>
               </div>
             </form>

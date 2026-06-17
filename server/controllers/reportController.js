@@ -38,7 +38,69 @@ const UNIT_CONFIGS = {
   zld: {
     name: 'ZLD',
     prefixes: ['Z']
+  },
+  ht: {
+    name: 'H.T. Motors',
+    isHT: true
   }
+};
+
+const parsePower = (powerStr) => {
+  if (!powerStr) return 0;
+  const match = String(powerStr).match(/([0-9.]+)/);
+  return match ? parseFloat(match[1]) : 0;
+};
+
+const getCharRank = (char) => {
+  if (char === 'P') return 1;
+  if (char === 'K') return 2;
+  if (char === 'H') return 3;
+  return 4;
+};
+
+const compareFollowChar = (charA, charB) => {
+  const rankA = getCharRank(charA);
+  const rankB = getCharRank(charB);
+  if (rankA !== rankB) return rankA - rankB;
+  return charA.localeCompare(charB);
+};
+
+const parseTonNumber = (tonNumber) => {
+  const ton = (tonNumber || '').trim();
+  const leadingDigitsMatch = ton.match(/^(\d{3})/);
+  const leadingDigits = leadingDigitsMatch ? parseInt(leadingDigitsMatch[1], 10) : 999;
+
+  const remaining = leadingDigitsMatch ? ton.slice(3) : ton;
+  const followCharMatch = remaining.match(/^([a-zA-Z])/);
+  const followChar = followCharMatch ? followCharMatch[1].toUpperCase() : '';
+
+  const allDigits = ton.match(/\d/g);
+  let lastTwoDigits = 0;
+  if (allDigits && allDigits.length >= 2) {
+    lastTwoDigits = parseInt(allDigits.slice(-2).join(''), 10);
+  } else if (allDigits && allDigits.length === 1) {
+    lastTwoDigits = parseInt(allDigits[0], 10);
+  }
+
+  return { leadingDigits, followChar, lastTwoDigits };
+};
+
+const compareTons = (tonA, tonB) => {
+  const parseA = parseTonNumber(tonA);
+  const parseB = parseTonNumber(tonB);
+
+  if (parseA.leadingDigits !== parseB.leadingDigits) {
+    return parseA.leadingDigits - parseB.leadingDigits;
+  }
+
+  const charCompare = compareFollowChar(parseA.followChar, parseB.followChar);
+  if (charCompare !== 0) return charCompare;
+
+  if (parseA.lastTwoDigits !== parseB.lastTwoDigits) {
+    return parseA.lastTwoDigits - parseB.lastTwoDigits;
+  }
+
+  return tonA.localeCompare(tonB);
 };
 
 const getUnitMotorData = async (unitId) => {
@@ -47,16 +109,27 @@ const getUnitMotorData = async (unitId) => {
     throw new Error(`Invalid unit identifier. Valid units are: ${Object.keys(UNIT_CONFIGS).join(', ')}`);
   }
 
-  // Find equipment whose tonNumber starts with any of the prefixes
-  const regexes = config.prefixes.map(prefix => new RegExp(`^${prefix}`, 'i'));
-  const query = {
-    $or: regexes.map(r => ({ tonNumber: r }))
-  };
+  let equipments;
+  if (config.isHT) {
+    const allEquipments = await PlantEquipment.find({})
+      .populate('currentMotor')
+      .populate('motorHistory.motor')
+      .lean();
+    equipments = allEquipments.filter(eq => {
+      return eq.currentMotor && parsePower(eq.currentMotor.power) > 160;
+    });
+  } else {
+    // Find equipment whose tonNumber starts with any of the prefixes
+    const regexes = config.prefixes.map(prefix => new RegExp(`^${prefix}`, 'i'));
+    const query = {
+      $or: regexes.map(r => ({ tonNumber: r }))
+    };
 
-  const equipments = await PlantEquipment.find(query)
-    .populate('currentMotor')
-    .populate('motorHistory.motor')
-    .lean();
+    equipments = await PlantEquipment.find(query)
+      .populate('currentMotor')
+      .populate('motorHistory.motor')
+      .lean();
+  }
 
   const rows = [];
   for (const eq of equipments) {
@@ -102,9 +175,9 @@ const getUnitMotorData = async (unitId) => {
     }
   }
 
-  // Sort rows: first by tonNumber alphabetically, then by dateAssigned descending (newest first)
+  // Sort rows: first by compareTons custom sort, then by dateAssigned descending (newest first)
   rows.sort((a, b) => {
-    const tonCompare = a.tonNumber.localeCompare(b.tonNumber);
+    const tonCompare = compareTons(a.tonNumber, b.tonNumber);
     if (tonCompare !== 0) return tonCompare;
 
     if (!a.dateAssigned) return 1;
@@ -121,7 +194,12 @@ exports.getReports = async (req, res) => {
 };
 
 exports.getActiveMotorReport = async (req, res) => {
-  res.status(200).json({ message: 'Active Motor Report' });
+  try {
+    const data = await getActiveMotorDetailedData();
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 };
 
 exports.getSpareMotorReport = async (req, res) => {
@@ -130,8 +208,8 @@ exports.getSpareMotorReport = async (req, res) => {
 
 // Additional report generation functions (e.g., export to PDF/Excel) can be added here
 exports.exportActiveMotorsToExcel = async (req, res) => {
-    try {
-    const activeMotors = await Motor.find({ status: 'active' }).populate('eq').lean();
+  try {
+    const groupedData = await getActiveMotorDetailedData();
     
     // Create workbook
     const workbook = new ExcelJS.Workbook();
@@ -153,21 +231,44 @@ exports.exportActiveMotorsToExcel = async (req, res) => {
     ];
 
     // Style header row
-    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     worksheet.getRow(1).fill = {
       type: 'pattern',
       pattern: 'solid',
       fgColor: { argb: 'FF4472C4' }
     };
-    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
     // Add data
-    activeMotors.forEach(motor => {
-      worksheet.addRow({
-        tonNumber: motor.eq ? motor.eq.tonNumber : '',
-        designation: motor.eq ? motor.eq.designation : '',
-        ...motor
+    groupedData.forEach(group => {
+      const headerText = group.unitName === 'H.T.' ? '--- H.T. MOTORS ---' : `--- ${group.unitName.toUpperCase()} UNIT ---`;
+      const catRow = worksheet.addRow({ tonNumber: headerText });
+      worksheet.mergeCells(`A${catRow.number}:K${catRow.number}`);
+      catRow.font = { bold: true, size: 12, color: { argb: 'FF1F497D' } };
+      catRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFEAEAEA' }
+      };
+      catRow.alignment = { horizontal: 'left' };
+
+      group.motors.forEach(row => {
+        worksheet.addRow({
+          tonNumber: row.tonNumber,
+          designation: row.designation,
+          serialNumber: row.serialNumber,
+          power: row.power,
+          speed: row.speed,
+          current: row.current || 'N/A',
+          IM: row.IM,
+          frameSize: row.frameSize,
+          bearingNDE: row.bearingNDE,
+          bearingDE: row.bearingDE,
+          lastMaintenanceDate: row.lastMaintenanceDate ? formatDate(row.lastMaintenanceDate) : 'N/A'
+        });
       });
+
+      worksheet.addRow([]);
     });
 
     // Set response headers
@@ -210,15 +311,20 @@ const getActiveMotorDetailedData = async () => {
       }
     }
 
-    let calculatedMTBM = motor.meanTimeBetweenMaintenance;
     let isCalculatedMTBM = false;
-    if ((calculatedMTBM === null || calculatedMTBM === undefined || typeof calculatedMTBM !== 'number' || isNaN(calculatedMTBM)) && motor.lastMaintenanceDate) {
+    let calculatedMTBM = motor.meanTimeBetweenMaintenance;
+    if (calculatedMTBM === null || calculatedMTBM === undefined || typeof calculatedMTBM !== 'number' || isNaN(calculatedMTBM)) {
+      isCalculatedMTBM = true;
+      calculatedMTBM = null;
+    }
+
+    let timeSinceLastMaintenance = null;
+    if (motor.lastMaintenanceDate) {
       const today = new Date();
       const lastMaint = new Date(motor.lastMaintenanceDate);
       if (!isNaN(lastMaint.getTime())) {
         const diffTime = Math.abs(today.getTime() - lastMaint.getTime());
-        calculatedMTBM = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        isCalculatedMTBM = true;
+        timeSinceLastMaintenance = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       }
     }
 
@@ -230,6 +336,7 @@ const getActiveMotorDetailedData = async () => {
       serialNumber: motor.serialNumber || '',
       power: motor.power || 'N/A',
       speed: motor.speed || 'N/A',
+      current: motor.current || 'N/A',
       IM: motor.IM || 'N/A',
       frameSize: motor.frameSize || 'N/A',
       bearingNDE: motor.bearingNDE || 'N/A',
@@ -237,79 +344,11 @@ const getActiveMotorDetailedData = async () => {
       lastMaintenanceDate: motor.lastMaintenanceDate || null,
       meanTimeBetweenMaintenance: calculatedMTBM,
       isCalculatedMTBM: isCalculatedMTBM,
+      timeSinceLastMaintenance: timeSinceLastMaintenance,
       dateAssigned: dateAssigned || null,
       greaseInterval: eq.greaseInterval
     });
   }
-
-  const getCharRank = (char) => {
-    if (char === 'P') return 1;
-    if (char === 'K') return 2;
-    if (char === 'H') return 3;
-    return 4;
-  };
-
-  const compareFollowChar = (charA, charB) => {
-    const rankA = getCharRank(charA);
-    const rankB = getCharRank(charB);
-    if (rankA !== rankB) return rankA - rankB;
-    return charA.localeCompare(charB);
-  };
-
-  const parseTonNumber = (tonNumber) => {
-    const ton = (tonNumber || '').trim();
-    const leadingDigitsMatch = ton.match(/^(\d{3})/);
-    const leadingDigits = leadingDigitsMatch ? parseInt(leadingDigitsMatch[1], 10) : 999;
-
-    const remaining = leadingDigitsMatch ? ton.slice(3) : ton;
-    const followCharMatch = remaining.match(/^([a-zA-Z])/);
-    const followChar = followCharMatch ? followCharMatch[1].toUpperCase() : '';
-
-    const allDigits = ton.match(/\d/g);
-    let lastTwoDigits = 0;
-    if (allDigits && allDigits.length >= 2) {
-      lastTwoDigits = parseInt(allDigits.slice(-2).join(''), 10);
-    } else if (allDigits && allDigits.length === 1) {
-      lastTwoDigits = parseInt(allDigits[0], 10);
-    }
-
-    return { leadingDigits, followChar, lastTwoDigits };
-  };
-
-  const compareTons = (tonA, tonB) => {
-    const parseA = parseTonNumber(tonA);
-    const parseB = parseTonNumber(tonB);
-
-    if (parseA.leadingDigits !== parseB.leadingDigits) {
-      return parseA.leadingDigits - parseB.leadingDigits;
-    }
-
-    const charCompare = compareFollowChar(parseA.followChar, parseB.followChar);
-    if (charCompare !== 0) return charCompare;
-
-    if (parseA.lastTwoDigits !== parseB.lastTwoDigits) {
-      return parseA.lastTwoDigits - parseB.lastTwoDigits;
-    }
-
-    return tonA.localeCompare(tonB);
-  };
-
-  const units = [
-    { id: 'ammonia', name: 'Ammonia', prefixes: ['301', '303', '305', '310', '380', '381', '382', '383', '384', '386'] },
-    { id: 'compressor', name: 'Compressor', prefixes: ['302', '305', '307', '309', '320', '385'] },
-    { id: 'urea', name: 'Urea', prefixes: ['321', '322', '323', '328', '329'] },
-    { id: 'granulation', name: 'Granulation', prefixes: ['335'] },
-    { id: 'water', name: 'Water', prefixes: ['388', '389', '390', '392'] },
-    { id: 'bl', name: 'BL', prefixes: ['37'] },
-    { id: 'uan', name: 'UAN', prefixes: ['34'] },
-    { id: 'zld', name: 'ZLD', prefixes: ['Z'] }
-  ];
-
-  const parsePower = (powerStr) => {
-    if (!powerStr) return 0;
-    const match = String(powerStr).match(/([0-9.]+)/);
-    return match ? parseFloat(match[1]) : 0;
-  };
 
   const groupedData = [];
   const matchedMotorIds = new Set();
@@ -327,6 +366,14 @@ const getActiveMotorDetailedData = async () => {
       motors: htMotors
     });
   }
+
+  const units = Object.keys(UNIT_CONFIGS)
+    .filter(key => key !== 'ht')
+    .map(key => ({
+      id: key,
+      name: UNIT_CONFIGS[key].name,
+      prefixes: UNIT_CONFIGS[key].prefixes
+    }));
 
   units.forEach(unit => {
     const unitMotors = activeMotorData.filter(item => {
@@ -386,6 +433,7 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
       { header: 'Bearing DE', key: 'bearingDE', width: 15 },
       { header: 'Last Maintenance', key: 'lastMaintenanceDate', width: 18 },
       { header: 'MTBM', key: 'meanTimeBetweenMaintenance', width: 15 },
+      { header: 'Time Since Last Maint.', key: 'timeSinceLastMaintenance', width: 22 },
       { header: 'Date Assigned', key: 'dateAssigned', width: 18 },
       { header: 'Grease Interval', key: 'greaseInterval', width: 18 },
     ];
@@ -401,7 +449,7 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
     groupedData.forEach(group => {
       const headerText = group.unitName === 'H.T.' ? '--- H.T. MOTORS ---' : `--- ${group.unitName.toUpperCase()} UNIT ---`;
       const catRow = worksheet.addRow({ tonNumber: headerText });
-      worksheet.mergeCells(`A${catRow.number}:M${catRow.number}`);
+      worksheet.mergeCells(`A${catRow.number}:N${catRow.number}`);
       catRow.font = { bold: true, size: 12, color: { argb: 'FF1F497D' } };
       catRow.fill = {
         type: 'pattern',
@@ -412,9 +460,10 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
 
       group.motors.forEach(row => {
         const isCalculated = row.isCalculatedMTBM;
-        const mtbmValue = isCalculated && row.meanTimeBetweenMaintenance !== null && row.meanTimeBetweenMaintenance !== undefined
-          ? `${formatMTBM(row.meanTimeBetweenMaintenance)} *`
-          : formatMTBM(row.meanTimeBetweenMaintenance);
+        const mtbmValue = formatMTBM(row.meanTimeBetweenMaintenance);
+        const timeSinceLastMaintValue = isCalculated && row.timeSinceLastMaintenance !== null && row.timeSinceLastMaintenance !== undefined
+          ? `${formatMTBM(row.timeSinceLastMaintenance)} *`
+          : formatMTBM(row.timeSinceLastMaintenance);
 
         const newRow = worksheet.addRow({
           tonNumber: row.tonNumber,
@@ -428,6 +477,7 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
           bearingDE: row.bearingDE,
           lastMaintenanceDate: row.lastMaintenanceDate ? formatDate(row.lastMaintenanceDate) : 'N/A',
           meanTimeBetweenMaintenance: mtbmValue,
+          timeSinceLastMaintenance: timeSinceLastMaintValue,
           dateAssigned: row.dateAssigned ? formatDate(row.dateAssigned) : 'N/A',
           greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
             ? `${row.greaseInterval} hrs` 
@@ -435,7 +485,7 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
         });
 
         if (isCalculated) {
-          const cell = newRow.getCell(11); // Column K (MTBM)
+          const cell = newRow.getCell(12); // Column L (Time Since Last Maint.)
           cell.fill = {
             type: 'pattern',
             pattern: 'solid',
@@ -449,8 +499,8 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
     });
 
     // Add footnote for calculated MTBM fields
-    const footnoteRow = worksheet.addRow({ tonNumber: '* Note: MTBM values marked with * are dynamically calculated since no historical maintenance log is recorded in the database.' });
-    worksheet.mergeCells(`A${footnoteRow.number}:M${footnoteRow.number}`);
+    const footnoteRow = worksheet.addRow({ tonNumber: '* Note: Time Since Last Maint. values marked with * are dynamically calculated since no historical maintenance log is recorded in the database.' });
+    worksheet.mergeCells(`A${footnoteRow.number}:N${footnoteRow.number}`);
     footnoteRow.font = { italic: true, size: 10, color: { argb: 'FF7F7F7F' } };
     footnoteRow.alignment = { horizontal: 'left' };
     worksheet.addRow([]);
@@ -478,14 +528,26 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
 exports.exportActiveMotorsToPDF = async (req, res) => {
   try {
     // 1. DATA FETCHING
-    const activeMotors = await Motor.find({ status: 'active' }).populate('eq').lean();
+    const groupedData = await getActiveMotorDetailedData();
     // 2. DATA PREPARATION (Flatten the data for the PDF service)
-    const flatData = activeMotors.map(motor => ({
-      tonNumber: motor.eq ? motor.eq.tonNumber : '',
-      designation: motor.eq ? motor.eq.designation : '',
-      lastMaintenanceDate: formatDate(motor.lastMaintenanceDate),
-      ...motor
-    }));
+    const flatData = [];
+    groupedData.forEach(group => {
+      group.motors.forEach(motor => {
+        flatData.push({
+          tonNumber: motor.tonNumber,
+          designation: motor.designation,
+          serialNumber: motor.serialNumber,
+          power: motor.power,
+          speed: motor.speed,
+          current: motor.current || 'N/A',
+          IM: motor.IM,
+          frameSize: motor.frameSize,
+          bearingNDE: motor.bearingNDE,
+          bearingDE: motor.bearingDE,
+          lastMaintenanceDate: formatDate(motor.lastMaintenanceDate)
+        });
+      });
+    });
     // 3. COLUMN DEFINITION
     const columns = [
       { label: 'TON', key: 'tonNumber', width: 70 },

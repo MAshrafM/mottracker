@@ -143,6 +143,7 @@ const ActiveMotorDetailedReport = () => {
                         <th className="px-4 py-3">Bearing DE</th>
                         <th className="px-4 py-3">Last Maint.</th>
                         <th className="px-4 py-3">MTBM</th>
+                        <th className="px-4 py-3">Time From Last Maint.</th>
                         <th className="px-4 py-3">Date Assigned</th>
                         <th className="px-4 py-3">Grease Interval</th>
                       </tr>
@@ -160,8 +161,11 @@ const ActiveMotorDetailedReport = () => {
                           <td className="px-4 py-3 font-mono text-xs">{motor.bearingNDE}</td>
                           <td className="px-4 py-3 font-mono text-xs">{motor.bearingDE}</td>
                           <td className="px-4 py-3">{formatDate(motor.lastMaintenanceDate)}</td>
-                          <td className={`px-4 py-3 font-semibold ${motor.isCalculatedMTBM ? 'text-amber-400 italic' : 'text-cyan-300'}`}>
+                          <td className="px-4 py-3 font-semibold text-cyan-300">
                             {formatMTBM(motor.meanTimeBetweenMaintenance)}
+                          </td>
+                          <td className={`px-4 py-3 font-semibold ${motor.isCalculatedMTBM ? 'text-amber-400 italic' : 'text-white'}`}>
+                            {formatMTBM(motor.timeSinceLastMaintenance)}
                             {motor.isCalculatedMTBM && ' *'}
                           </td>
                           <td className="px-4 py-3">{formatDate(motor.dateAssigned)}</td>
@@ -191,7 +195,8 @@ const ActiveMotorDetailedReport = () => {
                         <p>NDE Brg: <span className="text-white font-mono">{motor.bearingNDE}</span></p>
                         <p>DE Brg: <span className="text-white font-mono">{motor.bearingDE}</span></p>
                         <p>Last Maint: <span className="text-white">{formatDate(motor.lastMaintenanceDate)}</span></p>
-                        <p>MTBM: <span className={`font-semibold ${motor.isCalculatedMTBM ? 'text-amber-400 italic' : 'text-cyan-300'}`}>{formatMTBM(motor.meanTimeBetweenMaintenance)}{motor.isCalculatedMTBM && ' *'}</span></p>
+                        <p>MTBM: <span className="text-cyan-300 font-semibold">{formatMTBM(motor.meanTimeBetweenMaintenance)}</span></p>
+                        <p>Time From Last Maint: <span className={`font-semibold ${motor.isCalculatedMTBM ? 'text-amber-400 italic' : 'text-white'}`}>{formatMTBM(motor.timeSinceLastMaintenance)}{motor.isCalculatedMTBM && ' *'}</span></p>
                         <p>Assigned: <span className="text-white">{formatDate(motor.dateAssigned)}</span></p>
                         <p>Grease Int: <span className="text-amber-300 font-semibold">{motor.greaseInterval ? `${motor.greaseInterval} hrs` : 'N/A'}</span></p>
                       </div>
@@ -202,7 +207,7 @@ const ActiveMotorDetailedReport = () => {
             ))}
             {/* Footnote for calculated MTBM */}
             <div className="mt-6 text-sm text-gray-400 italic bg-white/5 border border-white/10 rounded-xl p-4">
-              <p>* Note: MTBM values highlighted in <span className="text-amber-400 font-semibold not-italic">amber *</span> are dynamically calculated based on the elapsed time since the last maintenance date because no historical maintenance log exists in the database.</p>
+              <p>* Note: Time From Last Maint. values highlighted in <span className="text-amber-400 font-semibold not-italic">amber *</span> are dynamically calculated based on the elapsed time since the last maintenance date because no historical maintenance log exists in the database.</p>
             </div>
           </div>
         )}

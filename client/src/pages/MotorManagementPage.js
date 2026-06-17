@@ -50,17 +50,21 @@ const MotorManagementPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const cleanedData = { ...formData };
+      if (cleanedData.speed === '') cleanedData.speed = null;
+      if (cleanedData.lastMaintenanceDate === '') cleanedData.lastMaintenanceDate = null;
+
       if (isEditing) {
-        await api.put(`/motors/${isEditing}`, formData);
+        await api.put(`/motors/${isEditing}`, cleanedData);
       } else {
         if (isBulk) {
           // Bulk Create
-          const serials = formData.serialNumber.split('\n').map(s => s.trim()).filter(s => s);
+          const serials = cleanedData.serialNumber.split('\n').map(s => s.trim()).filter(s => s);
           if (serials.length === 0) {
             setError('Please provide at least one serial number.');
             return;
           }
-          const { serialNumber, ...commonDetails } = formData;
+          const { serialNumber, ...commonDetails } = cleanedData;
           const res = await api.post('/motors/bulk', {
             serialNumbers: serials,
             ...commonDetails
@@ -71,7 +75,7 @@ const MotorManagementPage = () => {
           }
         } else {
           // Single Create
-          await api.post('/motors', formData);
+          await api.post('/motors', cleanedData);
         }
       }
       refreshData();
@@ -83,7 +87,25 @@ const MotorManagementPage = () => {
 
   const handleEdit = (motor) => {
     setIsEditing(motor._id);
-    setFormData({ ...motor });
+    setFormData({
+      serialNumber: motor.serialNumber || '',
+      type: motor.type || '',
+      power: motor.power || '',
+      current: motor.current || '',
+      speed: motor.speed || '',
+      IM: motor.IM || '',
+      frameSize: motor.frameSize || '',
+      manufacturer: motor.manufacturer || '',
+      bearingDE: motor.bearingDE || '',
+      bearingNDE: motor.bearingNDE || '',
+      status: motor.status || 'spare',
+      lastMaintenanceDate: motor.lastMaintenanceDate 
+        ? new Date(motor.lastMaintenanceDate).toISOString().split('T')[0] 
+        : '',
+      SAP: motor.SAP || '',
+      Note: motor.Note || '',
+      Warehouse: motor.Warehouse || ''
+    });
     setIsModalOpen(true);
   };
 

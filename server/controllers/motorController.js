@@ -49,7 +49,10 @@ exports.getMotorWithEquipment = async (req, res) => {
 // @access  Private/Admin
 exports.createMotor = async (req, res) => {
   try {
-    const motor = await Motor.create(req.body);
+    const data = { ...req.body };
+    if (data.speed === '') data.speed = null;
+    if (data.lastMaintenanceDate === '') data.lastMaintenanceDate = null;
+    const motor = await Motor.create(data);
     res.status(201).json({ success: true, data: motor });
   } catch (error) {
     // Handle duplicate serial number error
@@ -72,10 +75,15 @@ exports.createBulkMotors = async (req, res) => {
     }
 
     // Create array of motor objects
-    const motorsToCreate = serialNumbers.map(serial => ({
-      ...commonDetails,
-      serialNumber: serial
-    }));
+    const motorsToCreate = serialNumbers.map(serial => {
+      const data = {
+        ...commonDetails,
+        serialNumber: serial
+      };
+      if (data.speed === '') data.speed = null;
+      if (data.lastMaintenanceDate === '') data.lastMaintenanceDate = null;
+      return data;
+    });
 
     let createdMotors = [];
     let errors = [];
@@ -135,7 +143,19 @@ exports.createBulkMotors = async (req, res) => {
 // @access  Private/Manager or Admin
 exports.updateMotor = async (req, res) => {
   try {
-    const motor = await Motor.findByIdAndUpdate(req.params.id, req.body, {
+    const updateData = { ...req.body };
+    delete updateData._id;
+    delete updateData.__v;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+    delete updateData.eq;
+    delete updateData.maintenanceHistory;
+    delete updateData.assignmentHistory;
+
+    if (updateData.speed === '') updateData.speed = null;
+    if (updateData.lastMaintenanceDate === '') updateData.lastMaintenanceDate = null;
+
+    const motor = await Motor.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     });

@@ -1,9 +1,16 @@
 // client/src/pages/PlantEquipmentPage.js
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader, ImageIcon, ExternalLink } from 'lucide-react';
+import { Loader, ImageIcon, ExternalLink, Zap } from 'lucide-react';
 import api from '../services/api';
 import AuthContext from '../context/AuthContext';
+
+const parsePower = (powerStr) => {
+  if (!powerStr) return 0;
+  const match = String(powerStr).match(/([0-9.]+)/);
+  return match ? parseFloat(match[1]) : 0;
+};
+
 
 const PlantEquipmentPage = () => {
   const { user } = useContext(AuthContext);
@@ -121,6 +128,13 @@ const PlantEquipmentPage = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
         </svg>
       )
+    },
+    {
+      id: 'ht',
+      name: 'H.T. Equipment',
+      isHT: true,
+      color: 'from-amber-500 to-red-600',
+      icon: <Zap className="w-8 h-8 text-white" />
     }
   ];
 
@@ -301,11 +315,17 @@ const PlantEquipmentPage = () => {
 
     // If a plant is selected, filter by TON number prefixes
     if (selectedPlant) {
-      filtered = equipments.filter(eq =>
-        selectedPlant.prefixes.some(prefix =>
-          eq.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
-        )
-      );
+      if (selectedPlant.isHT) {
+        filtered = equipments.filter(eq =>
+          eq.currentMotor && parsePower(eq.currentMotor.power) > 160
+        );
+      } else {
+        filtered = equipments.filter(eq =>
+          selectedPlant.prefixes.some(prefix =>
+            eq.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
+          )
+        );
+      }
     }
 
     // Apply search filter
@@ -380,11 +400,14 @@ const PlantEquipmentPage = () => {
                 </h3>
                 <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-4"></div>
                 <p className="text-gray-300 text-sm">
-                  {equipments.filter(eq =>
-                    plant.prefixes.some(prefix =>
-                      eq.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
-                    )
-                  ).length} Equipment(s)
+                  {plant.isHT
+                    ? equipments.filter(eq => eq.currentMotor && parsePower(eq.currentMotor.power) > 160).length
+                    : equipments.filter(eq =>
+                        plant.prefixes.some(prefix =>
+                          eq.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
+                        )
+                      ).length
+                  } Equipment(s)
                 </p>
               </div>
 
@@ -426,7 +449,7 @@ const PlantEquipmentPage = () => {
                 <div className={`w-10 h-10 bg-gradient-to-r ${selectedPlant.color} rounded-lg flex items-center justify-center`}>
                   {selectedPlant.icon}
                 </div>
-                <span>{selectedPlant.name} Equipment</span>
+                <span>{selectedPlant.name}{selectedPlant.name.toLowerCase().endsWith('equipment') ? '' : ' Equipment'}</span>
               </h2>
               <p className="text-gray-300 mt-1">
                 {filteredEquipments.length} equipment(s) found

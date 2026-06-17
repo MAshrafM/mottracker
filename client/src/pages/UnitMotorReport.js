@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { FileDown, FileSpreadsheet, Loader, ArrowLeft, Layers, CheckCircle2, History } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Loader, ArrowLeft, Layers, CheckCircle2, History, Zap } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 
 const UnitMotorReport = () => {
@@ -91,6 +91,12 @@ const UnitMotorReport = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
         </svg>
       )
+    },
+    {
+      id: 'ht',
+      name: 'H.T. Motors',
+      color: 'from-amber-500 to-red-600',
+      icon: <Zap className="w-6 h-6 text-white" />
     }
   ];
 
