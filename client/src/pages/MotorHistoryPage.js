@@ -1,10 +1,11 @@
 // client/src/pages/MotorHistoryPage.js
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import api from '../services/api';
-import { Loader } from 'lucide-react';
+import { Loader, Printer, ArrowLeft } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import { useParams } from 'react-router-dom';
 import MassMaintenanceEntry from '../components/MassMaintenanceEntry';
+import logo from '../logo_ar.gif';
 
 const MaintenanceHistory = () => {
   const { motorId } = useParams();
@@ -27,6 +28,7 @@ const MaintenanceHistory = () => {
     serialNumber: '', type: '', power: '', current: '', speed: '', IM: '', frameSize: '',
     manufacturer: '', bearingDE: '', bearingNDE: '', status: 'spare', lastMaintenanceDate: '', SAP: '', Note: '', Warehouse: ''
   });
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   // Loading and error states
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -262,6 +264,229 @@ const MaintenanceHistory = () => {
     }
   }
 
+  if (isGeneratingReport) {
+    let activeAssignment = null;
+    if (motor && motor.assignmentHistory && motor.assignmentHistory.length > 0) {
+      activeAssignment = motor.assignmentHistory.find(h => !h.dateRemoved);
+      if (!activeAssignment) {
+        activeAssignment = motor.assignmentHistory[motor.assignmentHistory.length - 1];
+      }
+    }
+    const dateAssignedFormatted = activeAssignment && activeAssignment.dateInstalled 
+      ? new Date(activeAssignment.dateInstalled).toLocaleDateString() 
+      : 'N/A';
+    const dateRemovedFormatted = activeAssignment && activeAssignment.dateRemoved 
+      ? new Date(activeAssignment.dateRemoved).toLocaleDateString() 
+      : (activeAssignment ? 'Active' : 'N/A');
+
+    return (
+      <div className="min-h-screen bg-white text-black p-4 md:p-8">
+        {/* Navigation & Actions - Hidden when printing */}
+        <div className="print:hidden flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+          <button
+            onClick={() => setIsGeneratingReport(false)}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
+          >
+            <ArrowLeft size={20} />
+            Back to History
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
+          >
+            <Printer size={20} />
+            Print Report
+          </button>
+        </div>
+
+        {/* Report Content */}
+        <div className="w-full md:max-w-[210mm] mx-auto bg-white relative min-h-[297mm] p-4 md:p-8 shadow-none md:shadow-2xl print:shadow-none print:p-0 print:m-0 print:w-full print:max-w-none">
+          {/* Watermark */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.03]">
+            <img src={logo} alt="Watermark" className="w-[80%] h-auto grayscale" />
+          </div>
+          <style>
+            {`
+              @media print {
+                @page {
+                  size: A4 portrait;
+                  margin: 10mm;
+                }
+                body {
+                  -webkit-print-color-adjust: exact;
+                }
+                /* Hide global elements */
+                nav, header, .navbar, .sidebar { 
+                  display: none !important; 
+                }
+              }
+            `}
+          </style>
+
+          <div className="relative z-10">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row print:flex-row justify-between items-center border-b-2 border-slate-800 pb-6 mb-8 gap-4 text-center md:text-left print:text-left">
+              <div>
+                <h1 className="text-2xl md:text-3xl print:text-3xl font-bold text-slate-900 uppercase tracking-wider">Maintenance Report</h1>
+                <p className="text-slate-500 mt-1">Generated on {new Date().toLocaleDateString()}</p>
+              </div>
+              <img src={logo} alt="Company Logo" className="h-12 md:h-16 print:h-16 w-auto" />
+            </div>
+
+            {/* Equipment Info if active */}
+            {eq && motor.status === 'active' && (
+              <div className="mb-8 border-b border-slate-300 pb-4">
+                <span className="text-xs uppercase font-bold text-slate-500 tracking-wider">Current Installation</span>
+                <h3 className="text-xl font-bold text-slate-800 mt-1">
+                  {eq.tonNumber} - {eq.designation}
+                </h3>
+              </div>
+            )}
+
+            {/* Section 1: Motor Information */}
+            <section className="mb-10">
+              <h2 className="text-lg md:text-xl print:text-xl font-bold text-slate-800 uppercase border-l-4 border-blue-600 pl-3 mb-6">
+                Motor Information
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-12 gap-y-4 text-sm">
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Serial Number</span>
+                  <span className="font-bold text-slate-900">{motor.serialNumber}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Manufacturer</span>
+                  <span className="font-medium text-slate-900">{motor.manufacturer}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Type</span>
+                  <span className="font-medium text-slate-900">{motor.type}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Power</span>
+                  <span className="font-medium text-slate-900">{motor.power} KW</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Speed</span>
+                  <span className="font-medium text-slate-900">{motor.speed} rpm</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Current</span>
+                  <span className="font-medium text-slate-900">{motor.current} A</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Mounting (IM)</span>
+                  <span className="font-medium text-slate-900">{motor.IM}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Frame Size</span>
+                  <span className="font-medium text-slate-900">{motor.frameSize}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Bearing DE</span>
+                  <span className="font-medium text-slate-900">{motor.bearingDE}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Bearing NDE</span>
+                  <span className="font-medium text-slate-900">{motor.bearingNDE}</span>
+                </div>
+                 <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Status</span>
+                  <span className="font-medium text-slate-900 uppercase">{motor.status}</span>
+                </div>
+                {motor.Warehouse && (
+                  <div className="flex justify-between border-b border-slate-200 pb-2">
+                    <span className="font-semibold text-slate-600">Warehouse</span>
+                    <span className="font-medium text-slate-900">{motor.Warehouse}</span>
+                  </div>
+                )}
+                {motor.SAP && (
+                  <div className="flex justify-between border-b border-slate-200 pb-2">
+                    <span className="font-semibold text-slate-600">SAP ID</span>
+                    <span className="font-medium text-slate-900">{motor.SAP}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Last Maintenance</span>
+                  <span className="font-medium text-slate-900">
+                    {motor.lastMaintenanceDate
+                      ? new Date(motor.lastMaintenanceDate).toLocaleDateString()
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">MTBM</span>
+                  <span className="font-medium text-slate-900 text-cyan-600 font-semibold">{formatMTBM(displayMTBM)}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Time From Last Maint.</span>
+                  <span className={`font-semibold ${isCalculated ? 'text-amber-600 italic' : 'text-slate-900'}`}>
+                    {formatMTBM(timeFromLastMaintenance)}
+                    {isCalculated && timeFromLastMaintenance !== null && ' *'}
+                  </span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Date Assigned</span>
+                  <span className="font-medium text-slate-900">{dateAssignedFormatted}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="font-semibold text-slate-600">Date Removed</span>
+                  <span className="font-medium text-slate-900">{dateRemovedFormatted}</span>
+                </div>
+              </div>
+              {isCalculated && timeFromLastMaintenance !== null && (
+                <p className="text-xs text-amber-600 italic mt-4">
+                  * Time From Last Maint. is dynamically calculated because no historical maintenance log exists in the database.
+                </p>
+              )}
+            </section>
+
+            {/* Section 2: History Log */}
+            <section>
+              <h2 className="text-lg md:text-xl print:text-xl font-bold text-slate-800 uppercase border-l-4 border-blue-600 pl-3 mb-6">
+                Maintenance History Log
+              </h2>
+
+              {history.length > 0 ? (
+                <div className="overflow-x-auto print:overflow-visible">
+                  <table className="w-full text-sm text-left min-w-[600px] print:min-w-0">
+                    <thead className="text-xs text-slate-500 uppercase bg-slate-100 border-b border-slate-300">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 w-1/4">Date</th>
+                        <th scope="col" className="px-6 py-3">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {history.map((log, index) => (
+                        <tr key={log._id || index} className="border-b border-slate-200 hover:bg-slate-50">
+                          <td className="px-6 py-4 font-medium text-slate-900 align-top">
+                            {new Date(log.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 text-slate-700 whitespace-pre-wrap">
+                            {log.description}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-slate-500 italic border border-dashed border-slate-300 rounded-lg">
+                  No maintenance history recorded for this motor.
+                </div>
+              )}
+            </section>
+
+            {/* Footer */}
+            <div className="mt-16 pt-8 border-t border-slate-200 text-center text-xs text-slate-400">
+              <p>Motor Tracker System - Maintenance Report</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 min-h-screen p-6">
       <h4 className="text-2xl font-bold text-white flex justify-center items-center space-x-3 mb-4">
@@ -320,6 +545,15 @@ const MaintenanceHistory = () => {
                 <span>Edit Motor Details</span>
               </button>
             )}
+            <button
+              onClick={() => setIsGeneratingReport(true)}
+              className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-800 hover:to-slate-700 
+                         text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                         transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1.5"
+            >
+              <Printer size={16} />
+              <span>Generate Report</span>
+            </button>
           </div>
 
           {/* Empty div to balance flex layout on desktop */}

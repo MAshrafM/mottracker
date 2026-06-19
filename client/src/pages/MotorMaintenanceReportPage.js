@@ -5,6 +5,19 @@ import { Loader, Printer, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import logo from '../logo_ar.gif';
 
+const formatMTBM = (days) => {
+    if (days === null || days === undefined || isNaN(days)) return 'N/A';
+    const months = days / 30;
+    if (months > 12) {
+        const years = months / 12;
+        const formattedYears = Number(years.toFixed(1));
+        return `${formattedYears} ${formattedYears === 1 ? 'year' : 'years'}`;
+    } else {
+        const formattedMonths = Number(months.toFixed(1));
+        return `${formattedMonths} ${formattedMonths === 1 ? 'month' : 'months'}`;
+    }
+};
+
 const MotorMaintenanceReportPage = () => {
     const { motors, refreshData } = useMotorData();
     const [filteredMotors, setFilteredMotors] = useState([]);
@@ -82,6 +95,37 @@ const MotorMaintenanceReportPage = () => {
     }
 
     if (selectedMotor) {
+        let displayMTBM = selectedMotor.meanTimeBetweenMaintenance;
+        let isCalculated = false;
+        if (displayMTBM === null || displayMTBM === undefined || isNaN(displayMTBM)) {
+            isCalculated = true;
+            displayMTBM = null;
+        }
+
+        let timeFromLastMaintenance = null;
+        if (selectedMotor.lastMaintenanceDate) {
+            const today = new Date();
+            const lastMaint = new Date(selectedMotor.lastMaintenanceDate);
+            if (!isNaN(lastMaint.getTime())) {
+                const diffTime = Math.abs(today.getTime() - lastMaint.getTime());
+                timeFromLastMaintenance = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
+        }
+
+        let activeAssignment = null;
+        if (selectedMotor.assignmentHistory && selectedMotor.assignmentHistory.length > 0) {
+            activeAssignment = selectedMotor.assignmentHistory.find(h => !h.dateRemoved);
+            if (!activeAssignment) {
+                activeAssignment = selectedMotor.assignmentHistory[selectedMotor.assignmentHistory.length - 1];
+            }
+        }
+        const dateAssignedFormatted = activeAssignment && activeAssignment.dateInstalled 
+            ? new Date(activeAssignment.dateInstalled).toLocaleDateString() 
+            : 'N/A';
+        const dateRemovedFormatted = activeAssignment && activeAssignment.dateRemoved 
+            ? new Date(activeAssignment.dateRemoved).toLocaleDateString() 
+            : (activeAssignment ? 'Active' : 'N/A');
+
         return (
             <div className="min-h-screen bg-white text-black p-4 md:p-8">
                 {/* Navigation & Actions - Hidden when printing */}
@@ -192,6 +236,18 @@ const MotorMaintenanceReportPage = () => {
                                         <span className="font-semibold text-slate-600">Status</span>
                                         <span className="font-medium text-slate-900 uppercase">{selectedMotor.status}</span>
                                     </div>
+                                    {selectedMotor.Warehouse && (
+                                        <div className="flex justify-between border-b border-slate-200 pb-2">
+                                            <span className="font-semibold text-slate-600">Warehouse</span>
+                                            <span className="font-medium text-slate-900">{selectedMotor.Warehouse}</span>
+                                        </div>
+                                    )}
+                                    {selectedMotor.SAP && (
+                                        <div className="flex justify-between border-b border-slate-200 pb-2">
+                                            <span className="font-semibold text-slate-600">SAP ID</span>
+                                            <span className="font-medium text-slate-900">{selectedMotor.SAP}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between border-b border-slate-200 pb-2">
                                         <span className="font-semibold text-slate-600">Last Maintenance</span>
                                         <span className="font-medium text-slate-900">
@@ -200,7 +256,33 @@ const MotorMaintenanceReportPage = () => {
                                                 : 'N/A'}
                                         </span>
                                     </div>
+                                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                                        <span className="font-semibold text-slate-600">MTBM</span>
+                                        <span className="font-medium text-slate-900 text-cyan-600 font-semibold">
+                                            {formatMTBM(displayMTBM)}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                                        <span className="font-semibold text-slate-600">Time From Last Maint.</span>
+                                        <span className={`font-semibold ${isCalculated ? 'text-amber-600 italic' : 'text-slate-900'}`}>
+                                            {formatMTBM(timeFromLastMaintenance)}
+                                            {isCalculated && timeFromLastMaintenance !== null && ' *'}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                                        <span className="font-semibold text-slate-600">Date Assigned</span>
+                                        <span className="font-medium text-slate-900">{dateAssignedFormatted}</span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                                        <span className="font-semibold text-slate-600">Date Removed</span>
+                                        <span className="font-medium text-slate-900">{dateRemovedFormatted}</span>
+                                    </div>
                                 </div>
+                                {isCalculated && timeFromLastMaintenance !== null && (
+                                    <p className="text-xs text-amber-600 italic mt-4">
+                                        * Time From Last Maint. is dynamically calculated because no historical maintenance log exists in the database.
+                                    </p>
+                                )}
                             </section>
 
                             {/* Section 2: History Log */}

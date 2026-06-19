@@ -70,9 +70,30 @@ const parseTonNumber = (tonNumber) => {
   const leadingDigitsMatch = ton.match(/^(\d{3})/);
   const leadingDigits = leadingDigitsMatch ? parseInt(leadingDigitsMatch[1], 10) : 999;
 
-  const remaining = leadingDigitsMatch ? ton.slice(3) : ton;
-  const followCharMatch = remaining.match(/^([a-zA-Z])/);
+  const remainingAfterLeading = leadingDigitsMatch ? ton.slice(3) : ton;
+  const followCharMatch = remainingAfterLeading.match(/^([a-zA-Z])/);
   const followChar = followCharMatch ? followCharMatch[1].toUpperCase() : '';
+
+  // Middle digits (digits immediately after followChar)
+  const remainingAfterFollow = followCharMatch ? remainingAfterLeading.slice(1) : remainingAfterLeading;
+  const midDigitsMatch = remainingAfterFollow.match(/^(\d+)/);
+  const midDigits = midDigitsMatch ? parseInt(midDigitsMatch[1], 10) : 0;
+
+  // Sub-character (character immediately after middle digits or before dot or at position -5)
+  const remainingAfterMid = midDigitsMatch ? remainingAfterFollow.slice(midDigitsMatch[1].length) : remainingAfterFollow;
+  let subChar = '';
+  const subCharMatch = remainingAfterMid.match(/^([a-zA-Z])/);
+  if (subCharMatch) {
+    subChar = subCharMatch[1];
+  } else {
+    const dotIndex = ton.indexOf('.');
+    if (dotIndex > 0) {
+      subChar = ton.charAt(dotIndex - 1);
+    } else if (ton.length >= 5) {
+      subChar = ton.charAt(ton.length - 5);
+    }
+  }
+  subChar = subChar.toUpperCase();
 
   const allDigits = ton.match(/\d/g);
   let lastTwoDigits = 0;
@@ -82,7 +103,7 @@ const parseTonNumber = (tonNumber) => {
     lastTwoDigits = parseInt(allDigits[0], 10);
   }
 
-  return { leadingDigits, followChar, lastTwoDigits };
+  return { leadingDigits, followChar, midDigits, subChar, lastTwoDigits };
 };
 
 const compareTons = (tonA, tonB) => {
@@ -95,6 +116,15 @@ const compareTons = (tonA, tonB) => {
 
   const charCompare = compareFollowChar(parseA.followChar, parseB.followChar);
   if (charCompare !== 0) return charCompare;
+
+  // Compare middle digits
+  if (parseA.midDigits !== parseB.midDigits) {
+    return parseA.midDigits - parseB.midDigits;
+  }
+
+  // Compare sub-characters alphabetically
+  const subCompare = parseA.subChar.localeCompare(parseB.subChar);
+  if (subCompare !== 0) return subCompare;
 
   if (parseA.lastTwoDigits !== parseB.lastTwoDigits) {
     return parseA.lastTwoDigits - parseB.lastTwoDigits;
@@ -111,13 +141,10 @@ const getUnitMotorData = async (unitId) => {
 
   let equipments;
   if (config.isHT) {
-    const allEquipments = await PlantEquipment.find({})
+    equipments = await PlantEquipment.find({})
       .populate('currentMotor')
       .populate('motorHistory.motor')
       .lean();
-    equipments = allEquipments.filter(eq => {
-      return eq.currentMotor && parsePower(eq.currentMotor.power) > 160;
-    });
   } else {
     // Find equipment whose tonNumber starts with any of the prefixes
     const regexes = config.prefixes.map(prefix => new RegExp(`^${prefix}`, 'i'));
@@ -138,6 +165,10 @@ const getUnitMotorData = async (unitId) => {
       for (const history of eq.motorHistory) {
         if (!history.motor) continue;
 
+        const isHTMotor = parsePower(history.motor.power) > 160;
+        if (config.isHT && !isHTMotor) continue;
+        if (!config.isHT && isHTMotor) continue;
+
         const isCurrent = eq.currentMotor && eq.currentMotor._id.toString() === history.motor._id.toString() && !history.dateRemoved;
 
         rows.push({
@@ -156,6 +187,10 @@ const getUnitMotorData = async (unitId) => {
 
     // Fallback if currentMotor is set but somehow not in history (to avoid database inconsistency missing active motor)
     if (eq.currentMotor) {
+      const isHTMotor = parsePower(eq.currentMotor.power) > 160;
+      if (config.isHT && !isHTMotor) continue;
+      if (!config.isHT && isHTMotor) continue;
+
       const alreadyInHistory = eq.motorHistory && eq.motorHistory.some(
         h => h.motor && h.motor._id.toString() === eq.currentMotor._id.toString()
       );
@@ -175,11 +210,21 @@ const getUnitMotorData = async (unitId) => {
     }
   }
 
-  // Sort rows: first by compareTons custom sort, then by dateAssigned descending (newest first)
+  // Sort rows: 
+  // 1. Status: Active first, Historical second
+  // 2. TON number: compareTons custom sort
+  // 3. Date assigned: descending (newest first)
   rows.sort((a, b) => {
+    // Status comparison (Active before Historical)
+    if (a.status !== b.status) {
+      return a.status === 'Active' ? -1 : 1;
+    }
+
+    // TON number comparison
     const tonCompare = compareTons(a.tonNumber, b.tonNumber);
     if (tonCompare !== 0) return tonCompare;
 
+    // Date assigned comparison (newest first)
     if (!a.dateAssigned) return 1;
     if (!b.dateAssigned) return -1;
     return new Date(b.dateAssigned) - new Date(a.dateAssigned);
