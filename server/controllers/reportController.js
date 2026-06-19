@@ -568,6 +568,356 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
   }
 };
 
+const getStatusRank = (status) => {
+  if (status === 'Active') return 1;
+  if (status === 'Spare') return 2;
+  if (status === 'Historical') return 3;
+  return 4;
+};
+
+const compareAllMotors = (a, b) => {
+  const parseA = parseTonNumber(a.tonNumber);
+  const parseB = parseTonNumber(b.tonNumber);
+
+  // 1. Compare leadingDigits
+  if (parseA.leadingDigits !== parseB.leadingDigits) {
+    return parseA.leadingDigits - parseB.leadingDigits;
+  }
+
+  // 2. Compare followChar
+  const charCompare = compareFollowChar(parseA.followChar, parseB.followChar);
+  if (charCompare !== 0) return charCompare;
+
+  // 3. Compare midDigits (defines principle group, e.g. 001)
+  if (parseA.midDigits !== parseB.midDigits) {
+    return parseA.midDigits - parseB.midDigits;
+  }
+
+  // 4. If same main group, sort by Status Rank
+  const rankA = getStatusRank(a.status);
+  const rankB = getStatusRank(b.status);
+  if (rankA !== rankB) {
+    return rankA - rankB;
+  }
+
+  // 5. Within the same status, sort by subChar (train)
+  const subCompare = parseA.subChar.localeCompare(parseB.subChar);
+  if (subCompare !== 0) return subCompare;
+
+  // 6. Within the same status and train, sort by lastTwoDigits (suffix)
+  if (parseA.lastTwoDigits !== parseB.lastTwoDigits) {
+    return parseA.lastTwoDigits - parseB.lastTwoDigits;
+  }
+
+  // 7. For historical, sort by dateAssigned descending (newest first)
+  if (a.status === 'Historical' && a.dateAssigned && b.dateAssigned) {
+    return new Date(b.dateAssigned) - new Date(a.dateAssigned);
+  }
+
+  // 8. Fallback to literal comparison
+  return a.tonNumber.localeCompare(b.tonNumber);
+};
+
+const getAllMotorDetailedData = async () => {
+  // Fetch all equipment with their current motors and history
+  const equipments = await PlantEquipment.find({})
+    .populate('currentMotor')
+    .populate('motorHistory.motor')
+    .lean();
+
+  const allMotorRows = [];
+
+  for (const eq of equipments) {
+    const activeMotor = eq.currentMotor;
+    
+    // A. Active Motor
+    if (activeMotor) {
+      let dateAssigned = null;
+      if (eq.motorHistory && eq.motorHistory.length > 0) {
+        const activeHistory = eq.motorHistory.find(
+          h => h.motor && h.motor._id.toString() === activeMotor._id.toString() && !h.dateRemoved
+        );
+        if (activeHistory) {
+          dateAssigned = activeHistory.dateAssigned;
+        }
+      }
+
+      let isCalculatedMTBM = false;
+      let calculatedMTBM = activeMotor.meanTimeBetweenMaintenance;
+      if (calculatedMTBM === null || calculatedMTBM === undefined || typeof calculatedMTBM !== 'number' || isNaN(calculatedMTBM)) {
+        isCalculatedMTBM = true;
+        calculatedMTBM = null;
+      }
+
+      let timeSinceLastMaintenance = null;
+      if (activeMotor.lastMaintenanceDate) {
+        const today = new Date();
+        const lastMaint = new Date(activeMotor.lastMaintenanceDate);
+        if (!isNaN(lastMaint.getTime())) {
+          const diffTime = Math.abs(today.getTime() - lastMaint.getTime());
+          timeSinceLastMaintenance = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+      }
+
+      allMotorRows.push({
+        motorId: activeMotor._id,
+        tonNumber: eq.tonNumber || '',
+        designation: eq.designation || '',
+        serialNumber: activeMotor.serialNumber || '',
+        power: activeMotor.power || 'N/A',
+        speed: activeMotor.speed || 'N/A',
+        current: activeMotor.current || 'N/A',
+        IM: activeMotor.IM || 'N/A',
+        frameSize: activeMotor.frameSize || 'N/A',
+        bearingNDE: activeMotor.bearingNDE || 'N/A',
+        bearingDE: activeMotor.bearingDE || 'N/A',
+        lastMaintenanceDate: activeMotor.lastMaintenanceDate || null,
+        meanTimeBetweenMaintenance: calculatedMTBM,
+        isCalculatedMTBM: isCalculatedMTBM,
+        timeSinceLastMaintenance: timeSinceLastMaintenance,
+        dateAssigned: dateAssigned || null,
+        dateRemoved: null,
+        greaseInterval: eq.greaseInterval,
+        status: 'Active'
+      });
+    }
+  }
+
+  // C. Spare Motors
+  const spareMotors = await Motor.find({ status: 'spare' }).lean();
+  for (const motor of spareMotors) {
+    let isCalculatedMTBM = false;
+    let calculatedMTBM = motor.meanTimeBetweenMaintenance;
+    if (calculatedMTBM === null || calculatedMTBM === undefined || typeof calculatedMTBM !== 'number' || isNaN(calculatedMTBM)) {
+      isCalculatedMTBM = true;
+      calculatedMTBM = null;
+    }
+
+    let timeSinceLastMaintenance = null;
+    if (motor.lastMaintenanceDate) {
+      const today = new Date();
+      const lastMaint = new Date(motor.lastMaintenanceDate);
+      if (!isNaN(lastMaint.getTime())) {
+        const diffTime = Math.abs(today.getTime() - lastMaint.getTime());
+        timeSinceLastMaintenance = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
+    }
+
+    let tonNumber = '';
+    let designation = 'Spare Motor';
+    if (motor.assignmentHistory && motor.assignmentHistory.length > 0) {
+      const sortedHistory = [...motor.assignmentHistory].sort((a, b) => new Date(b.dateInstalled) - new Date(a.dateInstalled));
+      const lastAssigned = sortedHistory[0];
+      if (lastAssigned && lastAssigned.ton) {
+        tonNumber = lastAssigned.ton;
+        designation = `Spare (Prev: ${lastAssigned.ton})`;
+      }
+    }
+
+    allMotorRows.push({
+      motorId: motor._id,
+      tonNumber: tonNumber,
+      designation: designation,
+      serialNumber: motor.serialNumber || '',
+      power: motor.power || 'N/A',
+      speed: motor.speed || 'N/A',
+      current: motor.current || 'N/A',
+      IM: motor.IM || 'N/A',
+      frameSize: motor.frameSize || 'N/A',
+      bearingNDE: motor.bearingNDE || 'N/A',
+      bearingDE: motor.bearingDE || 'N/A',
+      lastMaintenanceDate: motor.lastMaintenanceDate || null,
+      meanTimeBetweenMaintenance: calculatedMTBM,
+      isCalculatedMTBM: isCalculatedMTBM,
+      timeSinceLastMaintenance: timeSinceLastMaintenance,
+      dateAssigned: null,
+      dateRemoved: null,
+      greaseInterval: null,
+      status: 'Spare'
+    });
+  }
+
+  const groupedData = [];
+  const matchedMotorKeys = new Set();
+  const getRowKey = (row) => `${row.motorId.toString()}-${row.status}-${row.tonNumber}`;
+
+  // Filter H.T. motors first
+  const htMotors = allMotorRows.filter(item => {
+    return parsePower(item.power) > 160;
+  });
+
+  if (htMotors.length > 0) {
+    htMotors.sort(compareAllMotors);
+    htMotors.forEach(row => matchedMotorKeys.add(getRowKey(row)));
+    groupedData.push({
+      unitName: 'H.T.',
+      motors: htMotors
+    });
+  }
+
+  const units = Object.keys(UNIT_CONFIGS)
+    .filter(key => key !== 'ht')
+    .map(key => ({
+      id: key,
+      name: UNIT_CONFIGS[key].name,
+      prefixes: UNIT_CONFIGS[key].prefixes
+    }));
+
+  units.forEach(unit => {
+    const unitMotors = allMotorRows.filter(item => {
+      return !matchedMotorKeys.has(getRowKey(item)) &&
+             unit.prefixes.some(prefix =>
+               item.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
+             );
+    });
+
+    if (unitMotors.length > 0) {
+      unitMotors.sort(compareAllMotors);
+      unitMotors.forEach(row => matchedMotorKeys.add(getRowKey(row)));
+      groupedData.push({
+        unitName: unit.name,
+        motors: unitMotors
+      });
+    }
+  });
+
+  const otherMotors = allMotorRows.filter(item => !matchedMotorKeys.has(getRowKey(item)));
+  if (otherMotors.length > 0) {
+    otherMotors.sort(compareAllMotors);
+    groupedData.push({
+      unitName: 'Other / Uncategorized',
+      motors: otherMotors
+    });
+  }
+
+  return groupedData;
+};
+
+exports.getAllMotorDetailedReport = async (req, res) => {
+  try {
+    const data = await getAllMotorDetailedData();
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.exportAllMotorsDetailedToExcel = async (req, res) => {
+  try {
+    const groupedData = await getAllMotorDetailedData();
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('All Motors Detailed');
+
+    worksheet.columns = [
+      { header: 'TON Number', key: 'tonNumber', width: 18 },
+      { header: 'Designation', key: 'designation', width: 28 },
+      { header: 'Serial Number', key: 'serialNumber', width: 18 },
+      { header: 'Power', key: 'power', width: 12 },
+      { header: 'Speed', key: 'speed', width: 12 },
+      { header: 'IM', key: 'IM', width: 10 },
+      { header: 'Frame Size', key: 'frameSize', width: 12 },
+      { header: 'Bearing NDE', key: 'bearingNDE', width: 15 },
+      { header: 'Bearing DE', key: 'bearingDE', width: 15 },
+      { header: 'Last Maintenance', key: 'lastMaintenanceDate', width: 18 },
+      { header: 'MTBM', key: 'meanTimeBetweenMaintenance', width: 15 },
+      { header: 'Time Since Last Maint.', key: 'timeSinceLastMaintenance', width: 22 },
+      { header: 'Status', key: 'status', width: 12 },
+      { header: 'Date Assigned', key: 'dateAssigned', width: 18 },
+      { header: 'Grease Interval', key: 'greaseInterval', width: 18 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' }
+    };
+    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    groupedData.forEach(group => {
+      const headerText = group.unitName === 'H.T.' ? '--- H.T. MOTORS ---' : `--- ${group.unitName.toUpperCase()} UNIT ---`;
+      const catRow = worksheet.addRow({ tonNumber: headerText });
+      worksheet.mergeCells(`A${catRow.number}:O${catRow.number}`);
+      catRow.font = { bold: true, size: 12, color: { argb: 'FF1F497D' } };
+      catRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFEAEAEA' }
+      };
+      catRow.alignment = { horizontal: 'left' };
+
+      group.motors.forEach(row => {
+        const isCalculated = row.isCalculatedMTBM;
+        const mtbmValue = formatMTBM(row.meanTimeBetweenMaintenance);
+        const timeSinceLastMaintValue = isCalculated && row.timeSinceLastMaintenance !== null && row.timeSinceLastMaintenance !== undefined
+          ? `${formatMTBM(row.timeSinceLastMaintenance)} *`
+          : formatMTBM(row.timeSinceLastMaintenance);
+
+        const newRow = worksheet.addRow({
+          tonNumber: row.tonNumber || 'N/A',
+          designation: row.designation,
+          serialNumber: row.serialNumber,
+          power: row.power,
+          speed: row.speed,
+          IM: row.IM,
+          frameSize: row.frameSize,
+          bearingNDE: row.bearingNDE,
+          bearingDE: row.bearingDE,
+          lastMaintenanceDate: row.lastMaintenanceDate ? formatDate(row.lastMaintenanceDate) : 'N/A',
+          meanTimeBetweenMaintenance: mtbmValue,
+          timeSinceLastMaintenance: timeSinceLastMaintValue,
+          status: row.status,
+          dateAssigned: row.dateAssigned ? formatDate(row.dateAssigned) : 'N/A',
+          greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
+            ? `${row.greaseInterval} hrs` 
+            : 'N/A'
+        });
+
+        if (isCalculated) {
+          const cell = newRow.getCell(12); // Column L (Time Since Last Maint.)
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFFF9C4' }
+          };
+          cell.font = { italic: true, color: { argb: 'FF975A16' } };
+        }
+
+        const statusCell = newRow.getCell(13); // Column M (Status)
+        if (row.status === 'Active') {
+          statusCell.font = { color: { argb: 'FF27AE60' }, bold: true };
+        } else if (row.status === 'Spare') {
+          statusCell.font = { color: { argb: 'FFD35400' }, bold: true }; // Orange color
+        }
+      });
+
+      worksheet.addRow([]);
+    });
+
+    const footnoteRow = worksheet.addRow({ tonNumber: '* Note: Time Since Last Maint. values marked with * are dynamically calculated since no historical maintenance log is recorded in the database.' });
+    worksheet.mergeCells(`A${footnoteRow.number}:O${footnoteRow.number}`);
+    footnoteRow.font = { italic: true, size: 10, color: { argb: 'FF7F7F7F' } };
+    footnoteRow.alignment = { horizontal: 'left' };
+    worksheet.addRow([]);
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=all_motors_detailed_${new Date().toISOString().split('T')[0]}.xlsx`
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Error exporting detailed all motors to Excel:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 
 
 exports.exportActiveMotorsToPDF = async (req, res) => {

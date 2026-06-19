@@ -35,6 +35,16 @@ const ReportsPage = () => {
               <p className="text-sm text-slate-300">View categorized detailed active motors report (Excel Export only).</p>
             </Link>
 
+            <Link to="/reports/all-motors-detailed" className="group flex flex-col items-center p-6 text-center
+                         bg-white/5 backdrop-blur-md rounded-xl 
+                         border border-white/10 
+                         shadow-lg transition-all duration-300 
+                         hover:bg-white/20 hover:border-white/30 hover:shadow-xl">
+              <ClipboardList className="w-12 h-12 mb-4 text-amber-400 opacity-70 transition-opacity group-hover:opacity-100" />
+              <h3 className="text-xl font-semibold mb-2 text-white">All Motor Detailed</h3>
+              <p className="text-sm text-slate-300">View categorized detailed report including active, spare, and historical motors.</p>
+            </Link>
+
             <Link to="/reports/spare-motors" className="group flex flex-col items-center p-6 text-center
                          bg-white/5 backdrop-blur-md rounded-xl 
                          border border-white/10 
