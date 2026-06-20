@@ -147,6 +147,8 @@ const AllMotorDetailedReport = () => {
                         <th className="px-4 py-3">Status</th>
                         <th className="px-4 py-3">Date Assigned</th>
                         <th className="px-4 py-3">Grease Interval</th>
+                        <th className="px-4 py-3">Warehouse No.</th>
+                        <th className="px-4 py-3">SAP No.</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-sm text-gray-200">
@@ -182,6 +184,8 @@ const AllMotorDetailedReport = () => {
                           <td className="px-4 py-3 text-amber-300 font-semibold">
                             {motor.greaseInterval ? `${motor.greaseInterval} hrs` : 'N/A'}
                           </td>
+                          <td className="px-4 py-3 font-mono text-xs">{motor.Warehouse || 'N/A'}</td>
+                          <td className="px-4 py-3 font-mono text-xs">{motor.SAP || 'N/A'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -216,6 +220,8 @@ const AllMotorDetailedReport = () => {
                         <p>Time From Maint: <span className={`font-semibold ${motor.isCalculatedMTBM ? 'text-amber-400 italic' : 'text-white'}`}>{formatMTBM(motor.timeSinceLastMaintenance)}{motor.isCalculatedMTBM && ' *'}</span></p>
                         <p>Assigned: <span className="text-white">{formatDate(motor.dateAssigned)}</span></p>
                         <p>Grease Int: <span className="text-amber-300 font-semibold">{motor.greaseInterval ? `${motor.greaseInterval} hrs` : 'N/A'}</span></p>
+                        <p>Warehouse No: <span className="text-white font-mono">{motor.Warehouse || 'N/A'}</span></p>
+                        <p>SAP No: <span className="text-white font-mono">{motor.SAP || 'N/A'}</span></p>
                       </div>
                     </div>
                   ))}

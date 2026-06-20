@@ -466,7 +466,7 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Active Motors Detailed');
 
-    worksheet.columns = [
+    const columnsConfig = [
       { header: 'TON Number', key: 'tonNumber', width: 18 },
       { header: 'Designation', key: 'designation', width: 28 },
       { header: 'Serial Number', key: 'serialNumber', width: 18 },
@@ -482,6 +482,8 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
       { header: 'Date Assigned', key: 'dateAssigned', width: 18 },
       { header: 'Grease Interval', key: 'greaseInterval', width: 18 },
     ];
+
+    worksheet.columns = columnsConfig;
 
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     worksheet.getRow(1).fill = {
@@ -550,6 +552,77 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
     footnoteRow.alignment = { horizontal: 'left' };
     worksheet.addRow([]);
 
+    // Add category-specific sheets
+    groupedData.forEach(group => {
+      // Clean and sanitize the sheet name to fit Excel guidelines (length <= 31, no invalid characters)
+      let sheetName = group.unitName.replace(/[\/\\?*:\[\]]/g, '-');
+      if (sheetName.length > 31) {
+        sheetName = sheetName.substring(0, 31);
+      }
+
+      const catSheet = workbook.addWorksheet(sheetName);
+      catSheet.columns = columnsConfig;
+
+      catSheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      catSheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' }
+      };
+      catSheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+      let hasCalculated = false;
+
+      group.motors.forEach(row => {
+        const isCalculated = row.isCalculatedMTBM;
+        if (isCalculated) {
+          hasCalculated = true;
+        }
+
+        const mtbmValue = formatMTBM(row.meanTimeBetweenMaintenance);
+        const timeSinceLastMaintValue = isCalculated && row.timeSinceLastMaintenance !== null && row.timeSinceLastMaintenance !== undefined
+          ? `${formatMTBM(row.timeSinceLastMaintenance)} *`
+          : formatMTBM(row.timeSinceLastMaintenance);
+
+        const newRow = catSheet.addRow({
+          tonNumber: row.tonNumber,
+          designation: row.designation,
+          serialNumber: row.serialNumber,
+          power: row.power,
+          speed: row.speed,
+          IM: row.IM,
+          frameSize: row.frameSize,
+          bearingNDE: row.bearingNDE,
+          bearingDE: row.bearingDE,
+          lastMaintenanceDate: row.lastMaintenanceDate ? formatDate(row.lastMaintenanceDate) : 'N/A',
+          meanTimeBetweenMaintenance: mtbmValue,
+          timeSinceLastMaintenance: timeSinceLastMaintValue,
+          dateAssigned: row.dateAssigned ? formatDate(row.dateAssigned) : 'N/A',
+          greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
+            ? `${row.greaseInterval} hrs` 
+            : 'N/A'
+        });
+
+        if (isCalculated) {
+          const cell = newRow.getCell(12); // Column L (Time Since Last Maint.)
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFFF9C4' } // soft pastel yellow/amber
+          };
+          cell.font = { italic: true, color: { argb: 'FF975A16' } };
+        }
+      });
+
+      if (hasCalculated) {
+        catSheet.addRow([]);
+        const footnoteRowCat = catSheet.addRow({ tonNumber: '* Note: Time Since Last Maint. values marked with * are dynamically calculated since no historical maintenance log is recorded in the database.' });
+        catSheet.mergeCells(`A${footnoteRowCat.number}:N${footnoteRowCat.number}`);
+        footnoteRowCat.font = { italic: true, size: 10, color: { argb: 'FF7F7F7F' } };
+        footnoteRowCat.alignment = { horizontal: 'left' };
+        catSheet.addRow([]);
+      }
+    });
 
     res.setHeader(
       'Content-Type',
@@ -678,7 +751,9 @@ const getAllMotorDetailedData = async () => {
         dateAssigned: dateAssigned || null,
         dateRemoved: null,
         greaseInterval: eq.greaseInterval,
-        status: 'Active'
+        status: 'Active',
+        Warehouse: activeMotor.Warehouse || 'N/A',
+        SAP: activeMotor.SAP || 'N/A'
       });
     }
   }
@@ -733,7 +808,9 @@ const getAllMotorDetailedData = async () => {
       dateAssigned: null,
       dateRemoved: null,
       greaseInterval: null,
-      status: 'Spare'
+      status: 'Spare',
+      Warehouse: motor.Warehouse || 'N/A',
+      SAP: motor.SAP || 'N/A'
     });
   }
 
@@ -809,7 +886,7 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('All Motors Detailed');
 
-    worksheet.columns = [
+    const columnsConfig = [
       { header: 'TON Number', key: 'tonNumber', width: 18 },
       { header: 'Designation', key: 'designation', width: 28 },
       { header: 'Serial Number', key: 'serialNumber', width: 18 },
@@ -825,7 +902,11 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
       { header: 'Status', key: 'status', width: 12 },
       { header: 'Date Assigned', key: 'dateAssigned', width: 18 },
       { header: 'Grease Interval', key: 'greaseInterval', width: 18 },
+      { header: 'Warehouse No.', key: 'Warehouse', width: 15 },
+      { header: 'SAP No.', key: 'SAP', width: 15 },
     ];
+
+    worksheet.columns = columnsConfig;
 
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     worksheet.getRow(1).fill = {
@@ -838,7 +919,7 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
     groupedData.forEach(group => {
       const headerText = group.unitName === 'H.T.' ? '--- H.T. MOTORS ---' : `--- ${group.unitName.toUpperCase()} UNIT ---`;
       const catRow = worksheet.addRow({ tonNumber: headerText });
-      worksheet.mergeCells(`A${catRow.number}:O${catRow.number}`);
+      worksheet.mergeCells(`A${catRow.number}:Q${catRow.number}`);
       catRow.font = { bold: true, size: 12, color: { argb: 'FF1F497D' } };
       catRow.fill = {
         type: 'pattern',
@@ -858,6 +939,8 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
           tonNumber: row.tonNumber || 'N/A',
           designation: row.designation,
           serialNumber: row.serialNumber,
+          Warehouse: row.Warehouse || 'N/A',
+          SAP: row.SAP || 'N/A',
           power: row.power,
           speed: row.speed,
           IM: row.IM,
@@ -896,10 +979,92 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
     });
 
     const footnoteRow = worksheet.addRow({ tonNumber: '* Note: Time Since Last Maint. values marked with * are dynamically calculated since no historical maintenance log is recorded in the database.' });
-    worksheet.mergeCells(`A${footnoteRow.number}:O${footnoteRow.number}`);
+    worksheet.mergeCells(`A${footnoteRow.number}:Q${footnoteRow.number}`);
     footnoteRow.font = { italic: true, size: 10, color: { argb: 'FF7F7F7F' } };
     footnoteRow.alignment = { horizontal: 'left' };
     worksheet.addRow([]);
+
+    // Add category-specific sheets
+    groupedData.forEach(group => {
+      // Clean and sanitize the sheet name to fit Excel guidelines (length <= 31, no invalid characters)
+      let sheetName = group.unitName.replace(/[\/\\?*:\[\]]/g, '-');
+      if (sheetName.length > 31) {
+        sheetName = sheetName.substring(0, 31);
+      }
+
+      const catSheet = workbook.addWorksheet(sheetName);
+      catSheet.columns = columnsConfig;
+
+      catSheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      catSheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4472C4' }
+      };
+      catSheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+      let hasCalculated = false;
+
+      group.motors.forEach(row => {
+        const isCalculated = row.isCalculatedMTBM;
+        if (isCalculated) {
+          hasCalculated = true;
+        }
+
+        const mtbmValue = formatMTBM(row.meanTimeBetweenMaintenance);
+        const timeSinceLastMaintValue = isCalculated && row.timeSinceLastMaintenance !== null && row.timeSinceLastMaintenance !== undefined
+          ? `${formatMTBM(row.timeSinceLastMaintenance)} *`
+          : formatMTBM(row.timeSinceLastMaintenance);
+
+        const newRow = catSheet.addRow({
+          tonNumber: row.tonNumber || 'N/A',
+          designation: row.designation,
+          serialNumber: row.serialNumber,
+          Warehouse: row.Warehouse || 'N/A',
+          SAP: row.SAP || 'N/A',
+          power: row.power,
+          speed: row.speed,
+          IM: row.IM,
+          frameSize: row.frameSize,
+          bearingNDE: row.bearingNDE,
+          bearingDE: row.bearingDE,
+          lastMaintenanceDate: row.lastMaintenanceDate ? formatDate(row.lastMaintenanceDate) : 'N/A',
+          meanTimeBetweenMaintenance: mtbmValue,
+          timeSinceLastMaintenance: timeSinceLastMaintValue,
+          status: row.status,
+          dateAssigned: row.dateAssigned ? formatDate(row.dateAssigned) : 'N/A',
+          greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
+            ? `${row.greaseInterval} hrs` 
+            : 'N/A'
+        });
+
+        if (isCalculated) {
+          const cell = newRow.getCell(12); // Column L (Time Since Last Maint.)
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFFF9C4' }
+          };
+          cell.font = { italic: true, color: { argb: 'FF975A16' } };
+        }
+
+        const statusCell = newRow.getCell(13); // Column M (Status)
+        if (row.status === 'Active') {
+          statusCell.font = { color: { argb: 'FF27AE60' }, bold: true };
+        } else if (row.status === 'Spare') {
+          statusCell.font = { color: { argb: 'FFD35400' }, bold: true };
+        }
+      });
+
+      if (hasCalculated) {
+        catSheet.addRow([]);
+        const footnoteRowCat = catSheet.addRow({ tonNumber: '* Note: Time Since Last Maint. values marked with * are dynamically calculated since no historical maintenance log is recorded in the database.' });
+        catSheet.mergeCells(`A${footnoteRowCat.number}:Q${footnoteRowCat.number}`);
+        footnoteRowCat.font = { italic: true, size: 10, color: { argb: 'FF7F7F7F' } };
+        footnoteRowCat.alignment = { horizontal: 'left' };
+        catSheet.addRow([]);
+      }
+    });
 
     res.setHeader(
       'Content-Type',
