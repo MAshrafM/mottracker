@@ -3,6 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { FileSpreadsheet, Loader, ChevronLeft } from 'lucide-react';
 
+const getUnitFromTon = (tonNumber) => {
+  if (!tonNumber) return '';
+  const ton = String(tonNumber).trim();
+  const matchDigits = ton.match(/^(\d+)/);
+  if (matchDigits) {
+    const digits = matchDigits[1];
+    return digits.substring(0, 3);
+  }
+  const matchLetters = ton.match(/^([a-zA-Z]+)/);
+  if (matchLetters) {
+    return matchLetters[1].toUpperCase();
+  }
+  return ton.substring(0, 3).toUpperCase();
+};
+
 const AllMotorDetailedReport = () => {
   const navigate = useNavigate();
   const [reportData, setReportData] = useState([]);
@@ -141,90 +156,124 @@ const AllMotorDetailedReport = () => {
                         <th className="px-4 py-3">Frame Size</th>
                         <th className="px-4 py-3">Bearing NDE</th>
                         <th className="px-4 py-3">Bearing DE</th>
+                        <th className="px-4 py-3">Prev. Maint.</th>
                         <th className="px-4 py-3">Last Maint.</th>
                         <th className="px-4 py-3">MTBM</th>
                         <th className="px-4 py-3">Time From Last Maint.</th>
                         <th className="px-4 py-3">Status</th>
-                        <th className="px-4 py-3">Date Assigned</th>
                         <th className="px-4 py-3">Grease Interval</th>
                         <th className="px-4 py-3">Warehouse No.</th>
                         <th className="px-4 py-3">SAP No.</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-sm text-gray-200">
-                      {group.motors.map((motor, mIndex) => (
-                        <tr key={mIndex} className="hover:bg-white/5 transition-colors duration-150">
-                          <td className="px-4 py-3 font-mono font-semibold text-blue-300">{motor.tonNumber || 'N/A'}</td>
-                          <td className="px-4 py-3 font-medium truncate max-w-[200px]" title={motor.designation}>{motor.designation}</td>
-                          <td className="px-4 py-3 font-mono">{motor.serialNumber}</td>
-                          <td className="px-4 py-3">{motor.power} kW</td>
-                          <td className="px-4 py-3">{motor.speed} rpm</td>
-                          <td className="px-4 py-3">{motor.IM}</td>
-                          <td className="px-4 py-3">{motor.frameSize}</td>
-                          <td className="px-4 py-3 font-mono text-xs">{motor.bearingNDE}</td>
-                          <td className="px-4 py-3 font-mono text-xs">{motor.bearingDE}</td>
-                          <td className="px-4 py-3">{formatDate(motor.lastMaintenanceDate)}</td>
-                          <td className="px-4 py-3 font-semibold text-cyan-300">
-                            {formatMTBM(motor.meanTimeBetweenMaintenance)}
-                          </td>
-                          <td className={`px-4 py-3 font-semibold ${motor.isCalculatedMTBM ? 'text-amber-400 italic' : 'text-white'}`}>
-                            {formatMTBM(motor.timeSinceLastMaintenance)}
-                            {motor.isCalculatedMTBM && ' *'}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                              motor.status === 'Active'
-                                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                                : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      {group.motors.map((motor, mIndex) => {
+                        const currentUnit = getUnitFromTon(motor.tonNumber);
+                        const prevMotor = mIndex > 0 ? group.motors[mIndex - 1] : null;
+                        const prevUnit = prevMotor ? getUnitFromTon(prevMotor.tonNumber) : null;
+                        const showSeparator = prevUnit !== null && currentUnit !== prevUnit;
+
+                        return (
+                          <React.Fragment key={mIndex}>
+                            {showSeparator && (
+                              <tr className="bg-blue-900/30 border-y border-white/5">
+                                <td colSpan={17} className="p-0">
+                                  <div className="h-2.5 bg-blue-500/10"></div>
+                                </td>
+                              </tr>
+                            )}
+                            <tr className={`transition-colors duration-150 ${
+                              motor.status === 'Spare'
+                                ? 'bg-amber-500/5 hover:bg-amber-500/10'
+                                : 'hover:bg-white/5'
                             }`}>
-                              {motor.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">{formatDate(motor.dateAssigned)}</td>
-                          <td className="px-4 py-3 text-amber-300 font-semibold">
-                            {motor.greaseInterval ? `${motor.greaseInterval} hrs` : 'N/A'}
-                          </td>
-                          <td className="px-4 py-3 font-mono text-xs">{motor.Warehouse || 'N/A'}</td>
-                          <td className="px-4 py-3 font-mono text-xs">{motor.SAP || 'N/A'}</td>
-                        </tr>
-                      ))}
+                              <td className="px-4 py-3 font-mono font-semibold text-blue-300">{motor.tonNumber || 'N/A'}</td>
+                              <td className="px-4 py-3 font-medium truncate max-w-[200px]" title={motor.designation}>{motor.designation}</td>
+                              <td className="px-4 py-3 font-mono">{motor.serialNumber}</td>
+                              <td className="px-4 py-3">{motor.power} kW</td>
+                              <td className="px-4 py-3">{motor.speed} rpm</td>
+                              <td className="px-4 py-3">{motor.IM}</td>
+                              <td className="px-4 py-3">{motor.frameSize}</td>
+                              <td className="px-4 py-3 font-mono text-xs">{motor.bearingNDE}</td>
+                              <td className="px-4 py-3 font-mono text-xs">{motor.bearingDE}</td>
+                              <td className="px-4 py-3">{formatDate(motor.prevMaintenanceDate)}</td>
+                              <td className="px-4 py-3">{formatDate(motor.lastMaintenanceDate)}</td>
+                              <td className="px-4 py-3 font-semibold text-cyan-300">
+                                {formatMTBM(motor.meanTimeBetweenMaintenance)}
+                              </td>
+                              <td className={`px-4 py-3 font-semibold ${motor.isCalculatedMTBM ? 'text-amber-400 italic' : 'text-white'}`}>
+                                {formatMTBM(motor.timeSinceLastMaintenance)}
+                                {motor.isCalculatedMTBM && ' *'}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                  motor.status === 'Active'
+                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                }`}>
+                                  {motor.status}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-amber-300 font-semibold">
+                                {motor.greaseInterval ? `${motor.greaseInterval} hrs` : 'N/A'}
+                              </td>
+                              <td className="px-4 py-3 font-mono text-xs">{motor.Warehouse || 'N/A'}</td>
+                              <td className="px-4 py-3 font-mono text-xs">{motor.SAP || 'N/A'}</td>
+                            </tr>
+                          </React.Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
 
                 {/* Mobile/Tablet Card View */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 xl:hidden bg-black/10">
-                  {group.motors.map((motor, mIndex) => (
-                    <div key={mIndex} className="glass-dark p-4 rounded-lg border border-white/5 space-y-2 text-sm">
-                      <div className="flex justify-between items-center border-b border-white/10 pb-1.5 mb-2">
-                        <span className="font-bold text-blue-300 font-mono text-base">{motor.tonNumber || 'N/A'}</span>
-                        <span className={`px-2 py-0.5 rounded text-xxs font-semibold ${
-                          motor.status === 'Active'
-                            ? 'bg-green-500/20 text-green-400'
-                            : 'bg-amber-500/20 text-amber-400'
-                        }`}>
-                          {motor.status}
-                        </span>
-                      </div>
-                      <p className="text-gray-300"><span className="text-gray-400 font-medium">Designation:</span> {motor.designation}</p>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-300 pt-1">
-                        <p>Serial: <span className="text-white font-mono">{motor.serialNumber}</span></p>
-                        <p>Power: <span className="text-white">{motor.power} kW</span></p>
-                        <p>Speed: <span className="text-white">{motor.speed} rpm</span></p>
-                        <p>IM: <span className="text-white">{motor.IM}</span></p>
-                        <p>Frame: <span className="text-white">{motor.frameSize}</span></p>
-                        <p>NDE Brg: <span className="text-white font-mono">{motor.bearingNDE}</span></p>
-                        <p>DE Brg: <span className="text-white font-mono">{motor.bearingDE}</span></p>
-                        <p>Last Maint: <span className="text-white">{formatDate(motor.lastMaintenanceDate)}</span></p>
-                        <p>MTBM: <span className="text-cyan-300 font-semibold">{formatMTBM(motor.meanTimeBetweenMaintenance)}</span></p>
-                        <p>Time From Maint: <span className={`font-semibold ${motor.isCalculatedMTBM ? 'text-amber-400 italic' : 'text-white'}`}>{formatMTBM(motor.timeSinceLastMaintenance)}{motor.isCalculatedMTBM && ' *'}</span></p>
-                        <p>Assigned: <span className="text-white">{formatDate(motor.dateAssigned)}</span></p>
-                        <p>Grease Int: <span className="text-amber-300 font-semibold">{motor.greaseInterval ? `${motor.greaseInterval} hrs` : 'N/A'}</span></p>
-                        <p>Warehouse No: <span className="text-white font-mono">{motor.Warehouse || 'N/A'}</span></p>
-                        <p>SAP No: <span className="text-white font-mono">{motor.SAP || 'N/A'}</span></p>
-                      </div>
-                    </div>
-                  ))}
+                  {group.motors.map((motor, mIndex) => {
+                    const currentUnit = getUnitFromTon(motor.tonNumber);
+                    const prevMotor = mIndex > 0 ? group.motors[mIndex - 1] : null;
+                    const prevUnit = prevMotor ? getUnitFromTon(prevMotor.tonNumber) : null;
+                    const showSeparator = prevUnit !== null && currentUnit !== prevUnit;
+
+                    return (
+                      <React.Fragment key={mIndex}>
+                        {showSeparator && (
+                          <div className="col-span-full py-2 flex items-center justify-center">
+                            <div className="w-full border-t border-dashed border-blue-500/30"></div>
+                          </div>
+                        )}
+                        <div className="glass-dark p-4 rounded-lg border border-white/5 space-y-2 text-sm">
+                          <div className="flex justify-between items-center border-b border-white/10 pb-1.5 mb-2">
+                            <span className="font-bold text-blue-300 font-mono text-base">{motor.tonNumber || 'N/A'}</span>
+                            <span className={`px-2 py-0.5 rounded text-xxs font-semibold ${
+                              motor.status === 'Active'
+                                ? 'bg-green-500/20 text-green-400'
+                                : 'bg-amber-500/20 text-amber-400'
+                            }`}>
+                              {motor.status}
+                            </span>
+                          </div>
+                          <p className="text-gray-300"><span className="text-gray-400 font-medium">Designation:</span> {motor.designation}</p>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-300 pt-1">
+                            <p>Serial: <span className="text-white font-mono">{motor.serialNumber}</span></p>
+                            <p>Power: <span className="text-white">{motor.power} kW</span></p>
+                            <p>Speed: <span className="text-white">{motor.speed} rpm</span></p>
+                            <p>IM: <span className="text-white">{motor.IM}</span></p>
+                            <p>Frame: <span className="text-white">{motor.frameSize}</span></p>
+                            <p>NDE Brg: <span className="text-white font-mono">{motor.bearingNDE}</span></p>
+                            <p>DE Brg: <span className="text-white font-mono">{motor.bearingDE}</span></p>
+                            <p>Prev Maint: <span className="text-white">{formatDate(motor.prevMaintenanceDate)}</span></p>
+                            <p>Last Maint: <span className="text-white">{formatDate(motor.lastMaintenanceDate)}</span></p>
+                            <p>MTBM: <span className="text-cyan-300 font-semibold">{formatMTBM(motor.meanTimeBetweenMaintenance)}</span></p>
+                            <p>Time From Maint: <span className={`font-semibold ${motor.isCalculatedMTBM ? 'text-amber-400 italic' : 'text-white'}`}>{formatMTBM(motor.timeSinceLastMaintenance)}{motor.isCalculatedMTBM && ' *'}</span></p>
+                            <p>Grease Int: <span className="text-amber-300 font-semibold">{motor.greaseInterval ? `${motor.greaseInterval} hrs` : 'N/A'}</span></p>
+                            <p>Warehouse No: <span className="text-white font-mono">{motor.Warehouse || 'N/A'}</span></p>
+                            <p>SAP No: <span className="text-white font-mono">{motor.SAP || 'N/A'}</span></p>
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
               </div>
             ))}

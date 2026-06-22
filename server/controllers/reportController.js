@@ -51,6 +51,43 @@ const parsePower = (powerStr) => {
   return match ? parseFloat(match[1]) : 0;
 };
 
+const getPrevMaintenanceDate = (motor) => {
+  if (!motor || !motor.maintenanceHistory || !Array.isArray(motor.maintenanceHistory) || motor.maintenanceHistory.length === 0) {
+    return null;
+  }
+  const completeEvents = motor.maintenanceHistory
+    .filter(event => {
+      const desc = (event.description || '').toLowerCase();
+      const hasText = desc.includes('compelet maintainance') ||
+                      desc.includes('complete maintenance') ||
+                      desc.includes('complete maint') ||
+                      desc.includes('motor complete maint');
+      return hasText && event.date && !isNaN(new Date(event.date).getTime());
+    })
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  if (completeEvents.length >= 2) {
+    return completeEvents[completeEvents.length - 2].date;
+  }
+  return null;
+};
+
+const getUnitFromTon = (tonNumber) => {
+  if (!tonNumber) return '';
+  const ton = String(tonNumber).trim();
+  const matchDigits = ton.match(/^(\d+)/);
+  if (matchDigits) {
+    const digits = matchDigits[1];
+    return digits.substring(0, 3);
+  }
+  const matchLetters = ton.match(/^([a-zA-Z]+)/);
+  if (matchLetters) {
+    return matchLetters[1].toUpperCase();
+  }
+  return ton.substring(0, 3).toUpperCase();
+};
+
+
 const getCharRank = (char) => {
   if (char === 'P') return 1;
   if (char === 'K') return 2;
@@ -386,6 +423,7 @@ const getActiveMotorDetailedData = async () => {
       frameSize: motor.frameSize || 'N/A',
       bearingNDE: motor.bearingNDE || 'N/A',
       bearingDE: motor.bearingDE || 'N/A',
+      prevMaintenanceDate: getPrevMaintenanceDate(motor),
       lastMaintenanceDate: motor.lastMaintenanceDate || null,
       meanTimeBetweenMaintenance: calculatedMTBM,
       isCalculatedMTBM: isCalculatedMTBM,
@@ -476,10 +514,10 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
       { header: 'Frame Size', key: 'frameSize', width: 12 },
       { header: 'Bearing NDE', key: 'bearingNDE', width: 15 },
       { header: 'Bearing DE', key: 'bearingDE', width: 15 },
+      { header: 'Prev. Maintenance', key: 'prevMaintenanceDate', width: 18 },
       { header: 'Last Maintenance', key: 'lastMaintenanceDate', width: 18 },
       { header: 'MTBM', key: 'meanTimeBetweenMaintenance', width: 15 },
       { header: 'Time Since Last Maint.', key: 'timeSinceLastMaintenance', width: 22 },
-      { header: 'Date Assigned', key: 'dateAssigned', width: 18 },
       { header: 'Grease Interval', key: 'greaseInterval', width: 18 },
     ];
 
@@ -505,7 +543,23 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
       };
       catRow.alignment = { horizontal: 'left' };
 
+      let prevUnit = null;
+
       group.motors.forEach(row => {
+        const currentUnit = getUnitFromTon(row.tonNumber);
+        if (prevUnit !== null && currentUnit !== prevUnit) {
+          const sepRow = worksheet.addRow({});
+          for (let i = 1; i <= columnsConfig.length; i++) {
+            sepRow.getCell(i).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9E1F2' }
+            };
+          }
+          sepRow.height = 15;
+        }
+        prevUnit = currentUnit;
+
         const isCalculated = row.isCalculatedMTBM;
         const mtbmValue = formatMTBM(row.meanTimeBetweenMaintenance);
         const timeSinceLastMaintValue = isCalculated && row.timeSinceLastMaintenance !== null && row.timeSinceLastMaintenance !== undefined
@@ -522,17 +576,17 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
           frameSize: row.frameSize,
           bearingNDE: row.bearingNDE,
           bearingDE: row.bearingDE,
+          prevMaintenanceDate: row.prevMaintenanceDate ? formatDate(row.prevMaintenanceDate) : 'N/A',
           lastMaintenanceDate: row.lastMaintenanceDate ? formatDate(row.lastMaintenanceDate) : 'N/A',
           meanTimeBetweenMaintenance: mtbmValue,
           timeSinceLastMaintenance: timeSinceLastMaintValue,
-          dateAssigned: row.dateAssigned ? formatDate(row.dateAssigned) : 'N/A',
           greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
             ? `${row.greaseInterval} hrs` 
             : 'N/A'
         });
 
         if (isCalculated) {
-          const cell = newRow.getCell(12); // Column L (Time Since Last Maint.)
+          const cell = newRow.getCell(13); // Column M (Time Since Last Maint.)
           cell.fill = {
             type: 'pattern',
             pattern: 'solid',
@@ -572,8 +626,23 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
       catSheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
       let hasCalculated = false;
+      let prevUnit = null;
 
       group.motors.forEach(row => {
+        const currentUnit = getUnitFromTon(row.tonNumber);
+        if (prevUnit !== null && currentUnit !== prevUnit) {
+          const sepRow = catSheet.addRow({});
+          for (let i = 1; i <= columnsConfig.length; i++) {
+            sepRow.getCell(i).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9E1F2' }
+            };
+          }
+          sepRow.height = 15;
+        }
+        prevUnit = currentUnit;
+
         const isCalculated = row.isCalculatedMTBM;
         if (isCalculated) {
           hasCalculated = true;
@@ -594,17 +663,17 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
           frameSize: row.frameSize,
           bearingNDE: row.bearingNDE,
           bearingDE: row.bearingDE,
+          prevMaintenanceDate: row.prevMaintenanceDate ? formatDate(row.prevMaintenanceDate) : 'N/A',
           lastMaintenanceDate: row.lastMaintenanceDate ? formatDate(row.lastMaintenanceDate) : 'N/A',
           meanTimeBetweenMaintenance: mtbmValue,
           timeSinceLastMaintenance: timeSinceLastMaintValue,
-          dateAssigned: row.dateAssigned ? formatDate(row.dateAssigned) : 'N/A',
           greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
             ? `${row.greaseInterval} hrs` 
             : 'N/A'
         });
 
         if (isCalculated) {
-          const cell = newRow.getCell(12); // Column L (Time Since Last Maint.)
+          const cell = newRow.getCell(13); // Column M (Time Since Last Maint.)
           cell.fill = {
             type: 'pattern',
             pattern: 'solid',
@@ -744,6 +813,7 @@ const getAllMotorDetailedData = async () => {
         frameSize: activeMotor.frameSize || 'N/A',
         bearingNDE: activeMotor.bearingNDE || 'N/A',
         bearingDE: activeMotor.bearingDE || 'N/A',
+        prevMaintenanceDate: getPrevMaintenanceDate(activeMotor),
         lastMaintenanceDate: activeMotor.lastMaintenanceDate || null,
         meanTimeBetweenMaintenance: calculatedMTBM,
         isCalculatedMTBM: isCalculatedMTBM,
@@ -801,6 +871,7 @@ const getAllMotorDetailedData = async () => {
       frameSize: motor.frameSize || 'N/A',
       bearingNDE: motor.bearingNDE || 'N/A',
       bearingDE: motor.bearingDE || 'N/A',
+      prevMaintenanceDate: getPrevMaintenanceDate(motor),
       lastMaintenanceDate: motor.lastMaintenanceDate || null,
       meanTimeBetweenMaintenance: calculatedMTBM,
       isCalculatedMTBM: isCalculatedMTBM,
@@ -896,11 +967,11 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
       { header: 'Frame Size', key: 'frameSize', width: 12 },
       { header: 'Bearing NDE', key: 'bearingNDE', width: 15 },
       { header: 'Bearing DE', key: 'bearingDE', width: 15 },
+      { header: 'Prev. Maintenance', key: 'prevMaintenanceDate', width: 18 },
       { header: 'Last Maintenance', key: 'lastMaintenanceDate', width: 18 },
       { header: 'MTBM', key: 'meanTimeBetweenMaintenance', width: 15 },
       { header: 'Time Since Last Maint.', key: 'timeSinceLastMaintenance', width: 22 },
       { header: 'Status', key: 'status', width: 12 },
-      { header: 'Date Assigned', key: 'dateAssigned', width: 18 },
       { header: 'Grease Interval', key: 'greaseInterval', width: 18 },
       { header: 'Warehouse No.', key: 'Warehouse', width: 15 },
       { header: 'SAP No.', key: 'SAP', width: 15 },
@@ -928,7 +999,23 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
       };
       catRow.alignment = { horizontal: 'left' };
 
+      let prevUnit = null;
+
       group.motors.forEach(row => {
+        const currentUnit = getUnitFromTon(row.tonNumber);
+        if (prevUnit !== null && currentUnit !== prevUnit) {
+          const sepRow = worksheet.addRow({});
+          for (let i = 1; i <= columnsConfig.length; i++) {
+            sepRow.getCell(i).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9E1F2' }
+            };
+          }
+          sepRow.height = 15;
+        }
+        prevUnit = currentUnit;
+
         const isCalculated = row.isCalculatedMTBM;
         const mtbmValue = formatMTBM(row.meanTimeBetweenMaintenance);
         const timeSinceLastMaintValue = isCalculated && row.timeSinceLastMaintenance !== null && row.timeSinceLastMaintenance !== undefined
@@ -947,18 +1034,28 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
           frameSize: row.frameSize,
           bearingNDE: row.bearingNDE,
           bearingDE: row.bearingDE,
+          prevMaintenanceDate: row.prevMaintenanceDate ? formatDate(row.prevMaintenanceDate) : 'N/A',
           lastMaintenanceDate: row.lastMaintenanceDate ? formatDate(row.lastMaintenanceDate) : 'N/A',
           meanTimeBetweenMaintenance: mtbmValue,
           timeSinceLastMaintenance: timeSinceLastMaintValue,
           status: row.status,
-          dateAssigned: row.dateAssigned ? formatDate(row.dateAssigned) : 'N/A',
           greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
             ? `${row.greaseInterval} hrs` 
             : 'N/A'
         });
 
+        if (row.status === 'Spare') {
+          for (let i = 1; i <= columnsConfig.length; i++) {
+            newRow.getCell(i).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFF0E6' }
+            };
+          }
+        }
+
         if (isCalculated) {
-          const cell = newRow.getCell(12); // Column L (Time Since Last Maint.)
+          const cell = newRow.getCell(13); // Column M (Time Since Last Maint.)
           cell.fill = {
             type: 'pattern',
             pattern: 'solid',
@@ -967,7 +1064,7 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
           cell.font = { italic: true, color: { argb: 'FF975A16' } };
         }
 
-        const statusCell = newRow.getCell(13); // Column M (Status)
+        const statusCell = newRow.getCell(14); // Column N (Status)
         if (row.status === 'Active') {
           statusCell.font = { color: { argb: 'FF27AE60' }, bold: true };
         } else if (row.status === 'Spare') {
@@ -1004,8 +1101,23 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
       catSheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
       let hasCalculated = false;
+      let prevUnit = null;
 
       group.motors.forEach(row => {
+        const currentUnit = getUnitFromTon(row.tonNumber);
+        if (prevUnit !== null && currentUnit !== prevUnit) {
+          const sepRow = catSheet.addRow({});
+          for (let i = 1; i <= columnsConfig.length; i++) {
+            sepRow.getCell(i).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9E1F2' }
+            };
+          }
+          sepRow.height = 15;
+        }
+        prevUnit = currentUnit;
+
         const isCalculated = row.isCalculatedMTBM;
         if (isCalculated) {
           hasCalculated = true;
@@ -1028,18 +1140,28 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
           frameSize: row.frameSize,
           bearingNDE: row.bearingNDE,
           bearingDE: row.bearingDE,
+          prevMaintenanceDate: row.prevMaintenanceDate ? formatDate(row.prevMaintenanceDate) : 'N/A',
           lastMaintenanceDate: row.lastMaintenanceDate ? formatDate(row.lastMaintenanceDate) : 'N/A',
           meanTimeBetweenMaintenance: mtbmValue,
           timeSinceLastMaintenance: timeSinceLastMaintValue,
           status: row.status,
-          dateAssigned: row.dateAssigned ? formatDate(row.dateAssigned) : 'N/A',
           greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
             ? `${row.greaseInterval} hrs` 
             : 'N/A'
         });
 
+        if (row.status === 'Spare') {
+          for (let i = 1; i <= columnsConfig.length; i++) {
+            newRow.getCell(i).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFF0E6' }
+            };
+          }
+        }
+
         if (isCalculated) {
-          const cell = newRow.getCell(12); // Column L (Time Since Last Maint.)
+          const cell = newRow.getCell(13); // Column M (Time Since Last Maint.)
           cell.fill = {
             type: 'pattern',
             pattern: 'solid',
@@ -1048,7 +1170,7 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
           cell.font = { italic: true, color: { argb: 'FF975A16' } };
         }
 
-        const statusCell = newRow.getCell(13); // Column M (Status)
+        const statusCell = newRow.getCell(14); // Column N (Status)
         if (row.status === 'Active') {
           statusCell.font = { color: { argb: 'FF27AE60' }, bold: true };
         } else if (row.status === 'Spare') {
