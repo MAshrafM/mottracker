@@ -25,7 +25,7 @@ const UNIT_CONFIGS = {
   },
   water: {
     name: 'Water',
-    prefixes: ['388', '389', '390', '392']
+    prefixes: ['388', '389', '390', '392', '393', '394']
   },
   bl: {
     name: 'BL',
@@ -59,9 +59,9 @@ const getPrevMaintenanceDate = (motor) => {
     .filter(event => {
       const desc = (event.description || '').toLowerCase();
       const hasText = desc.includes('compelet maintainance') ||
-                      desc.includes('complete maintenance') ||
-                      desc.includes('complete maint') ||
-                      desc.includes('motor complete maint');
+        desc.includes('complete maintenance') ||
+        desc.includes('complete maint') ||
+        desc.includes('motor complete maint');
       return hasText && event.date && !isNaN(new Date(event.date).getTime());
     })
     .sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -292,7 +292,7 @@ exports.getSpareMotorReport = async (req, res) => {
 exports.exportActiveMotorsToExcel = async (req, res) => {
   try {
     const groupedData = await getActiveMotorDetailedData();
-    
+
     // Create workbook
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Active Motors');
@@ -461,9 +461,9 @@ const getActiveMotorDetailedData = async () => {
   units.forEach(unit => {
     const unitMotors = activeMotorData.filter(item => {
       return !matchedMotorIds.has(item.motorId.toString()) &&
-             unit.prefixes.some(prefix =>
-               item.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
-             );
+        unit.prefixes.some(prefix =>
+          item.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
+        );
     });
 
     if (unitMotors.length > 0) {
@@ -580,8 +580,8 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
           lastMaintenanceDate: row.lastMaintenanceDate ? formatDate(row.lastMaintenanceDate) : 'N/A',
           meanTimeBetweenMaintenance: mtbmValue,
           timeSinceLastMaintenance: timeSinceLastMaintValue,
-          greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
-            ? `${row.greaseInterval} hrs` 
+          greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined
+            ? `${row.greaseInterval} hrs`
             : 'N/A'
         });
 
@@ -667,8 +667,8 @@ exports.exportActiveMotorsDetailedToExcel = async (req, res) => {
           lastMaintenanceDate: row.lastMaintenanceDate ? formatDate(row.lastMaintenanceDate) : 'N/A',
           meanTimeBetweenMaintenance: mtbmValue,
           timeSinceLastMaintenance: timeSinceLastMaintValue,
-          greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
-            ? `${row.greaseInterval} hrs` 
+          greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined
+            ? `${row.greaseInterval} hrs`
             : 'N/A'
         });
 
@@ -771,7 +771,7 @@ const getAllMotorDetailedData = async () => {
 
   for (const eq of equipments) {
     const activeMotor = eq.currentMotor;
-    
+
     // A. Active Motor
     if (activeMotor) {
       let dateAssigned = null;
@@ -914,9 +914,9 @@ const getAllMotorDetailedData = async () => {
   units.forEach(unit => {
     const unitMotors = allMotorRows.filter(item => {
       return !matchedMotorKeys.has(getRowKey(item)) &&
-             unit.prefixes.some(prefix =>
-               item.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
-             );
+        unit.prefixes.some(prefix =>
+          item.tonNumber.toLowerCase().startsWith(prefix.toLowerCase())
+        );
     });
 
     if (unitMotors.length > 0) {
@@ -1039,8 +1039,8 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
           meanTimeBetweenMaintenance: mtbmValue,
           timeSinceLastMaintenance: timeSinceLastMaintValue,
           status: row.status,
-          greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
-            ? `${row.greaseInterval} hrs` 
+          greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined
+            ? `${row.greaseInterval} hrs`
             : 'N/A'
         });
 
@@ -1145,8 +1145,8 @@ exports.exportAllMotorsDetailedToExcel = async (req, res) => {
           meanTimeBetweenMaintenance: mtbmValue,
           timeSinceLastMaintenance: timeSinceLastMaintValue,
           status: row.status,
-          greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined 
-            ? `${row.greaseInterval} hrs` 
+          greaseInterval: row.greaseInterval !== null && row.greaseInterval !== undefined
+            ? `${row.greaseInterval} hrs`
             : 'N/A'
         });
 
@@ -1258,7 +1258,7 @@ exports.exportActiveMotorsToPDF = async (req, res) => {
     res.status(200).send(Buffer.from(pdfBytes));
 
 
-  }catch (error) {
+  } catch (error) {
     console.error('Error exporting to PDF with pdf-lib:', error);
     res.status(500).json({ message: 'Server error while generating PDF.', error: error.message });
   }
@@ -1267,7 +1267,7 @@ exports.exportActiveMotorsToPDF = async (req, res) => {
 exports.exportSpareMotorsToExcel = async (req, res) => {
   try {
     const spareMotors = await Motor.find({ status: 'spare' }).sort({ power: 1 }).populate('eq').lean();
-    
+
     // Create workbook
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Spare Motors');
@@ -1321,7 +1321,7 @@ exports.exportSpareMotorsToExcel = async (req, res) => {
 exports.exportSpareMotorsToPDF = async (req, res) => {
   try {
     // --- 1. DATA FETCHING  ---
-    const spareMotors = await Motor.find({ status: 'spare' }).sort({power: 1}).populate('eq').lean();
+    const spareMotors = await Motor.find({ status: 'spare' }).sort({ power: 1 }).populate('eq').lean();
     // 2. Col Definitions and PDF Setup    
     const columns = [
       { label: 'Serial', key: 'serialNumber', width: 70 },
@@ -1334,7 +1334,7 @@ exports.exportSpareMotorsToPDF = async (req, res) => {
       { label: 'DE', key: 'bearingDE', width: 80 },
       { label: 'Last Maint.', key: 'lastMaintenanceDate', width: 70 },
     ];
-    
+
     // 4. GENERATE PDF (Edit 'orientation' to 'portrait' if needed)
     const pdfBytes = await generateTablePDF({
       title: 'AFC 3 Plant Spare Motors',
@@ -1359,24 +1359,30 @@ const getBearingPipeline = () => [
   { $match: { status: 'active' } },
   // 2. Create a temporary array combining both fields
   // We also normalize text to Uppercase to ensure "6309c3" and "6309C3" count as the same
-  { $project: {
-    bearings: [
-      { $toUpper: "$bearingDE" },
-      { $toUpper: "$bearingNDE" }
-    ]
-  }},
+  {
+    $project: {
+      bearings: [
+        { $toUpper: "$bearingDE" },
+        { $toUpper: "$bearingNDE" }
+      ]
+    }
+  },
   // 3. "Unwind" the array. 
   // This splits 1 document (Motor) into 2 documents (one for each bearing)
   { $unwind: "$bearings" },
   // 4. Remove empty values, nulls, or "N/A" if necessary
-  { $match: {
-    bearings: { $ne: null, $ne: "", $ne: "N/A" }
-  }},
+  {
+    $match: {
+      bearings: { $ne: null, $ne: "", $ne: "N/A" }
+    }
+  },
   // 5. Group by the bearing name and count them
-  { $group: {
-    _id: "$bearings", // Group by the bearing name
-    count: { $sum: 1 } // Add 1 for every occurrence
-  }},
+  {
+    $group: {
+      _id: "$bearings", // Group by the bearing name
+      count: { $sum: 1 } // Add 1 for every occurrence
+    }
+  },
   // 6. Sort by highest usage first
   { $sort: { count: -1 } }
 ];
@@ -1386,7 +1392,7 @@ exports.getBearingsReport = async (req, res) => {
     const bearingStats = await Motor.aggregate(getBearingPipeline());
 
     // Format the results to a more readable structure
-    return res.status(200).json({success: true, data: bearingStats});
+    return res.status(200).json({ success: true, data: bearingStats });
   } catch (error) {
     console.error('Error generating bearings report:', error);
     res.status(500).json({ message: 'Server error while generating bearings report.', error: error.message });
@@ -1454,8 +1460,8 @@ exports.exportBearingsReportToPDF = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=bearings_report.pdf`);
     res.status(200).send(Buffer.from(pdfBytes));
 
-    
-  }  catch (error) {    
+
+  } catch (error) {
     console.error('Error exporting bearings report to PDF:', error);
     res.status(500).json({ message: 'Server error while generating bearings report.', error: error.message });
   }

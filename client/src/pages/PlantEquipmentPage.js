@@ -88,7 +88,7 @@ const PlantEquipmentPage = () => {
     {
       id: 'water',
       name: 'Water',
-      prefixes: ['388', '389', '390', '392'],
+      prefixes: ['388', '389', '390', '392', '393', '394'],
       color: 'from-cyan-500 to-blue-500',
       icon: (
         <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
