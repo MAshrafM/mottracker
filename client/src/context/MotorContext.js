@@ -28,7 +28,7 @@ export const MotorProvider = ({ children }) => {
         }
     };
     loadMotorsOnInit();
-  }, []);
+  }, [location.search]);
 
   const loadMotors = async () => {
     // If we already have data, STOP. Do not fetch again.
