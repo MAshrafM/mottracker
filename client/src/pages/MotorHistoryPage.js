@@ -1,14 +1,16 @@
-// client/src/pages/MotorHistoryPage.js
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import api from '../services/api';
-import { Loader, Printer, ArrowLeft } from 'lucide-react';
+import { Loader, Printer, ArrowLeft, QrCode } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import MassMaintenanceEntry from '../components/MassMaintenanceEntry';
 import logo from '../logo_ar.gif';
 
 const MaintenanceHistory = () => {
   const { motorId } = useParams();
+  const [searchParams] = useSearchParams();
+  const qrToken = searchParams.get('qrToken') || searchParams.get('qrtoken');
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
@@ -82,6 +84,12 @@ const MaintenanceHistory = () => {
       setIsLoading(false);
     }
   }, [motorId]);
+
+  const handlePrintQR = () => {
+    const token = qrToken || motor?.qrToken;
+    const qrPdfUrl = `${api.defaults.baseURL || ''}/motors/${motorId}/qr-pdf${token ? `?qrToken=${token}` : ''}`;
+    window.open(qrPdfUrl, '_blank');
+  };
 
   useEffect(() => {
     fetchMotorHistory();
@@ -532,7 +540,7 @@ const MaintenanceHistory = () => {
                 Set Spare
               </button>
             )}
-            {(user.role === 'admin' || user.role === 'manager') && (
+            {(user?.role === 'admin' || user?.role === 'manager') && (
               <button
                 onClick={openEditMotorModal}
                 className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
@@ -554,6 +562,25 @@ const MaintenanceHistory = () => {
               <Printer size={16} />
               <span>Generate Report</span>
             </button>
+            <button
+              onClick={handlePrintQR}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 
+                         text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                         transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1.5"
+            >
+              <QrCode size={16} />
+              <span>Print QR Tag</span>
+            </button>
+            {!user && (
+              <button
+                onClick={() => navigate('/login')}
+                className="bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 
+                           text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                           transform hover:scale-105 shadow-md hover:shadow-lg"
+              >
+                <span>Staff Login</span>
+              </button>
+            )}
           </div>
 
           {/* Empty div to balance flex layout on desktop */}
@@ -728,7 +755,7 @@ const MaintenanceHistory = () => {
       </div>
 
       {/* Form Section for admin/manager */}
-      {(user.role === 'admin' || user.role === 'manager') && (
+      {(user?.role === 'admin' || user?.role === 'manager') && (
         <div className="glass rounded-xl p-6 mb-8 shadow-xl">
           <div className="flex justify-between items-center mb-4">
             <h5 className="text-lg font-semibold text-blue-300 flex items-center space-x-2">
@@ -738,7 +765,7 @@ const MaintenanceHistory = () => {
               <span>Add New Maintenance Event</span>
             </h5>
 
-            {user.role === 'admin' && (
+            {user?.role === 'admin' && (
               <button
                 onClick={() => setIsMassEntryOpen(true)}
                 className="text-sm bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1"
@@ -874,8 +901,8 @@ const MaintenanceHistory = () => {
 
                     {/* Action Buttons - Always visible on mobile, hover on desktop */}
                     <div className="flex justify-end space-x-2 ml-6 mt-2">
-                      {/* Edit button for admin/manager */}
-                      {(user.role === 'admin' || user.role === 'manager') && (
+              {/* Edit button for admin/manager */}
+                      {(user?.role === 'admin' || user?.role === 'manager') && (
                         <button
                           onClick={() => openEditModal(event)}
                           className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
@@ -890,7 +917,7 @@ const MaintenanceHistory = () => {
                       )}
 
                       {/* Delete button for admin */}
-                      {user.role === 'admin' && (
+                      {user?.role === 'admin' && (
                         <button
                           onClick={() => handleDeleteEvent(event._id)}
                           className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 
@@ -924,7 +951,7 @@ const MaintenanceHistory = () => {
             </svg>
             <p>No maintenance events recorded yet.</p>
             <p className="text-gray-500 text-sm mt-2">
-              {(user.role === 'admin' || user.role === 'manager')
+              {(user?.role === 'admin' || user?.role === 'manager')
                 ? "Use the form above to add the first maintenance event."
                 : "Contact an administrator to add maintenance records."
               }

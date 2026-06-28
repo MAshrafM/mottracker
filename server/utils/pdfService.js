@@ -194,3 +194,5 @@ exports.generateTablePDF = async ({
 
   return await pdfDoc.save();
 };
+
+exports.logoBase64 = logoBase64;

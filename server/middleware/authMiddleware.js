@@ -8,6 +8,41 @@ dotenv.config(); // Ensure the .env file is loaded
 
 // Middleware to protect routes
 exports.protect = async (req, res, next) => {
+  // Check if there is a qrToken query parameter or x-qr-token header
+  const qrToken = req.headers['x-qr-token'] || req.query.qrToken || req.query.qrtoken;
+  if (qrToken && req.method === 'GET') {
+    let motorId = req.params.id || req.params.motorId;
+    
+    if (!motorId) {
+      const parts = req.originalUrl.split('?')[0].split('/');
+      const motorsIndex = parts.indexOf('motors');
+      const equipmentIndex = parts.indexOf('equipment');
+      if (motorsIndex !== -1 && parts[motorsIndex + 1]) {
+        motorId = parts[motorsIndex + 1];
+      } else if (equipmentIndex !== -1 && parts[equipmentIndex + 1]) {
+        motorId = parts[equipmentIndex + 1];
+      }
+    }
+
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    if (motorId && objectIdRegex.test(motorId)) {
+      try {
+        const Motor = require('../models/motorModel');
+        const motor = await Motor.findById(motorId);
+        if (motor && motor.qrToken === qrToken) {
+          req.user = {
+            _id: 'guest',
+            username: 'Guest (QR Scan)',
+            role: 'guest'
+          };
+          return next();
+        }
+      } catch (err) {
+        console.error('Error validating QR token bypass:', err);
+      }
+    }
+  }
+
   let token;
   // Check if the token is in the authorization header (e.g., 'Bearer <token>')
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {

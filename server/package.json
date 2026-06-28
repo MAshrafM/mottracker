@@ -21,7 +21,8 @@
     "googleapis": "^167.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.1",
-    "pdf-lib": "^1.17.1"
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "csv-parse": "^6.1.0",

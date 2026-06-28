@@ -75,10 +75,12 @@ exports.createBulkMotors = async (req, res) => {
     }
 
     // Create array of motor objects
+    const crypto = require('crypto');
     const motorsToCreate = serialNumbers.map(serial => {
       const data = {
         ...commonDetails,
-        serialNumber: serial
+        serialNumber: serial,
+        qrToken: crypto.randomBytes(16).toString('hex')
       };
       if (data.speed === '') data.speed = null;
       if (data.lastMaintenanceDate === '') data.lastMaintenanceDate = null;
@@ -231,5 +233,36 @@ exports.updateLastGreasingDate = async (req, res) => {
     res.status(200).json({ success: true, data: motor });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Export motor details and QR code to PDF
+// @route   GET /api/motors/:id/qr-pdf
+// @access  Private (or Guest with valid QR Token)
+exports.exportMotorQRPDF = async (req, res) => {
+  try {
+    const motor = await Motor.findById(req.params.id);
+    if (!motor) {
+      return res.status(404).json({ success: false, message: 'Motor not found' });
+    }
+
+    // Ensure motor has a QR token
+    if (!motor.qrToken) {
+      const crypto = require('crypto');
+      motor.qrToken = crypto.randomBytes(16).toString('hex');
+      await motor.save({ validateBeforeSave: false });
+    }
+
+    const { generateQRPDF } = require('../utils/qrPdfService');
+    const qrUrl = `https://mottracker.vercel.app/motors/${motor._id}/maintenance?qrToken=${motor.qrToken}`;
+
+    const pdfBytes = await generateQRPDF({ motor, qrUrl });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=motor_${motor.serialNumber}_qr.pdf`);
+    res.status(200).send(Buffer.from(pdfBytes));
+  } catch (error) {
+    console.error('Error generating motor QR PDF:', error);
+    res.status(500).json({ success: false, message: 'Server error while generating QR PDF.', error: error.message });
   }
 };

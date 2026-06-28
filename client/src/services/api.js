@@ -13,6 +13,11 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    const searchParams = new URLSearchParams(window.location.search);
+    const qrToken = searchParams.get('qrToken') || searchParams.get('qrtoken');
+    if (qrToken) {
+      config.headers['x-qr-token'] = qrToken;
+    }
     return config;
   },
   (error) => {
@@ -25,9 +30,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const searchParams = new URLSearchParams(window.location.search);
+      const qrToken = searchParams.get('qrToken') || searchParams.get('qrtoken');
+      if (!qrToken) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

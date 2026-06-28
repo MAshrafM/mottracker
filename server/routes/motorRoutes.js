@@ -10,7 +10,8 @@ const {
   createBulkMotors,
   updateMotor,
   deleteMotor,
-  updateLastGreasingDate
+  updateLastGreasingDate,
+  exportMotorQRPDF
 } = require('../controllers/motorController');
 const maintenanceRouter = require('./maintenanceRoutes');
 const { protect, authorize } = require('../middleware/authMiddleware');
@@ -36,6 +37,9 @@ router.route('/:id')
 
 router.route('/:id/grease')
   .post(authorize('admin', 'manager'), updateLastGreasingDate);
+
+router.route('/:id/qr-pdf')
+  .get(exportMotorQRPDF);
 
 router.use('/:motorId/maintenance', maintenanceRouter);
 

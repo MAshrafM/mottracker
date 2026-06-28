@@ -1,11 +1,14 @@
 // client/src/components/PrivateRoute.js
 import React, { useContext } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import { MotorProvider } from '../context/MotorContext';
 
 const PrivateRoute = () => {
   const { user, loading } = useContext(AuthContext);
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const qrToken = searchParams.get('qrToken') || searchParams.get('qrtoken');
 
   if (loading) {
     return (
@@ -18,7 +21,7 @@ const PrivateRoute = () => {
     );
   }
 
-  if (!user) {
+  if (!user && !qrToken) {
     return <Navigate to="/login" replace />;
   }
 

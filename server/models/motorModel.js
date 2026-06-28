@@ -56,6 +56,11 @@ const MotorSchema = new Schema({
     default: 'spare',
     required: true,
   },
+  qrToken: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
 }, {
   timestamps: true,
   toObject: { virtuals: true },
@@ -70,8 +75,13 @@ MotorSchema.virtual('eq', {
   justOne: true
 });
 
-// Pre-save hook to calculate meanTimeBetweenMaintenance
+// Pre-save hook to calculate meanTimeBetweenMaintenance and generate qrToken
 MotorSchema.pre('save', function (next) {
+  // Generate unique qrToken if not present
+  if (!this.qrToken) {
+    const crypto = require('crypto');
+    this.qrToken = crypto.randomBytes(16).toString('hex');
+  }
   if (!this.isModified('meanTimeBetweenMaintenance') && (this.isModified('maintenanceHistory') || this.meanTimeBetweenMaintenance === undefined)) {
     const completeEvents = this.maintenanceHistory
       .filter(event => {

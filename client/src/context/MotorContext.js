@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../services/api';
 
 const MotorContext = createContext();
@@ -8,8 +9,14 @@ export const MotorProvider = ({ children }) => {
   //const [motorsWithEquipment, setMotorsWithEquipment] = useState(null); // Null indicates "not loaded yet"
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const location = useLocation();
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const qrToken = searchParams.get('qrToken') || searchParams.get('qrtoken');
+    if (qrToken) {
+      return;
+    }
     const loadMotorsOnInit = async () => {
         try {
         const motors = await api.get('/motors/with-equipment');
