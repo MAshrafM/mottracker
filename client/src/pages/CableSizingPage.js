@@ -215,6 +215,7 @@ const CableSizingPage = () => {
   const [maxVoltageDrop, setMaxVoltageDrop] = useState(5);
   const [shortCircuitCurrent, setShortCircuitCurrent] = useState(10);
   const [faultTime, setFaultTime] = useState(0.4);
+  const [isPreliminary, setIsPreliminary] = useState(false);
 
   // Result States
   const [calcResults, setCalcResults] = useState(null);
@@ -363,7 +364,10 @@ const CableSizingPage = () => {
       }
 
       // Selection: Max of CCC, VD, and SC sizes
-      const finalSizes = [minSizeCCC, minSizeVD, minSizeSCStd].filter(s => s !== null);
+      const finalSizes = (isPreliminary 
+        ? [minSizeCCC, minSizeVD] 
+        : [minSizeCCC, minSizeVD, minSizeSCStd]
+      ).filter(s => s !== null);
       let recommendedSize = finalSizes.length > 0 ? Math.max(...finalSizes) : null;
       if (!recommendedSize) {
         recommendedSize = availableSizes[availableSizes.length - 1]; // Fallback to largest
@@ -425,7 +429,8 @@ const CableSizingPage = () => {
         k,
         tripCurrent,
         cableMaxCurrent,
-        i2Limit
+        i2Limit,
+        isPreliminary
       });
     } catch (err) {
       console.error(err);
@@ -458,7 +463,8 @@ const CableSizingPage = () => {
     maxVoltageDrop,
     shortCircuitCurrent,
     faultTime,
-    location
+    location,
+    isPreliminary
   ]);
 
   const generatePDFReport = () => {
@@ -474,9 +480,10 @@ const CableSizingPage = () => {
     const deviceText = protectionTripCurves[protectionDevice]?.name || protectionDevice;
     
     // Status indicators
+    const isPreliminary = calcResults.isPreliminary;
     const cccPass = calcResults.finalRating >= calcResults.designCurrent;
     const vdPass = calcResults.finalVD.vdPercent <= calcResults.maxVoltageDrop;
-    const scPass = calcResults.finalSCWithstand >= calcResults.shortCircuitCurrent;
+    const scPass = isPreliminary || (calcResults.finalSCWithstand >= calcResults.shortCircuitCurrent);
     const protectionPass = calcResults.protectionValid;
     
     const htmlContent = `
@@ -624,6 +631,12 @@ const CableSizingPage = () => {
           </div>
         </div>
 
+        ${isPreliminary ? `
+        <div style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 12px; margin-bottom: 20px; border-radius: 4px; font-size: 13px; text-align: center;">
+          <strong>⚠️ Preliminary Sizing Notice:</strong> This report represents a preliminary sizing calculation without short-circuit thermal withstand verification, which is required for full IEC 60364 compliance.
+        </div>
+        ` : ''}
+
         <div class="recommendation-box">
           <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #555;">Minimum Recommended Cable Cross-Section</div>
           <div class="rec-size">${calcResults.recommendedSize} mm²</div>
@@ -632,7 +645,11 @@ const CableSizingPage = () => {
           </div>
           <div style="margin-top: 10px; font-size: 13px;">
             Status: <span class="${(cccPass && vdPass && scPass) ? 'status-pass' : 'status-warn'}">
-              ${(cccPass && vdPass && scPass) ? '✅ ALL IEC CRITERIA SATISFIED' : '⚠️ SOME CRITERIA NOT SATISFIED - VERIFY DESIGN'}
+              ${isPreliminary 
+                ? '⚠️ PRELIMINARY CALCULATION - SC BYPASSED' 
+                : (cccPass && vdPass && scPass) 
+                  ? '✅ ALL IEC CRITERIA SATISFIED' 
+                  : '⚠️ SOME CRITERIA NOT SATISFIED - VERIFY DESIGN'}
             </span>
           </div>
         </div>
@@ -665,8 +682,8 @@ const CableSizingPage = () => {
                   <tr><td>Installation Method</td><td>Method ${installMethod}</td></tr>
                   <tr><td>Ambient Temp / Grouping</td><td>${ambientTemp}°C / ${grouping} circuits</td></tr>
                   <tr><td>Protection Device</td><td>${deviceText} (Rating ${protectionRating}A)</td></tr>
-                  <tr><td>Fault Clearance Time</td><td>${faultTime} s (${isFaultTimeManual ? 'Manual Override' : 'Auto-linked'})</td></tr>
-                  <tr><td>Prospective Short Circuit (I_sc)</td><td>${shortCircuitCurrent} kA</td></tr>
+                  <tr><td>Fault Clearance Time</td><td>${isPreliminary ? 'N/A (Bypassed)' : `${faultTime} s (${isFaultTimeManual ? 'Manual Override' : 'Auto-linked'})`}</td></tr>
+                  <tr><td>Prospective Short Circuit (I_sc)</td><td>${isPreliminary ? 'N/A (Bypassed)' : `${shortCircuitCurrent} kA`}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -735,25 +752,35 @@ const CableSizingPage = () => {
           <div class="step-box">
             <div class="step-title">
               <span>Step 3: Short Circuit Thermal Withstand (Adiabatic Limit)</span>
-              <span class="${scPass ? 'status-pass' : 'status-fail'}">${scPass ? 'PASS' : 'FAIL'}</span>
+              <span class="${isPreliminary ? 'status-warn' : (scPass ? 'status-pass' : 'status-fail')}">
+                ${isPreliminary ? 'BYPASSED' : (scPass ? 'PASS' : 'FAIL')}
+              </span>
             </div>
             <div>
-              The cable must withstand short-circuit heat until the breaker trips.
-              <br />
-              <div class="formula">S = (I_sc × √t) / k</div>
-              <br />
-              - Short circuit current (I_sc): <strong>${shortCircuitCurrent} kA</strong> (${shortCircuitCurrent * 1000} A)
-              <br />
-              - Clearance time (t): <strong>${faultTime} s</strong>
-              <br />
-              - Conductor constant (k): <strong>${calcResults.k}</strong>
-              <br />
-              - Minimum required cross section (S): <strong>${calcResults.minSizeSC.toFixed(2)} mm²</strong>
-              <br />
-              - Selected cable size: <strong>${calcResults.recommendedSize} mm²</strong>
-              <br />
-              - Status: <strong>${calcResults.recommendedSize} mm² ≥ ${calcResults.minSizeSC.toFixed(2)} mm²</strong>
-              (<span class="${scPass ? 'status-pass' : 'status-fail'}">${scPass ? 'Satisfied' : 'Cable Will Burn During Fault'}</span>)
+              ${isPreliminary ? `
+                <strong>BYPASSED (Preliminary Sizing Only)</strong>: The short-circuit thermal withstand check was bypassed during calculation.
+                <br />
+                <span class="status-warn" style="font-size: 12px; font-weight: bold;">
+                  ⚠️ NOTE: This calculation is not complete according to the IEC standard. Short-circuit fault level verification is required for full compliance.
+                </span>
+              ` : `
+                The selected cable must withstand short-circuit heat until the breaker trips.
+                <br />
+                <div class="formula">S = (I_sc × √t) / k</div>
+                <br />
+                - Short circuit current (I_sc): <strong>${shortCircuitCurrent} kA</strong> (${shortCircuitCurrent * 1000} A)
+                <br />
+                - Clearance time (t): <strong>${faultTime} s</strong>
+                <br />
+                - Conductor constant (k): <strong>${calcResults.k}</strong>
+                <br />
+                - Minimum required cross section (S): <strong>${calcResults.minSizeSC.toFixed(2)} mm²</strong>
+                <br />
+                - Selected cable size: <strong>${calcResults.recommendedSize} mm²</strong>
+                <br />
+                - Status: <strong>${calcResults.recommendedSize} mm² ≥ ${calcResults.minSizeSC.toFixed(2)} mm²</strong>
+                (<span class="${scPass ? 'status-pass' : 'status-fail'}">${scPass ? 'Satisfied' : 'Cable Will Burn During Fault'}</span>)
+              `}
             </div>
           </div>
 
@@ -1220,6 +1247,23 @@ const CableSizingPage = () => {
               </div>
             </div>
 
+            <div className="space-y-2 border-t border-white/5 pt-4">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input 
+                  type="checkbox"
+                  checked={isPreliminary}
+                  onChange={(e) => setIsPreliminary(e.target.checked)}
+                  className="w-4 h-4 rounded border-white/10 bg-slate-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-800 cursor-pointer"
+                />
+                <span className="text-sm font-semibold text-slate-300">
+                  Preliminary Cable Sizing (Skip PSCC / Fault calculations)
+                </span>
+              </label>
+              <p className="text-xs text-slate-400 leading-normal pl-7">
+                ⚠️ Note: Bypassing the short-circuit thermal check means the calculation is incomplete according to the IEC standard.
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 flex flex-col justify-between">
                 <div>
@@ -1231,7 +1275,10 @@ const CableSizingPage = () => {
                     type="number" 
                     value={shortCircuitCurrent} 
                     onChange={(e) => setShortCircuitCurrent(parseFloat(e.target.value) || 0)}
-                    className="w-full mt-1 bg-slate-900/80 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 text-white"
+                    disabled={isPreliminary}
+                    className={`w-full mt-1 bg-slate-900/80 border rounded-xl px-4 py-2.5 focus:outline-none text-white ${
+                      isPreliminary ? 'opacity-40 cursor-not-allowed border-white/5' : 'border-white/10 focus:border-blue-500'
+                    }`}
                     min="0.1"
                     step="0.1"
                   />
@@ -1262,8 +1309,9 @@ const CableSizingPage = () => {
                       setFaultTime(parseFloat(e.target.value) || 0.0); 
                       setIsFaultTimeManual(true); 
                     }}
+                    disabled={isPreliminary}
                     className={`w-full mt-1 bg-slate-900/80 border rounded-xl px-4 py-2.5 focus:outline-none text-white ${
-                      isFaultTimeManual ? 'border-white/10 focus:border-blue-500' : 'border-green-500/50 focus:border-green-400'
+                      isPreliminary ? 'opacity-40 cursor-not-allowed border-white/5' : (isFaultTimeManual ? 'border-white/10 focus:border-blue-500' : 'border-green-500/50 focus:border-green-400')
                     }`}
                     min="0.001"
                     max="10"
@@ -1273,21 +1321,23 @@ const CableSizingPage = () => {
                 {isFaultTimeManual ? (
                   <div className="text-[10px] text-slate-400 mt-1 flex justify-between items-center">
                     <span>User overridden time limit</span>
-                    <button 
-                      type="button" 
-                      onClick={() => {
-                        setIsFaultTimeManual(false);
-                        const defaultTime = protectionTripCurves[protectionDevice]?.time || 0.1;
-                        setFaultTime(defaultTime);
-                      }}
-                      className="text-blue-400 hover:text-blue-300 transition-colors font-semibold cursor-pointer underline text-[10px] bg-transparent border-0 p-0"
-                    >
-                      Reset to auto
-                    </button>
+                    {!isPreliminary && (
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          setIsFaultTimeManual(false);
+                          const defaultTime = protectionTripCurves[protectionDevice]?.time || 0.1;
+                          setFaultTime(defaultTime);
+                        }}
+                        className="text-blue-400 hover:text-blue-300 transition-colors font-semibold cursor-pointer underline text-[10px] bg-transparent border-0 p-0"
+                      >
+                        Reset to auto
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="text-[10px] text-green-400/85 mt-1 font-medium leading-tight truncate" title={protectionTripCurves[protectionDevice]?.desc}>
-                    {protectionTripCurves[protectionDevice]?.desc || "Standard clearance limit"}
+                    {isPreliminary ? "N/A (Bypassed)" : (protectionTripCurves[protectionDevice]?.desc || "Standard clearance limit")}
                   </div>
                 )}
               </div>
@@ -1341,15 +1391,32 @@ const CableSizingPage = () => {
                 </div>
               </div>
               <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center gap-3">
-                <div className="p-2.5 bg-green-500/20 rounded-lg">
-                  <CheckCircle2 className="w-6 h-6 text-green-400" />
+                <div className={`p-2.5 rounded-lg ${calcResults.isPreliminary ? 'bg-amber-500/20' : 'bg-green-500/20'}`}>
+                  {calcResults.isPreliminary ? (
+                    <Info className="w-6 h-6 text-amber-400" />
+                  ) : (
+                    <CheckCircle2 className="w-6 h-6 text-green-400" />
+                  )}
                 </div>
                 <div>
-                  <h4 className="font-bold text-white text-sm">IEC Validation Pass</h4>
-                  <p className="text-xs text-slate-300">All checks successfully calculated</p>
+                  <h4 className="font-bold text-white text-sm">
+                    {calcResults.isPreliminary ? "Preliminary Sizing" : "IEC Validation Pass"}
+                  </h4>
+                  <p className="text-xs text-slate-300">
+                    {calcResults.isPreliminary ? "Bypassed Short-Circuit check" : "All checks successfully calculated"}
+                  </p>
                 </div>
               </div>
             </div>
+
+            {calcResults.isPreliminary && (
+              <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-3 backdrop-blur-md">
+                <Info className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="text-xs sm:text-sm text-amber-300">
+                  <span className="font-bold text-white">⚠️ Preliminary Sizing Note:</span> The short-circuit thermal withstand check (adiabatic limit) was bypassed. This calculation is not fully compliant with standard IEC 60364 requirements. For critical installations, verification using the Prospective Short-Circuit Current (PSCC) is mandatory.
+                </div>
+              </div>
+            )}
 
             {/* Results Grid - 4 core validation criteria */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1414,30 +1481,34 @@ const CableSizingPage = () => {
 
               {/* SC Card */}
               <div className={`bg-slate-800/40 backdrop-blur-md rounded-xl p-5 border relative overflow-hidden flex flex-col justify-between ${
-                calcResults.finalSCWithstand >= calcResults.shortCircuitCurrent 
-                  ? 'border-green-500/30 bg-green-500/5' 
-                  : 'border-red-500/30 bg-red-500/5'
+                calcResults.isPreliminary 
+                  ? 'border-amber-500/20 bg-amber-500/5' 
+                  : calcResults.finalSCWithstand >= calcResults.shortCircuitCurrent 
+                    ? 'border-green-500/30 bg-green-500/5' 
+                    : 'border-red-500/30 bg-red-500/5'
               }`}>
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase">Thermal Limit (SC)</span>
                   <span className={`text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                    calcResults.finalSCWithstand >= calcResults.shortCircuitCurrent 
-                      ? 'bg-green-500/20 text-green-300' 
-                      : 'bg-red-500/20 text-red-300'
+                    calcResults.isPreliminary 
+                      ? 'bg-amber-500/20 text-amber-300' 
+                      : calcResults.finalSCWithstand >= calcResults.shortCircuitCurrent 
+                        ? 'bg-green-500/20 text-green-300' 
+                        : 'bg-red-500/20 text-red-300'
                   }`}>
-                    {calcResults.finalSCWithstand >= calcResults.shortCircuitCurrent ? "PASS" : "FAIL"}
+                    {calcResults.isPreliminary ? "BYPASSED" : (calcResults.finalSCWithstand >= calcResults.shortCircuitCurrent ? "PASS" : "FAIL")}
                   </span>
                 </div>
                 <div className="space-y-1 my-3">
                   <div className="text-xl sm:text-2xl font-bold text-white">
-                    {calcResults.finalSCWithstand.toFixed(2)} kA
+                    {calcResults.isPreliminary ? "N/A" : `${calcResults.finalSCWithstand.toFixed(2)} kA`}
                   </div>
                   <div className="text-xs text-slate-300">
-                    Fault SC: {calcResults.shortCircuitCurrent} kA
+                    {calcResults.isPreliminary ? "Preliminary Mode Active" : `Fault SC: ${calcResults.shortCircuitCurrent} kA`}
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-400 border-t border-white/5 pt-2">
-                  Withstand duration: {calcResults.faultTime} s | k={calcResults.k}
+                  {calcResults.isPreliminary ? "Adiabatic check skipped" : `Withstand duration: ${calcResults.faultTime} s | k=${calcResults.k}`}
                 </div>
               </div>
 
@@ -1487,11 +1558,11 @@ const CableSizingPage = () => {
                   <div className="text-xs text-slate-300">
                     For capacity: {calcResults.minSizeCCC || 'N/A'} mm²<br />
                     For drop: {calcResults.minSizeVD || 'N/A'} mm²<br />
-                    For fault: {calcResults.minSizeSCStd || 'N/A'} mm²
+                    For fault: {calcResults.isPreliminary ? 'Bypassed' : `${calcResults.minSizeSCStd || 'N/A'} mm²`}
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-400 border-t border-white/5 pt-2">
-                  Max of all requirements
+                  Max of all active requirements
                 </div>
               </div>
 
@@ -1591,9 +1662,13 @@ const CableSizingPage = () => {
                       </tr>
                       <tr>
                         <td className="py-2.5 text-slate-300">Fault Disconnection</td>
-                        <td className="py-2.5 font-semibold text-white">{calcResults.tripData.time} s</td>
+                        <td className="py-2.5 font-semibold text-white">
+                          {calcResults.isPreliminary ? 'N/A' : `${calcResults.tripData.time} s`}
+                        </td>
                         <td className="py-2.5 text-slate-400">≤ 5.0 s (TN/TT System)</td>
-                        <td className="py-2.5 text-right font-medium text-green-400">✅ PASS</td>
+                        <td className="py-2.5 text-right font-medium text-green-400">
+                          {calcResults.isPreliminary ? '➖ N/A' : '✅ PASS'}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -1623,12 +1698,20 @@ const CableSizingPage = () => {
 
                 <div className="bg-slate-900/50 p-4 rounded-lg border border-white/5 space-y-1 font-mono text-xs">
                   <div className="text-blue-400 font-semibold mb-1">2. Short Circuit Adiabatic Equation (IEC 60909)</div>
-                  <div className="text-white text-sm my-1.5">
-                    S = (I_sc × √t) / k
-                  </div>
-                  <div className="text-slate-400 leading-relaxed">
-                    Values: I_sc = {calcResults.shortCircuitCurrent} kA, t = {calcResults.faultTime} s, k = {calcResults.k}
-                  </div>
+                  {calcResults.isPreliminary ? (
+                    <div className="text-amber-400 my-1.5 leading-normal">
+                      ⚠️ Bypassed (Preliminary sizing mode is active. Fault clearance & short-circuit thermal checks are disabled).
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-white text-sm my-1.5">
+                        S = (I_sc × √t) / k
+                      </div>
+                      <div className="text-slate-400 leading-relaxed">
+                        Values: I_sc = {calcResults.shortCircuitCurrent} kA, t = {calcResults.faultTime} s, k = {calcResults.k}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
