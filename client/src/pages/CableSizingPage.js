@@ -14,6 +14,258 @@ import {
   Gauge
 } from 'lucide-react';
 
+const standardSizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300];
+
+const installationMethods = [
+  {
+    id: 'A1',
+    label: 'A1 - Conductors in Insulated Wall',
+    icon: (active) => (
+      <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="2" width="6" height="36" fill={active ? '#3b82f6' : '#475569'} fillOpacity="0.2" />
+        <rect x="30" y="2" width="6" height="36" fill={active ? '#3b82f6' : '#475569'} fillOpacity="0.2" />
+        <circle cx="20" cy="20" r="8" stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1.5" strokeDasharray="3 2" />
+        <path d="M 12 6 Q 16 10 12 14 Q 16 18 12 22 Q 16 26 12 30 Q 16 34 12 38" stroke={active ? '#2563eb' : '#475569'} strokeWidth="1" strokeLinecap="round" />
+        <path d="M 28 6 Q 24 10 28 14 Q 24 18 28 22 Q 24 26 28 30 Q 24 34 28 38" stroke={active ? '#2563eb' : '#475569'} strokeWidth="1" strokeLinecap="round" />
+        <circle cx="17" cy="20" r="2.5" fill="#f87171" />
+        <circle cx="23" cy="20" r="2.5" fill="#60a5fa" />
+      </svg>
+    )
+  },
+  {
+    id: 'A2',
+    label: 'A2 - Multicore in Insulated Wall',
+    icon: (active) => (
+      <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="2" width="6" height="36" fill={active ? '#3b82f6' : '#475569'} fillOpacity="0.2" />
+        <rect x="30" y="2" width="6" height="36" fill={active ? '#3b82f6' : '#475569'} fillOpacity="0.2" />
+        <circle cx="20" cy="20" r="9" stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1.5" strokeDasharray="3 2" />
+        <path d="M 12 6 Q 16 10 12 14 Q 16 18 12 22 Q 16 26 12 30 Q 16 34 12 38" stroke={active ? '#2563eb' : '#475569'} strokeWidth="1" strokeLinecap="round" />
+        <circle cx="20" cy="20" r="6" fill={active ? '#3b82f6' : '#64748b'} fillOpacity="0.4" stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1" />
+        <circle cx="18" cy="18" r="2" fill="#ef4444" />
+        <circle cx="22" cy="18" r="2" fill="#3b82f6" />
+        <circle cx="20" cy="22" r="2" fill="#eab308" />
+      </svg>
+    )
+  },
+  {
+    id: 'B1',
+    label: 'B1 - Conductors in Conduit on Wall',
+    icon: (active) => (
+      <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="2" y1="20" x2="38" y2="20" stroke={active ? '#3b82f6' : '#64748b'} strokeWidth="2" />
+        <line x1="8" y1="20" x2="8" y2="35" stroke={active ? '#3b82f6' : '#64748b'} strokeWidth="1" strokeOpacity="0.3" />
+        <line x1="20" y1="20" x2="20" y2="35" stroke={active ? '#3b82f6' : '#64748b'} strokeWidth="1" strokeOpacity="0.3" />
+        <line x1="32" y1="20" x2="32" y2="35" stroke={active ? '#3b82f6' : '#64748b'} strokeWidth="1" strokeOpacity="0.3" />
+        <circle cx="20" cy="12" r="7" fill={active ? '#1e293b' : '#334155'} stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1.5" />
+        <circle cx="17" cy="12" r="2" fill="#f87171" />
+        <circle cx="23" cy="12" r="2" fill="#60a5fa" />
+      </svg>
+    )
+  },
+  {
+    id: 'B2',
+    label: 'B2 - Multicore in Conduit on Wall',
+    icon: (active) => (
+      <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="2" y1="20" x2="38" y2="20" stroke={active ? '#3b82f6' : '#64748b'} strokeWidth="2" />
+        <line x1="8" y1="20" x2="8" y2="35" stroke={active ? '#3b82f6' : '#64748b'} strokeWidth="1" strokeOpacity="0.3" />
+        <line x1="20" y1="20" x2="20" y2="35" stroke={active ? '#3b82f6' : '#64748b'} strokeWidth="1" strokeOpacity="0.3" />
+        <circle cx="20" cy="11" r="8" fill={active ? '#1e293b' : '#334155'} stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1.5" />
+        <circle cx="20" cy="11" r="5" fill={active ? '#3b82f6' : '#475569'} stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="0.8" />
+        <circle cx="18.5" cy="10" r="1.5" fill="#f87171" />
+        <circle cx="21.5" cy="10" r="1.5" fill="#60a5fa" />
+        <circle cx="20" cy="12.5" r="1.5" fill="#eab308" />
+      </svg>
+    )
+  },
+  {
+    id: 'C',
+    label: 'C - Clipped Direct to Wall',
+    icon: (active) => (
+      <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="15" width="36" height="23" fill={active ? '#3b82f6' : '#475569'} fillOpacity="0.1" rx="2" />
+        <line x1="20" y1="15" x2="20" y2="38" stroke={active ? '#3b82f6' : '#64748b'} strokeWidth="1" strokeDasharray="2 2" strokeOpacity="0.5" />
+        <path d="M 12 11 A 8 8 0 0 1 28 11" stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="3" strokeLinecap="round" />
+        <line x1="10" y1="12" x2="30" y2="12" stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1.5" />
+        <circle cx="20" cy="11" r="5.5" fill={active ? '#2563eb' : '#475569'} stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1" />
+        <circle cx="18" cy="11" r="1.5" fill="#ef4444" />
+        <circle cx="22" cy="11" r="1.5" fill="#3b82f6" />
+      </svg>
+    )
+  },
+  {
+    id: 'D1',
+    label: 'D1 - Buried Conduit (Multicore)',
+    icon: (active) => (
+      <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 2 10 L 38 10" stroke="#78350f" strokeWidth="2.5" />
+        <line x1="8" y1="6" x2="10" y2="10" stroke="#22c55e" strokeWidth="1.5" />
+        <line x1="28" y1="6" x2="30" y2="10" stroke="#22c55e" strokeWidth="1.5" />
+        <circle cx="20" cy="24" r="8.5" fill="#1e293b" stroke="#78350f" strokeWidth="2.5" />
+        <circle cx="20" cy="24" r="6" fill={active ? '#3b82f6' : '#475569'} stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1" />
+        <circle cx="18" cy="23" r="1.5" fill="#ef4444" />
+        <circle cx="22" cy="23" r="1.5" fill="#3b82f6" />
+        <circle cx="20" cy="26" r="1.5" fill="#eab308" />
+      </svg>
+    )
+  },
+  {
+    id: 'D2',
+    label: 'D2 - Buried Conduit (Single Core)',
+    icon: (active) => (
+      <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 2 10 L 38 10" stroke="#78350f" strokeWidth="2.5" />
+        <line x1="18" y1="6" x2="20" y2="10" stroke="#22c55e" strokeWidth="1.5" />
+        <circle cx="13" cy="24" r="7" fill="#1e293b" stroke="#78350f" strokeWidth="2" />
+        <circle cx="13" cy="24" r="2.5" fill="#ef4444" />
+        <circle cx="27" cy="24" r="7" fill="#1e293b" stroke="#78350f" strokeWidth="2" />
+        <circle cx="27" cy="24" r="2.5" fill="#3b82f6" />
+      </svg>
+    )
+  },
+  {
+    id: 'E',
+    label: 'E - Cable Tray in Free Air',
+    icon: (active) => (
+      <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="16" width="32" height="4" fill={active ? '#3b82f6' : '#64748b'} rx="1" />
+        <line x1="8" y1="20" x2="8" y2="28" stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1.5" />
+        <line x1="20" y1="20" x2="20" y2="28" stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1.5" />
+        <line x1="32" y1="20" x2="32" y2="28" stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1.5" />
+        <circle cx="20" cy="10" r="7" fill={active ? '#2563eb' : '#475569'} stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1" />
+        <circle cx="17.5" cy="9" r="1.8" fill="#f87171" />
+        <circle cx="22.5" cy="9" r="1.8" fill="#60a5fa" />
+        <circle cx="20" cy="12" r="1.8" fill="#eab308" />
+      </svg>
+    )
+  },
+  {
+    id: 'F1',
+    label: 'F1 - Single Core Touching (Free Air)',
+    icon: (active) => (
+      <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="13" cy="16" r="5" fill="#f87171" stroke={active ? '#ef4444' : '#94a3b8'} strokeWidth="1" />
+        <circle cx="13" cy="16" r="1.5" fill="#fee2e2" />
+        <circle cx="23" cy="16" r="5" fill="#60a5fa" stroke={active ? '#3b82f6' : '#94a3b8'} strokeWidth="1" />
+        <circle cx="23" cy="16" r="1.5" fill="#dbeafe" />
+        <circle cx="18" cy="24" r="5" fill="#facc15" stroke={active ? '#eab308' : '#94a3b8'} strokeWidth="1" />
+        <circle cx="18" cy="24" r="1.5" fill="#fef9c3" />
+      </svg>
+    )
+  },
+  {
+    id: 'F2',
+    label: 'F2 - Single Core Spaced (Free Air)',
+    icon: (active) => (
+      <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10" cy="20" r="5.5" fill="#f87171" stroke={active ? '#ef4444' : '#94a3b8'} strokeWidth="1" />
+        <circle cx="10" cy="20" r="1.5" fill="#fee2e2" />
+        <circle cx="20" cy="20" r="5.5" fill="#60a5fa" stroke={active ? '#3b82f6' : '#94a3b8'} strokeWidth="1" />
+        <circle cx="20" cy="20" r="1.5" fill="#dbeafe" />
+        <circle cx="30" cy="20" r="5.5" fill="#facc15" stroke={active ? '#eab308' : '#94a3b8'} strokeWidth="1" />
+        <circle cx="30" cy="20" r="1.5" fill="#fef9c3" />
+      </svg>
+    )
+  },
+  {
+    id: 'G',
+    label: 'G - Embedded Directly in Concrete',
+    icon: (active) => (
+      <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="36" height="36" fill={active ? '#1e3a8a' : '#475569'} fillOpacity="0.2" rx="3" stroke={active ? '#3b82f6' : '#64748b'} strokeWidth="1.5" />
+        <polygon points="6,6 9,8 7,10" fill={active ? '#60a5fa' : '#94a3b8'} fillOpacity="0.4" />
+        <polygon points="32,8 34,11 31,12" fill={active ? '#60a5fa' : '#94a3b8'} fillOpacity="0.4" />
+        <polygon points="8,30 11,32 10,34" fill={active ? '#60a5fa' : '#94a3b8'} fillOpacity="0.4" />
+        <polygon points="30,30 33,28 32,32" fill={active ? '#60a5fa' : '#94a3b8'} fillOpacity="0.4" />
+        <circle cx="20" cy="20" r="6" fill={active ? '#2563eb' : '#334155'} stroke={active ? '#60a5fa' : '#94a3b8'} strokeWidth="1.5" />
+        <circle cx="20" cy="20" r="1.5" fill="#ffffff" />
+      </svg>
+    )
+  }
+];
+
+const renderThermalWizardSVG = (grouping, temp) => {
+  const isHighTemp = temp > 35;
+  let waveColor = "stroke-green-400";
+  let heatIntensity = "green";
+  if (grouping > 1 && grouping <= 3) {
+    waveColor = "stroke-amber-400";
+    heatIntensity = "amber";
+  } else if (grouping > 3 || isHighTemp) {
+    waveColor = "stroke-red-500";
+    heatIntensity = "red";
+  }
+
+  const getCables = () => {
+    if (grouping === 1) {
+      return [{ x: 20, y: 20 }];
+    } else if (grouping === 2) {
+      return [{ x: 15, y: 20 }, { x: 25, y: 20 }];
+    } else if (grouping === 3) {
+      return [{ x: 14, y: 15 }, { x: 26, y: 15 }, { x: 20, y: 25 }];
+    } else if (grouping === 4) {
+      return [{ x: 14, y: 14 }, { x: 26, y: 14 }, { x: 14, y: 26 }, { x: 26, y: 26 }];
+    } else if (grouping === 6) {
+      return [
+        { x: 13, y: 13 }, { x: 20, y: 13 }, { x: 27, y: 13 },
+        { x: 13, y: 27 }, { x: 20, y: 27 }, { x: 27, y: 27 }
+      ];
+    } else {
+      return [
+        { x: 12, y: 12 }, { x: 20, y: 12 }, { x: 28, y: 12 },
+        { x: 12, y: 20 }, { x: 20, y: 20 }, { x: 28, y: 20 },
+        { x: 12, y: 28 }, { x: 20, y: 28 }, { x: 28, y: 28 }
+      ];
+    }
+  };
+
+  const cables = getCables();
+
+  return (
+    <svg className="w-24 h-24 overflow-visible" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {cables.map((c, i) => (
+        <g key={i}>
+          <circle cx={c.x} cy={c.y} r="8" className={`${waveColor} animate-ping opacity-25`} strokeWidth="0.5" style={{ animationDuration: '3s', animationDelay: `${i * 0.2}s` }} />
+          <circle cx={c.x} cy={c.y} r="5" stroke={heatIntensity === 'green' ? '#34d399' : heatIntensity === 'amber' ? '#fbbf24' : '#ef4444'} strokeWidth="1" strokeOpacity="0.4" />
+        </g>
+      ))}
+      {cables.map((c, i) => (
+        <g key={`cable-${i}`}>
+          <circle cx={c.x} cy={c.y} r="3" fill="#334155" stroke="#94a3b8" strokeWidth="0.5" />
+          <circle cx={c.x} cy={c.y} r="1" fill="#f97316" />
+        </g>
+      ))}
+      {grouping > 3 && (
+        <circle cx="20" cy="20" r="16" fill="#ef4444" fillOpacity="0.08" className="animate-pulse" style={{ animationDuration: '2s' }} />
+      )}
+    </svg>
+  );
+};
+
+const getGroupingThermalExplanation = (grouping, temp, location) => {
+  let text = "";
+  if (grouping === 1) {
+    text += "Single isolated circuit. Heat dissipates freely into the surrounding environment. ";
+  } else {
+    text += `${grouping} circuits are bunched together. The proximity of multiple heat sources restricts heat dissipation, causing temperature buildup. `;
+  }
+
+  if (temp > 30) {
+    text += `Additionally, the high ambient temperature of ${temp}°C leaves less thermal margin, requiring severe current-carrying capacity reductions to prevent insulation melting. `;
+  } else {
+    text += "Standard ambient temperature provides normal heat clearance. ";
+  }
+
+  if (location === 'underground') {
+    text += "Buried cables rely heavily on soil moisture to conduct heat away; dry soils trap heat around the conduit.";
+  } else {
+    text += "Air movement around the tray or conduit helps, but proper physical spacing between cables is highly recommended.";
+  }
+
+  return text;
+};
+
 // IEC 60364-5-52 Current Carrying Capacity Tables (simplified for common sizes)
 // Values are for Copper & Aluminum, PVC/XLPE, at 30°C ambient
 const currentRatings = {
@@ -178,7 +430,6 @@ const getEarthConductorSize = (phaseSize) => {
   if (phaseSize <= 16) return phaseSize;
   if (phaseSize <= 35) return 16;
   const half = phaseSize / 2;
-  const standardSizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300];
   return standardSizes.find(s => s >= half) || phaseSize;
 };
 
@@ -216,6 +467,7 @@ const CableSizingPage = () => {
   const [shortCircuitCurrent, setShortCircuitCurrent] = useState(10);
   const [faultTime, setFaultTime] = useState(0.4);
   const [isPreliminary, setIsPreliminary] = useState(false);
+  const [selectedCableSize, setSelectedCableSize] = useState('auto');
 
   // Result States
   const [calcResults, setCalcResults] = useState(null);
@@ -373,9 +625,15 @@ const CableSizingPage = () => {
         recommendedSize = availableSizes[availableSizes.length - 1]; // Fallback to largest
       }
 
-      const finalRating = activeRatingsTable[recommendedSize] * totalFactor;
-      const finalVD = calcVoltageDrop(recommendedSize, designCurrent, cableLength);
-      const finalSCWithstand = (k * recommendedSize) / Math.sqrt(faultTime) / 1000; // in kA
+      const activeSize = selectedCableSize === 'auto' ? recommendedSize : parseFloat(selectedCableSize);
+
+      const finalRating = activeRatingsTable[activeSize] * totalFactor;
+      const finalVD = calcVoltageDrop(activeSize, designCurrent, cableLength);
+      const finalSCWithstand = (k * activeSize) / Math.sqrt(faultTime) / 1000; // in kA
+
+      const finalRatingRecommended = activeRatingsTable[recommendedSize] * totalFactor;
+      const finalVDRecommended = calcVoltageDrop(recommendedSize, designCurrent, cableLength);
+      const finalSCWithstandRecommended = (k * recommendedSize) / Math.sqrt(faultTime) / 1000;
 
       // Protection coordination check: Ib <= In <= Iz and I2 <= 1.45 * Iz
       const tripData = protectionTripCurves[protectionDevice] || { factor: 1.45, time: 0.4 };
@@ -389,7 +647,7 @@ const CableSizingPage = () => {
       }
 
       const tripCurrent = protectionRating * overloadFusingFactor;
-      const cableMaxCurrent = activeRatingsTable[recommendedSize] * totalFactor;
+      const cableMaxCurrent = finalRating;
       const i2Limit = 1.45 * cableMaxCurrent;
 
       const protectionValid = protectionRating >= designCurrent && 
@@ -430,7 +688,12 @@ const CableSizingPage = () => {
         tripCurrent,
         cableMaxCurrent,
         i2Limit,
-        isPreliminary
+        isPreliminary,
+        activeSize,
+        selectedCableSize,
+        finalRatingRecommended,
+        finalVDRecommended,
+        finalSCWithstandRecommended
       });
     } catch (err) {
       console.error(err);
@@ -464,7 +727,8 @@ const CableSizingPage = () => {
     shortCircuitCurrent,
     faultTime,
     location,
-    isPreliminary
+    isPreliminary,
+    selectedCableSize
   ]);
 
   const generatePDFReport = () => {
@@ -637,9 +901,17 @@ const CableSizingPage = () => {
         </div>
         ` : ''}
 
+        ${calcResults.selectedCableSize !== 'auto' ? `
+        <div style="background-color: #f0f4f8; border: 1px solid #d1d5db; padding: 12px; margin-bottom: 20px; border-radius: 4px; font-size: 12px; text-align: center; color: #374151;">
+          <strong>Evaluated Size (Manual Selection):</strong> ${calcResults.activeSize} mm² | <strong>Recommended Size:</strong> ${calcResults.recommendedSize} mm²
+        </div>
+        ` : ''}
+
         <div class="recommendation-box">
-          <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #555;">Minimum Recommended Cable Cross-Section</div>
-          <div class="rec-size">${calcResults.recommendedSize} mm²</div>
+          <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #555;">
+            ${calcResults.selectedCableSize === 'auto' ? 'Minimum Recommended Cable Cross-Section' : 'Evaluated Cable Cross-Section'}
+          </div>
+          <div class="rec-size">${calcResults.activeSize} mm²</div>
           <div style="font-size: 14px; color: #333; font-weight: bold;">
             ${conductorText} | ${insulationText} | ${configText} | ${cableLength}m Length
           </div>
@@ -706,7 +978,7 @@ const CableSizingPage = () => {
               <br />
               <div class="formula">Iz = Itable × k_temp × k_group × k_soil</div>
               <br />
-              - Table base rating: <strong>${calcResults.ratingsTable[calcResults.recommendedSize]} A</strong> (Method ${installMethod})
+              - Table base rating: <strong>${calcResults.ratingsTable[calcResults.activeSize]} A</strong> (Method ${installMethod})
               <br />
               - Combined derating factor: <strong>${calcResults.totalFactor.toFixed(3)}</strong>
               <br />
@@ -776,9 +1048,9 @@ const CableSizingPage = () => {
                 <br />
                 - Minimum required cross section (S): <strong>${calcResults.minSizeSC.toFixed(2)} mm²</strong>
                 <br />
-                - Selected cable size: <strong>${calcResults.recommendedSize} mm²</strong>
+                - Selected cable size: <strong>${calcResults.activeSize} mm²</strong>
                 <br />
-                - Status: <strong>${calcResults.recommendedSize} mm² ≥ ${calcResults.minSizeSC.toFixed(2)} mm²</strong>
+                - Status: <strong>${calcResults.activeSize} mm² ≥ ${calcResults.minSizeSC.toFixed(2)} mm²</strong>
                 (<span class="${scPass ? 'status-pass' : 'status-fail'}">${scPass ? 'Satisfied' : 'Cable Will Burn During Fault'}</span>)
               `}
             </div>
@@ -827,6 +1099,10 @@ const CableSizingPage = () => {
     printWindow.document.write(htmlContent);
     printWindow.document.close();
   };
+
+  const cccPass = calcResults ? (calcResults.finalRating >= calcResults.designCurrent) : true;
+  const vdPass = calcResults ? (calcResults.finalVD.vdPercent <= calcResults.maxVoltageDrop) : true;
+  const scPass = calcResults ? (calcResults.isPreliminary || calcResults.finalSCWithstand >= calcResults.shortCircuitCurrent) : true;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 text-white relative">
@@ -1104,26 +1380,61 @@ const CableSizingPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-300">
+                    Evaluation Size (Cable Cross-Section)
+                  </label>
+                  <select 
+                    value={selectedCableSize} 
+                    onChange={(e) => setSelectedCableSize(e.target.value)}
+                    className="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 text-white animate-fade-in"
+                  >
+                    <option value="auto">Auto-Recommend (Smart Sizing)</option>
+                    {standardSizes.map((size) => (
+                      <option key={size} value={size}>{size} mm²</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-300">
                     Installation Method 
                     <span className="text-xs font-normal text-slate-400 ml-1">(IEC 60364-5-52)</span>
                   </label>
-                  <select 
-                    value={installMethod} 
-                    onChange={(e) => setInstallMethod(e.target.value)}
-                    className="w-full bg-slate-900/80 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 text-white"
-                  >
-                    <option value="A1">A1 - Insulated conductors inside thermal-insulated walls</option>
-                    <option value="A2">A2 - Multicore cable inside thermal-insulated walls</option>
-                    <option value="B1">B1 - Insulated conductors in conduit on masonry/walls</option>
-                    <option value="B2">B2 - Multicore cable in conduit on masonry/walls</option>
-                    <option value="C">C - Single/Multicore cables directly on wood/masonry walls</option>
-                    <option value="D1">D1 - Multicore cables in buried conduits</option>
-                    <option value="D2">D2 - Single-core cables in buried conduits</option>
-                    <option value="E">E - Multicore cables in free air / open trays</option>
-                    <option value="F1">F1 - Single-core cables touching in free air / open trays</option>
-                    <option value="F2">F2 - Single-core cables spaced in free air / open trays</option>
-                    <option value="G">G - Single-core cables embedded directly in concrete</option>
-                  </select>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
+                    {installationMethods.map((m) => {
+                      const isActive = installMethod === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setInstallMethod(m.id)}
+                          className={`flex flex-col items-center justify-between p-2.5 rounded-xl border text-center transition-all duration-200 cursor-pointer h-28 ${
+                            isActive 
+                              ? 'border-blue-500 bg-blue-600/10 shadow-lg shadow-blue-500/5' 
+                              : 'border-white/10 bg-slate-900/40 hover:border-white/20 hover:bg-slate-900/60'
+                          }`}
+                        >
+                          <div className="flex-shrink-0 flex items-center justify-center h-10 w-10">
+                            {m.icon(isActive)}
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-bold text-white mt-1">{m.id}</span>
+                          <div className="h-6 flex items-center justify-center overflow-hidden">
+                            <span className="text-[8px] sm:text-[9px] text-slate-400 leading-tight line-clamp-2">
+                              {m.label.split(' - ')[1]}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Selected method full description box */}
+                  <div className="mt-2.5 p-2.5 bg-slate-900/60 border border-white/5 rounded-xl flex items-start gap-2 text-xs text-slate-300">
+                    <Info className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-white">{installMethod}:</span>{' '}
+                      {installationMethods.find(m => m.id === installMethod)?.label}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -1187,6 +1498,37 @@ const CableSizingPage = () => {
                 </select>
               </div>
             )}
+
+            {/* Interactive Derating Wizard Box */}
+            <div className="bg-slate-900/40 border border-white/5 rounded-xl p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Activity className="w-4 h-4 text-orange-400" />
+                  Thermal Dissipation Wizard
+                </h4>
+                <span className="text-[10px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full border border-orange-500/30 font-medium">
+                  {calcResults ? ((1 - calcResults.totalFactor) * 100).toFixed(0) : 0}% Derated
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 items-center">
+                {/* Visual heat dissipation SVG */}
+                <div className="relative w-32 h-32 bg-slate-950/80 rounded-xl border border-white/5 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  {renderThermalWizardSVG(grouping, ambientTemp)}
+                </div>
+
+                {/* Explanation text */}
+                <div className="text-xs text-slate-300 space-y-2 leading-relaxed">
+                  <div>
+                    <span className="font-semibold text-white">Current Capacity Multiplier:</span>{' '}
+                    <span className="font-bold text-blue-400">{calcResults ? calcResults.totalFactor.toFixed(3) : '1.000'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-normal">
+                    {getGroupingThermalExplanation(grouping, ambientTemp, location)}
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -1379,10 +1721,10 @@ const CableSizingPage = () => {
             <div className="bg-gradient-to-r from-blue-600/30 via-indigo-600/30 to-slate-800/80 backdrop-blur-lg border border-blue-500/40 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-2xl">
               <div className="space-y-2 text-center md:text-left">
                 <div className="text-blue-400 font-semibold text-xs sm:text-sm uppercase tracking-wider">
-                  IEC 60364-5-52 Minimum Recommended Phase Size
+                  {calcResults.selectedCableSize === 'auto' ? 'IEC 60364-5-52 Recommended Phase Size' : 'IEC 60364-5-52 Evaluated Phase Size'}
                 </div>
                 <div className="text-4xl md:text-5xl font-extrabold text-white flex items-center justify-center md:justify-start gap-2">
-                  <span>{calcResults.recommendedSize}</span>
+                  <span>{calcResults.activeSize}</span>
                   <span className="text-xl md:text-2xl font-medium text-slate-300">mm²</span>
                 </div>
                 <div className="text-xs sm:text-sm text-slate-300 max-w-xl">
@@ -1391,23 +1733,134 @@ const CableSizingPage = () => {
                 </div>
               </div>
               <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center gap-3">
-                <div className={`p-2.5 rounded-lg ${calcResults.isPreliminary ? 'bg-amber-500/20' : 'bg-green-500/20'}`}>
-                  {calcResults.isPreliminary ? (
+                <div className={`p-2.5 rounded-lg ${(cccPass && vdPass && scPass) ? (calcResults.isPreliminary ? 'bg-amber-500/20' : 'bg-green-500/20') : 'bg-red-500/20'}`}>
+                  {calcResults.isPreliminary && (cccPass && vdPass && scPass) ? (
                     <Info className="w-6 h-6 text-amber-400" />
-                  ) : (
+                  ) : (cccPass && vdPass && scPass) ? (
                     <CheckCircle2 className="w-6 h-6 text-green-400" />
+                  ) : (
+                    <Shield className="w-6 h-6 text-red-400" />
                   )}
                 </div>
                 <div>
                   <h4 className="font-bold text-white text-sm">
-                    {calcResults.isPreliminary ? "Preliminary Sizing" : "IEC Validation Pass"}
+                    {!(cccPass && vdPass && scPass) ? "IEC Check Fail" : calcResults.isPreliminary ? "Preliminary Sizing" : "IEC Validation Pass"}
                   </h4>
                   <p className="text-xs text-slate-300">
-                    {calcResults.isPreliminary ? "Bypassed Short-Circuit check" : "All checks successfully calculated"}
+                    {!(cccPass && vdPass && scPass) ? "Selected size is unsafe" : calcResults.isPreliminary ? "Bypassed Short-Circuit check" : "All checks successfully calculated"}
                   </p>
                 </div>
               </div>
             </div>
+
+            {/* Smart Recommendation Banner if user selected manual size and it fails */}
+            {selectedCableSize !== 'auto' && (!cccPass || !vdPass || !scPass) && (
+              <div className="p-5 bg-red-500/10 border border-red-500/30 rounded-xl space-y-4 backdrop-blur-md animate-fade-in">
+                <div className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5 animate-pulse" />
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-white text-sm">
+                      ⚠️ Selected Cable Size ({selectedCableSize} mm²) Fails IEC Check
+                    </h4>
+                    <p className="text-xs text-red-200">
+                      The selected cable size does not satisfy safety verification criteria. See comparison details below:
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-950/40 p-4 rounded-xl border border-white/5 text-xs font-mono">
+                  <div className="space-y-1">
+                    <div className="text-slate-400 font-semibold mb-1">Current Carrying Capacity</div>
+                    <div className="flex justify-between text-white border-b border-white/5 pb-1">
+                      <span>Selected:</span>
+                      <span className={cccPass ? 'text-green-400' : 'text-red-400 font-bold'}>
+                        {calcResults.finalRating.toFixed(1)} A {cccPass ? '✓' : '✗'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Required:</span>
+                      <span>{calcResults.designCurrent.toFixed(1)} A</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="text-slate-400 font-semibold mb-1">Voltage Drop</div>
+                    <div className="flex justify-between text-white border-b border-white/5 pb-1">
+                      <span>Selected:</span>
+                      <span className={vdPass ? 'text-green-400' : 'text-red-400 font-bold'}>
+                        {calcResults.finalVD.vdPercent.toFixed(2)}% {vdPass ? '✓' : '✗'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Limit:</span>
+                      <span>≤ {calcResults.maxVoltageDrop}%</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="text-slate-400 font-semibold mb-1">Thermal Withstand</div>
+                    <div className="flex justify-between text-white border-b border-white/5 pb-1">
+                      <span>Selected:</span>
+                      <span className={scPass ? 'text-green-400' : 'text-red-400 font-bold'}>
+                        {isPreliminary ? 'Bypassed' : `${calcResults.finalSCWithstand.toFixed(2)} kA ${scPass ? '✓' : '✗'}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Fault SC:</span>
+                      <span>{isPreliminary ? 'N/A' : `${calcResults.shortCircuitCurrent} kA`}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-white/5 text-xs">
+                  <div className="text-slate-300 text-center sm:text-left">
+                    💡 <span className="font-bold text-white">Smart Recommendation:</span> Upsizing to{' '}
+                    <span className="font-bold text-green-400 text-sm">{calcResults.recommendedSize} mm²</span> will resolve all safety checks.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCableSize(calcResults.recommendedSize.toString())}
+                    className="bg-green-600 hover:bg-green-500 text-white font-bold px-4 py-2.5 rounded-lg active:scale-95 transition-all duration-150 cursor-pointer border-0 shadow"
+                  >
+                    Apply suggested upsize ({calcResults.recommendedSize} mm²)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Smart Safety Margin Notice if user selected manual size and it is larger than recommended */}
+            {selectedCableSize !== 'auto' && cccPass && vdPass && scPass && parseFloat(selectedCableSize) > calcResults.recommendedSize && (
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-md text-xs text-slate-300 animate-fade-in">
+                <div>
+                  💡 <span className="font-bold text-white">Safety Margin Notice:</span> The selected size **{selectedCableSize} mm²** is larger than the recommended **{calcResults.recommendedSize} mm²**. It is fully safe but might be over-engineered.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCableSize('auto')}
+                  className="bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-500/30 font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all duration-150 cursor-pointer"
+                >
+                  Reset to recommended
+                </button>
+              </div>
+            )}
+
+            {/* Smart Alert if even the largest cable size fails */}
+            {calcResults && (!cccPass || !vdPass || !scPass) && (selectedCableSize === 'auto' || parseFloat(selectedCableSize) === calcResults.recommendedSize) && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-5 space-y-3 backdrop-blur-md text-xs animate-fade-in">
+                <h4 className="font-bold text-white text-sm flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-red-500" />
+                  ⚠️ Extreme Installation Limits Exceeded
+                </h4>
+                <p className="text-slate-300 leading-relaxed">
+                  Even the largest standard cable size ({calcResults.recommendedSize} mm²) fails one or more IEC validation criteria under these design parameters.
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-slate-400">
+                  <li>Consider splitting the load and running <strong>multiple parallel cables</strong>.</li>
+                  <li>Try reducing the route length or upsizing the supply voltage to decrease drop.</li>
+                  <li>Review the protective device rating or adjust the short-circuit clearance time.</li>
+                </ul>
+              </div>
+            )}
 
             {calcResults.isPreliminary && (
               <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-3 backdrop-blur-md">
@@ -1446,7 +1899,7 @@ const CableSizingPage = () => {
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-400 border-t border-white/5 pt-2">
-                  Base: {calcResults.ratingsTable[calcResults.recommendedSize]}A | Derated (Iz)
+                  Base: {calcResults.ratingsTable[calcResults.activeSize]}A | Derated (Iz)
                 </div>
               </div>
 
@@ -1576,15 +2029,15 @@ const CableSizingPage = () => {
                 </div>
                 <div className="space-y-1 my-3">
                   <div className="text-xl sm:text-2xl font-bold text-white">
-                    {getEarthConductorSize(calcResults.recommendedSize)} mm²
+                    {getEarthConductorSize(calcResults.activeSize)} mm²
                   </div>
                   <div className="text-xs text-slate-300">
-                    Phase: {calcResults.recommendedSize} mm²<br />
+                    Phase: {calcResults.activeSize} mm²<br />
                     Standard size for grounding
                   </div>
                 </div>
                 <div className="text-[11px] text-slate-400 border-t border-white/5 pt-2">
-                  {calcResults.recommendedSize > 35 ? 'Recommended: ½ phase size' : 'Same as phase'}
+                  {calcResults.activeSize > 35 ? 'Recommended: ½ phase size' : 'Same as phase'}
                 </div>
               </div>
 
