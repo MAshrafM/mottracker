@@ -63,7 +63,7 @@ const ActiveMotorsReport = () => {
 
   const formatDate = (date) => {
     if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString();
+    return new Date(date).toLocaleDateString('en-GB');
   };
 
   const totalActiveMotors = reportData.reduce((sum, group) => sum + group.motors.length, 0);

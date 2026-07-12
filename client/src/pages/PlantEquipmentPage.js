@@ -639,13 +639,13 @@ const PlantEquipmentPage = () => {
                         <p>Speed: <span className="text-white">{eq.currentMotor.speed} RPM</span></p>
                         <p>Maintained: <span className={`text-white ${!eq.currentMotor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
                           {eq.currentMotor.lastMaintenanceDate
-                            ? new Date(eq.currentMotor.lastMaintenanceDate).toLocaleDateString()
+                            ? new Date(eq.currentMotor.lastMaintenanceDate).toLocaleDateString('en-GB')
                             : 'N/A'}
                         </span></p>
                         <div className="col-span-2 flex justify-between items-center border-t border-white/10 pt-2 mt-1">
                           <p>Greased: <span className={`text-white ${!eq.currentMotor.lastGreasingDate ? 'text-red-300' : 'text-green-300'}`}>
                             {eq.currentMotor.lastGreasingDate
-                              ? new Date(eq.currentMotor.lastGreasingDate).toLocaleDateString()
+                              ? new Date(eq.currentMotor.lastGreasingDate).toLocaleDateString('en-GB')
                               : 'N/A'}
                           </span></p>
 

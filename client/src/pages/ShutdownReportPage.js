@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { FileDown, Loader, ChevronLeft, Calendar, Info, Search } from 'lucide-react';
+import DatePicker from '../components/DatePicker';
 
 const ShutdownReportPage = () => {
   const navigate = useNavigate();
@@ -17,19 +18,10 @@ const ShutdownReportPage = () => {
       const day = String(date.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     };
-
-    const formatToDisplay = (date) => {
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    };
     
     return {
       from: formatToInternal(firstDay),
-      to: formatToInternal(today),
-      fromDisplay: formatToDisplay(firstDay),
-      toDisplay: formatToDisplay(today)
+      to: formatToInternal(today)
     };
   };
 
@@ -37,81 +29,23 @@ const ShutdownReportPage = () => {
   // Internal API format: yyyy-mm-dd
   const [fromDate, setFromDate] = useState(defaults.from);
   const [toDate, setToDate] = useState(defaults.to);
-  
-  // UI Display format: dd/mm/yyyy
-  const [fromDisplay, setFromDisplay] = useState(defaults.fromDisplay);
-  const [toDisplay, setToDisplay] = useState(defaults.toDisplay);
-  const [fromError, setFromError] = useState('');
-  const [toError, setToError] = useState('');
 
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('date'); // 'date' | 'unit'
 
-  // Convert dd/mm/yyyy to yyyy-mm-dd, returns null if invalid
-  const parseDisplayDate = (displayStr) => {
-    const match = displayStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (!match) return null;
-    const [, day, month, year] = match;
-    const d = parseInt(day, 10);
-    const m = parseInt(month, 10);
-    const y = parseInt(year, 10);
-    if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900 || y > 2100) return null;
-    
-    // Check if it's a real calendar date
-    const date = new Date(y, m - 1, d);
-    if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return null;
-    
-    return `${year}-${month}-${day}`;
-  };
-
-  // Auto-format as user types: insert '/' after dd and mm
-  const handleDateInput = (value, setDisplay, setInternal, setErr) => {
-    // Strip non-digit characters
-    let digits = value.replace(/\D/g, '');
-    
-    // Limit to 8 digits (ddmmyyyy)
-    if (digits.length > 8) digits = digits.slice(0, 8);
-    
-    // Build formatted string
-    let formatted = '';
-    if (digits.length > 0) formatted += digits.slice(0, 2);
-    if (digits.length > 2) formatted += '/' + digits.slice(2, 4);
-    if (digits.length > 4) formatted += '/' + digits.slice(4, 8);
-    
-    setDisplay(formatted);
-    
-    // Validate if complete (10 chars: dd/mm/yyyy)
-    if (formatted.length === 10) {
-      const internal = parseDisplayDate(formatted);
-      if (internal) {
-        setInternal(internal);
-        setErr('');
-      } else {
-        setErr('Invalid date');
-      }
-    } else {
-      setErr('');
-    }
-  };
-
   const fetchReport = async () => {
-    // Validate both dates before fetching
-    const fromValid = parseDisplayDate(fromDisplay);
-    const toValid = parseDisplayDate(toDisplay);
-    
-    if (!fromValid) { setFromError('Invalid date'); return; }
-    if (!toValid) { setToError('Invalid date'); return; }
-    
-    setFromDate(fromValid);
-    setToDate(toValid);
+    if (!fromDate || !toDate) {
+      setError('Please provide valid dates.');
+      return;
+    }
 
     try {
       setLoading(true);
       setError('');
       const response = await api.get('/reports/shutdown-report', {
-        params: { from: fromValid, to: toValid }
+        params: { from: fromDate, to: toDate }
       });
       setReportData(response.data.data || []);
     } catch (err) {
@@ -232,24 +166,12 @@ const ShutdownReportPage = () => {
                     <Calendar size={12} />
                     From
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={fromDisplay}
-                      onChange={(e) => handleDateInput(e.target.value, setFromDisplay, setFromDate, setFromError)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="dd/mm/yyyy"
-                      maxLength={10}
-                      className={`w-full bg-slate-900/80 border rounded-lg px-3 py-2.5 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 text-white placeholder-gray-500 transition-all duration-200 ${
-                        fromError 
-                          ? 'border-red-500/60 focus:ring-red-500/30' 
-                          : 'border-white/15 focus:ring-blue-500/30 focus:border-blue-500/50'
-                      }`}
-                    />
-                    {fromError && (
-                      <span className="absolute -bottom-5 left-0 text-[11px] text-red-400 font-medium">{fromError}</span>
-                    )}
-                  </div>
+                  <DatePicker 
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    name="fromDate"
+                  />
                 </div>
 
                 {/* Separator */}
@@ -263,31 +185,19 @@ const ShutdownReportPage = () => {
                     <Calendar size={12} />
                     To
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={toDisplay}
-                      onChange={(e) => handleDateInput(e.target.value, setToDisplay, setToDate, setToError)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="dd/mm/yyyy"
-                      maxLength={10}
-                      className={`w-full bg-slate-900/80 border rounded-lg px-3 py-2.5 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 text-white placeholder-gray-500 transition-all duration-200 ${
-                        toError 
-                          ? 'border-red-500/60 focus:ring-red-500/30' 
-                          : 'border-white/15 focus:ring-blue-500/30 focus:border-blue-500/50'
-                      }`}
-                    />
-                    {toError && (
-                      <span className="absolute -bottom-5 left-0 text-[11px] text-red-400 font-medium">{toError}</span>
-                    )}
-                  </div>
+                  <DatePicker 
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    name="toDate"
+                  />
                 </div>
 
                 {/* Generate Button */}
                 <div className="flex items-end mt-4 sm:mt-0">
                   <button
                     onClick={fetchReport}
-                    disabled={loading || !!fromError || !!toError}
+                    disabled={loading || !fromDate || !toDate}
                     className="flex w-full sm:w-auto items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
                     title="Generate Report"
                   >

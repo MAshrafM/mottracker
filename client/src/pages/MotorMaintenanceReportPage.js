@@ -120,10 +120,10 @@ const MotorMaintenanceReportPage = () => {
             }
         }
         const dateAssignedFormatted = activeAssignment && activeAssignment.dateInstalled 
-            ? new Date(activeAssignment.dateInstalled).toLocaleDateString() 
+            ? new Date(activeAssignment.dateInstalled).toLocaleDateString('en-GB') 
             : 'N/A';
         const dateRemovedFormatted = activeAssignment && activeAssignment.dateRemoved 
-            ? new Date(activeAssignment.dateRemoved).toLocaleDateString() 
+            ? new Date(activeAssignment.dateRemoved).toLocaleDateString('en-GB') 
             : (activeAssignment ? 'Active' : 'N/A');
 
         return (
@@ -180,7 +180,7 @@ const MotorMaintenanceReportPage = () => {
                             <div className="flex flex-col md:flex-row print:flex-row justify-between items-center border-b-2 border-slate-800 pb-6 mb-8 gap-4 text-center md:text-left print:text-left">
                                 <div>
                                     <h1 className="text-2xl md:text-3xl print:text-3xl font-bold text-slate-900 uppercase tracking-wider">Maintenance Report</h1>
-                                    <p className="text-slate-500 mt-1">Generated on {new Date().toLocaleDateString()}</p>
+                                    <p className="text-slate-500 mt-1">Generated on {new Date().toLocaleDateString('en-GB')}</p>
                                 </div>
                                 <img src={logo} alt="Company Logo" className="h-12 md:h-16 print:h-16 w-auto" />
                             </div>
@@ -252,7 +252,7 @@ const MotorMaintenanceReportPage = () => {
                                         <span className="font-semibold text-slate-600">Last Maintenance</span>
                                         <span className="font-medium text-slate-900">
                                             {selectedMotor.lastMaintenanceDate
-                                                ? new Date(selectedMotor.lastMaintenanceDate).toLocaleDateString()
+                                                ? new Date(selectedMotor.lastMaintenanceDate).toLocaleDateString('en-GB')
                                                 : 'N/A'}
                                         </span>
                                     </div>
@@ -304,7 +304,7 @@ const MotorMaintenanceReportPage = () => {
                                                 {maintenanceHistory.map((log, index) => (
                                                     <tr key={log._id || index} className="border-b border-slate-200 hover:bg-slate-50">
                                                         <td className="px-6 py-4 font-medium text-slate-900 align-top">
-                                                            {new Date(log.date).toLocaleDateString()}
+                                                            {new Date(log.date).toLocaleDateString('en-GB')}
                                                         </td>
                                                         <td className="px-6 py-4 text-slate-700 whitespace-pre-wrap">
                                                             {log.description}

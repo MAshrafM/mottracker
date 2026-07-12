@@ -4,6 +4,7 @@ import { Loader, Printer, ArrowLeft, QrCode } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import MassMaintenanceEntry from '../components/MassMaintenanceEntry';
+import DatePicker from '../components/DatePicker';
 import logo from '../logo_ar.gif';
 
 const MaintenanceHistory = () => {
@@ -281,10 +282,10 @@ const MaintenanceHistory = () => {
       }
     }
     const dateAssignedFormatted = activeAssignment && activeAssignment.dateInstalled 
-      ? new Date(activeAssignment.dateInstalled).toLocaleDateString() 
+      ? new Date(activeAssignment.dateInstalled).toLocaleDateString('en-GB') 
       : 'N/A';
     const dateRemovedFormatted = activeAssignment && activeAssignment.dateRemoved 
-      ? new Date(activeAssignment.dateRemoved).toLocaleDateString() 
+      ? new Date(activeAssignment.dateRemoved).toLocaleDateString('en-GB') 
       : (activeAssignment ? 'Active' : 'N/A');
 
     return (
@@ -336,7 +337,7 @@ const MaintenanceHistory = () => {
             <div className="flex flex-col md:flex-row print:flex-row justify-between items-center border-b-2 border-slate-800 pb-6 mb-8 gap-4 text-center md:text-left print:text-left">
               <div>
                 <h1 className="text-2xl md:text-3xl print:text-3xl font-bold text-slate-900 uppercase tracking-wider">Maintenance Report</h1>
-                <p className="text-slate-500 mt-1">Generated on {new Date().toLocaleDateString()}</p>
+                <p className="text-slate-500 mt-1">Generated on {new Date().toLocaleDateString('en-GB')}</p>
               </div>
               <img src={logo} alt="Company Logo" className="h-12 md:h-16 print:h-16 w-auto" />
             </div>
@@ -418,7 +419,7 @@ const MaintenanceHistory = () => {
                   <span className="font-semibold text-slate-600">Last Maintenance</span>
                   <span className="font-medium text-slate-900">
                     {motor.lastMaintenanceDate
-                      ? new Date(motor.lastMaintenanceDate).toLocaleDateString()
+                      ? new Date(motor.lastMaintenanceDate).toLocaleDateString('en-GB')
                       : 'N/A'}
                   </span>
                 </div>
@@ -468,7 +469,7 @@ const MaintenanceHistory = () => {
                       {history.map((log, index) => (
                         <tr key={log._id || index} className="border-b border-slate-200 hover:bg-slate-50">
                           <td className="px-6 py-4 font-medium text-slate-900 align-top">
-                            {new Date(log.date).toLocaleDateString()}
+                            {new Date(log.date).toLocaleDateString('en-GB')}
                           </td>
                           <td className="px-6 py-4 text-slate-700 whitespace-pre-wrap">
                             {log.description}
@@ -708,7 +709,7 @@ const MaintenanceHistory = () => {
               <p className="flex justify-between items-center">
                 <strong className="text-blue-300 text-base">Last Maintenance:</strong>
                 <span className={`text-base ${!motor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
-                  {motor.lastMaintenanceDate ? new Date(motor.lastMaintenanceDate).toLocaleDateString() : 'N/A'}
+                  {motor.lastMaintenanceDate ? new Date(motor.lastMaintenanceDate).toLocaleDateString('en-GB') : 'N/A'}
                 </span>
               </p>
             </div>
@@ -716,7 +717,7 @@ const MaintenanceHistory = () => {
               <p className="flex justify-between items-center">
                 <strong className="text-blue-300 text-base">Last Greasing:</strong>
                 <span className={`text-base ${!motor.lastGreasingDate ? 'text-red-300' : 'text-green-300'}`}>
-                  {motor.lastGreasingDate ? new Date(motor.lastGreasingDate).toLocaleDateString() : 'N/A'}
+                  {motor.lastGreasingDate ? new Date(motor.lastGreasingDate).toLocaleDateString('en-GB') : 'N/A'}
                 </span>
               </p>
             </div>
@@ -782,8 +783,7 @@ const MaintenanceHistory = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-blue-300 text-sm font-semibold">Maintenance Date</label>
-                <input
-                  type="date"
+                <DatePicker
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   required
@@ -879,7 +879,7 @@ const MaintenanceHistory = () => {
                         <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex-shrink-0"></div>
                         <div className="min-w-0 flex-1">
                           <strong className="text-blue-300 font-semibold text-sm md:text-base block truncate">
-                            {new Date(event.date).toLocaleDateString('en-US', {
+                            {new Date(event.date).toLocaleDateString('en-GB', {
                               year: 'numeric',
                               month: 'long',
                               day: 'numeric'
@@ -967,8 +967,7 @@ const MaintenanceHistory = () => {
             <form onSubmit={handleUpdateEvent} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-blue-500 text-sm font-semibold">Date</label>
-                <input
-                  type="date"
+                <DatePicker
                   name="date"
                   value={editingEvent.date}
                   onChange={handleEditInputChange}
@@ -1178,9 +1177,8 @@ const MaintenanceHistory = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Last Maintenance Date</label>
-                  <input
+                  <DatePicker
                     name="lastMaintenanceDate"
-                    type="date"
                     value={motorFormData.lastMaintenanceDate}
                     onChange={handleMotorInputChange}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 

@@ -5,6 +5,7 @@ import { Loader, Grid3X3, List } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import { useMotorData } from '../context/MotorContext';
 import { Link } from 'react-router-dom';
+import DatePicker from '../components/DatePicker';
 
 const MotorManagementPage = () => {
   const { user } = useContext(AuthContext);
@@ -422,7 +423,7 @@ const MotorManagementPage = () => {
                   <p className="flex justify-between items-center">
                     <strong className="text-blue-300 text-base">Last Maintenance:</strong>
                     <span className={`text-base ${!motor.lastMaintenanceDate ? 'text-red-300' : 'text-green-300'}`}>
-                      {motor.lastMaintenanceDate ? new Date(motor.lastMaintenanceDate).toLocaleDateString() : 'N/A'}
+                      {motor.lastMaintenanceDate ? new Date(motor.lastMaintenanceDate).toLocaleDateString('en-GB') : 'N/A'}
                     </span>
                   </p>
                 </div>
@@ -753,9 +754,8 @@ const MotorManagementPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-blue-300 text-sm font-semibold">Last Maintenance Date</label>
-                  <input
+                  <DatePicker
                     name="lastMaintenanceDate"
-                    type="date"
                     value={formData.lastMaintenanceDate}
                     onChange={handleInputChange}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
