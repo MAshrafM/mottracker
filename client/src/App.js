@@ -15,6 +15,7 @@ import SpareMotorsReport from './pages/SpareMotorReport';
 import BearingReport from './pages/BearingReport';
 import MotorMaintenanceReportPage from './pages/MotorMaintenanceReportPage';
 import UnitMotorReport from './pages/UnitMotorReport';
+import ShutdownReportPage from './pages/ShutdownReportPage';
 import SparePartsPage from './pages/SparePartsPage';
 import EquipmentByPowerPage from './pages/EquipmentByPowerPage';
 import DevParserPage from './pages/DevParserPage';
@@ -56,6 +57,7 @@ function App() {
               <Route path="/reports/bearings" element={<BearingReport />} />
               <Route path="/reports/motor-maintenance" element={<MotorMaintenanceReportPage />} />
               <Route path="/reports/unit-motor" element={<UnitMotorReport />} />
+              <Route path="/reports/shutdown" element={<ShutdownReportPage />} />
               <Route path="/spare-parts" element={<SparePartsPage />} />
               <Route path="/cable-sizing" element={<CableSizingPage />} />
               {/* Add other private routes for motors, equipment etc. here */}

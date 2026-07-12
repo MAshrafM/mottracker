@@ -1,25 +1,254 @@
 const { PDFDocument, StandardFonts, rgb, PageSizes } = require('pdf-lib');
 const { formatDate } = require('./helpers'); // Your date formatter
+const fontkit = require('@pdf-lib/fontkit');
+const reshaper = require('arabic-persian-reshaper');
+const fs = require('fs');
+const path = require('path');
+
+let regularFontBytes = null;
+let boldFontBytes = null;
+
+try {
+  regularFontBytes = fs.readFileSync(path.join(__dirname, '..', 'fonts', 'Amiri-Regular.ttf'));
+  boldFontBytes = fs.readFileSync(path.join(__dirname, '..', 'fonts', 'Amiri-Bold.ttf'));
+} catch (err) {
+  console.error('Failed to load Amiri fonts in pdfService:', err);
+}
 const logoBase64 = 'data:image/jpeg;base64,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';
 
-// 1. Text Wrapping Helper
-const wrapText = (text, font, size, maxWidth) => {
-  const words = text.split(' ');
-  let lines = [];
-  let currentLine = words[0];
+const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
 
-  for (let i = 1; i < words.length; i++) {
-    const word = words[i];
-    const width = font.widthOfTextAtSize(currentLine + ' ' + word, size);
-    if (width < maxWidth) {
-      currentLine += ' ' + word;
+// Split text into bidi runs (contiguous Arabic vs Latin word groups)
+const toBidiRuns = (text) => {
+  if (text === null || text === undefined) return [];
+  const str = String(text);
+  if (str.trim() === '') return [];
+
+  const words = str.split(/\s+/);
+  const runs = [];
+  
+  if (words.length > 0 && words[0] !== '') {
+    let currentRunWords = [words[0]];
+    let currentRunIsArabic = arabicRegex.test(words[0]);
+
+    for (let i = 1; i < words.length; i++) {
+      const isArabic = arabicRegex.test(words[i]);
+      if (isArabic === currentRunIsArabic) {
+        currentRunWords.push(words[i]);
+      } else {
+        runs.push({
+          text: currentRunWords.join(' '),
+          isArabic: currentRunIsArabic
+        });
+        currentRunWords = [words[i]];
+        currentRunIsArabic = isArabic;
+      }
+    }
+    runs.push({
+      text: currentRunWords.join(' '),
+      isArabic: currentRunIsArabic
+    });
+  }
+
+  return runs;
+};
+
+const bracketMirror = {
+  '(': ')',
+  ')': '(',
+  '[': ']',
+  ']': '[',
+  '{': '}',
+  '}': '{',
+  '<': '>',
+  '>': '<'
+};
+
+// Shape Arabic text into presentation forms and mirror brackets.
+// The reshaper converts logical Arabic characters into connected presentation forms.
+// Word order is kept as-is — PDF viewers handle RTL display of presentation forms.
+const shapeArabicRun = (text) => {
+  const shaped = reshaper.ArabicShaper.convertArabic(text);
+  // Mirror brackets for RTL context
+  let mirrored = '';
+  for (let i = 0; i < shaped.length; i++) {
+    const char = shaped[i];
+    mirrored += bracketMirror[char] || char;
+  }
+  return mirrored;
+};
+
+
+// Measure the width of a text segment using the appropriate font
+const measureSegment = (text, isArabic, font, size) => {
+  const displayText = isArabic ? reshaper.ArabicShaper.convertArabic(text) : text;
+  return font.widthOfTextAtSize(displayText, size);
+};
+
+// Determine the paragraph-level direction: RTL if majority of text is Arabic
+const getParagraphDirection = (runs) => {
+  let arabicChars = 0;
+  let latinChars = 0;
+  runs.forEach(run => {
+    if (run.isArabic) {
+      arabicChars += run.text.replace(/\s/g, '').length;
     } else {
-      lines.push(currentLine);
-      currentLine = word;
+      latinChars += run.text.replace(/\s/g, '').length;
+    }
+  });
+  return arabicChars >= latinChars ? 'rtl' : 'ltr';
+};
+
+// Prepare text for PDF rendering with proper bidi handling.
+// Returns an array of lines, where each line contains an array of segments
+// that should be drawn side-by-side on the same visual line.
+// Each segment: { text, isArabic, font }
+const prepareTextForPDF = (text, customRegularFont, customBoldFont, helveticaFont, helveticaBoldFont, size, maxWidth, isBold = false) => {
+  const runs = toBidiRuns(text);
+  if (runs.length === 0) return [];
+
+  const getFont = (isArabic) => isArabic 
+    ? (isBold ? customBoldFont : customRegularFont) 
+    : (isBold ? helveticaBoldFont : helveticaFont);
+
+  const paragraphDir = getParagraphDirection(runs);
+  const spaceWidth = getFont(false).widthOfTextAtSize(' ', size);
+
+  // Flatten all runs into individual words with their directionality
+  const allWords = [];
+  runs.forEach(run => {
+    const words = run.text.split(' ');
+    words.forEach(word => {
+      if (word !== '') {
+        allWords.push({ word, isArabic: run.isArabic });
+      }
+    });
+  });
+
+  // Word-wrap: greedily fit words onto lines respecting maxWidth
+  const wrappedLines = []; // each element: array of { word, isArabic }
+  let currentLineWords = [];
+  let currentLineWidth = 0;
+
+  for (let i = 0; i < allWords.length; i++) {
+    const { word, isArabic } = allWords[i];
+    const font = getFont(isArabic);
+    const wordWidth = measureSegment(word, isArabic, font, size);
+    const addedWidth = currentLineWords.length > 0 ? spaceWidth + wordWidth : wordWidth;
+
+    if (maxWidth && currentLineWidth + addedWidth > maxWidth && currentLineWords.length > 0) {
+      // Line is full, push current line and start a new one
+      wrappedLines.push(currentLineWords);
+      currentLineWords = [{ word, isArabic }];
+      currentLineWidth = wordWidth;
+    } else {
+      currentLineWords.push({ word, isArabic });
+      currentLineWidth += addedWidth;
     }
   }
-  lines.push(currentLine);
-  return lines;
+  if (currentLineWords.length > 0) {
+    wrappedLines.push(currentLineWords);
+  }
+
+  // Convert each wrapped line into segments (group consecutive same-direction words)
+  const resultLines = [];
+  for (const lineWords of wrappedLines) {
+    // Group consecutive words with the same directionality into segments
+    const segments = [];
+    let currentSegWords = [lineWords[0].word];
+    let currentIsArabic = lineWords[0].isArabic;
+
+    for (let i = 1; i < lineWords.length; i++) {
+      if (lineWords[i].isArabic === currentIsArabic) {
+        currentSegWords.push(lineWords[i].word);
+      } else {
+        const segText = currentIsArabic 
+          ? shapeArabicRun(currentSegWords.join(' '))
+          : currentSegWords.join(' ');
+        segments.push({ text: segText, isArabic: currentIsArabic });
+        currentSegWords = [lineWords[i].word];
+        currentIsArabic = lineWords[i].isArabic;
+      }
+    }
+    // Push last segment
+    const segText = currentIsArabic 
+      ? shapeArabicRun(currentSegWords.join(' '))
+      : currentSegWords.join(' ');
+    segments.push({ text: segText, isArabic: currentIsArabic });
+
+
+
+
+    resultLines.push({ segments, paragraphDir });
+  }
+
+  return resultLines;
+};
+
+// Draw prepared multi-segment lines on a PDF page.
+// Each line may contain multiple segments (Arabic + Latin mixed inline).
+const drawPreparedText = (page, preparedLines, {
+  x,
+  y,
+  size,
+  customRegularFont,
+  customBoldFont,
+  helveticaFont,
+  helveticaBoldFont,
+  color,
+  isBold,
+  lineHeight = size * 1.2,
+  alignment = 'left',
+  width = 0
+}) => {
+  const getFont = (isArabic) => isArabic
+    ? (isBold ? customBoldFont : customRegularFont)
+    : (isBold ? helveticaBoldFont : helveticaFont);
+
+  const spaceWidth = getFont(false).widthOfTextAtSize(' ', size);
+
+  preparedLines.forEach((line, index) => {
+    const lineY = y - (index * lineHeight);
+    const segments = line.segments;
+
+    // Calculate total line width (sum of all segment widths + spaces between)
+    let totalLineWidth = 0;
+    segments.forEach((seg, i) => {
+      const font = getFont(seg.isArabic);
+      totalLineWidth += font.widthOfTextAtSize(seg.text, size);
+      if (i < segments.length - 1) totalLineWidth += spaceWidth;
+    });
+
+    // Determine starting X based on alignment
+    let drawX = x;
+    if (alignment === 'center') {
+      drawX = x + (width - totalLineWidth) / 2;
+    } else if (alignment === 'right') {
+      drawX = x + width - totalLineWidth;
+    }
+
+    // Draw each segment sequentially
+    segments.forEach((seg, i) => {
+      const font = getFont(seg.isArabic);
+      const segWidth = font.widthOfTextAtSize(seg.text, size);
+
+      page.drawText(seg.text, {
+        x: drawX,
+        y: lineY,
+        font: font,
+        size: size,
+        color: color
+      });
+
+      drawX += segWidth;
+      if (i < segments.length - 1) drawX += spaceWidth;
+    });
+  });
+};
+
+// 1. Text Wrapping Helper
+const wrapText = (text, customRegularFont, customBoldFont, helveticaFont, helveticaBoldFont, size, maxWidth, isBold = false) => {
+  return prepareTextForPDF(text, customRegularFont, customBoldFont, helveticaFont, helveticaBoldFont, size, maxWidth, isBold);
 };
 
 // 2. Main Generator Function
@@ -30,8 +259,62 @@ exports.generateTablePDF = async ({
   orientation = 'landscape' // 'landscape' or 'portrait'
 }) => {
   const pdfDoc = await PDFDocument.create();
+  pdfDoc.registerFontkit(fontkit);
+
+  // Embed Amiri fonts or fallback to Helvetica if not available
+  const customRegularFont = regularFontBytes ? await pdfDoc.embedFont(regularFontBytes) : await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const customBoldFont = boldFontBytes ? await pdfDoc.embedFont(boldFontBytes) : await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  // Helper to sanitize control characters while preserving non-control Unicode (like Arabic)
+  const cleanWinAnsi = (val) => {
+    if (val === null || val === undefined) return '';
+    let str = String(val);
+    
+    // Replace tabs with 4 spaces
+    str = str.replace(/\t/g, '    ');
+    
+    // Replace newlines/carriage returns with space
+    str = str.replace(/[\r\n]+/g, ' ');
+
+    let cleaned = '';
+    for (let i = 0; i < str.length; i++) {
+      const code = str.charCodeAt(i);
+      
+      // Keep non-control characters (code >= 32, and code !== 127)
+      if (code >= 32 && code !== 127) {
+        // If it's a non-WinAnsi character, keep it ONLY if it's Arabic
+        // Otherwise, Helvetica will crash with "WinAnsi cannot encode"
+        if (code > 255) {
+          if (arabicRegex.test(str[i])) {
+            cleaned += str[i];
+          }
+        } else {
+          cleaned += str[i];
+        }
+      }
+    }
+    return cleaned;
+  };
+
+  // Sanitize all text fields
+  const cleanTitle = cleanWinAnsi(title);
+  const cleanColumns = columns.map(col => ({
+    ...col,
+    label: cleanWinAnsi(col.label)
+  }));
+  const cleanData = data.map(item => {
+    const cleanedItem = { ...item };
+    for (const key of Object.keys(item)) {
+      if (item[key] instanceof Date) {
+        cleanedItem[key] = item[key];
+      } else {
+        cleanedItem[key] = cleanWinAnsi(item[key]);
+      }
+    }
+    return cleanedItem;
+  });
 
   // Logo Setup (Replace with your actual Base64)
   const logoImage = await pdfDoc.embedJpg(logoBase64);
@@ -63,33 +346,51 @@ exports.generateTablePDF = async ({
 
     // 2. Draw Title
     const titleY = height - pageMargin - logoDims.height - 25;
-    const titleWidth = helveticaBoldFont.widthOfTextAtSize(title, 18);
-    page.drawText(title, {
-      x: (width - titleWidth) / 2,
+    const titleLines = prepareTextForPDF(cleanTitle, customRegularFont, customBoldFont, helveticaFont, helveticaBoldFont, 18, usableWidth, true);
+    const titleLineHeight = 18 * 1.2;
+    const titleTotalHeight = titleLines.length * titleLineHeight;
+
+    drawPreparedText(page, titleLines, {
+      x: pageMargin,
       y: titleY,
-      font: helveticaBoldFont,
       size: 18,
+      customRegularFont,
+      customBoldFont,
+      helveticaFont,
+      helveticaBoldFont,
       color: rgb(0, 0, 0),
+      isBold: true,
+      lineHeight: titleLineHeight,
+      alignment: 'center',
+      width: usableWidth
     });
 
     // 3. Draw Timestamp
     const dateText = `Generated: ${new Date().toLocaleString()}`;
-    const dateWidth = helveticaFont.widthOfTextAtSize(dateText, 10);
-    page.drawText(dateText, {
-      x: (width - dateWidth) / 2,
-      y: titleY - 20,
-      font: helveticaFont,
+    const dateLines = prepareTextForPDF(dateText, customRegularFont, customBoldFont, helveticaFont, helveticaBoldFont, 10, usableWidth, false);
+    const dateY = titleY - titleTotalHeight - 10;
+
+    drawPreparedText(page, dateLines, {
+      x: pageMargin,
+      y: dateY,
       size: 10,
+      customRegularFont,
+      customBoldFont,
+      helveticaFont,
+      helveticaBoldFont,
       color: rgb(0.3, 0.3, 0.3),
+      isBold: false,
+      alignment: 'center',
+      width: usableWidth
     });
 
     // 4. Calculate Column Positions (Centering the table)
-    const totalTableWidth = columns.reduce((acc, col) => acc + col.width, 0);
+    const totalTableWidth = cleanColumns.reduce((acc, col) => acc + col.width, 0);
     let currentX = pageMargin + (usableWidth - totalTableWidth) / 2;
     
     // 5. Draw Table Headers
-    const headerY = titleY - 50;
-    columns.forEach(col => {
+    const headerY = dateY - 30;
+    cleanColumns.forEach(col => {
       // Draw Box
       page.drawRectangle({
         x: currentX,
@@ -100,12 +401,22 @@ exports.generateTablePDF = async ({
         borderWidth: 0.5,
       });
       // Draw Text
-      const textWidth = helveticaBoldFont.widthOfTextAtSize(col.label, headerFontSize);
-      page.drawText(col.label, {
-        x: currentX + (col.width - textWidth) / 2,
-        y: headerY - 16,
-        font: helveticaBoldFont,
+      const headerLines = prepareTextForPDF(col.label, customRegularFont, customBoldFont, helveticaFont, helveticaBoldFont, headerFontSize, col.width - 12, true);
+      const headerTextHeight = headerLines.length * headerFontSize * 1.2;
+      const textY = headerY - (rowHeight - headerTextHeight) / 2 - headerFontSize;
+
+      drawPreparedText(page, headerLines, {
+        x: currentX,
+        y: textY,
         size: headerFontSize,
+        customRegularFont,
+        customBoldFont,
+        helveticaFont,
+        helveticaBoldFont,
+        color: rgb(0, 0, 0),
+        isBold: true,
+        alignment: 'center',
+        width: col.width
       });
       
       // Save calculated X to the column object for row drawing
@@ -119,7 +430,7 @@ exports.generateTablePDF = async ({
   // --- Start Drawing Data ---
   let { page, currentY } = addNewPage();
 
-  for (const item of data) {
+  for (const item of cleanData) {
     // Check for page break
     if (currentY - rowHeight < pageMargin + 40) {
       const newPageObj = addNewPage();
@@ -131,21 +442,20 @@ exports.generateTablePDF = async ({
     const cellPadding = 6;
     const rowLineHeight = rowFontSize * 1.2;
     
-    const wrappedContent = columns.map(col => {
+    const cellContent = cleanColumns.map(col => {
+      let val = item[col.key];
       if (col.key === 'lastMaintenanceDate') {
-          const rawDate = item[col.key];
-          const formattedDate = rawDate ? formatDate(rawDate) : 'N/A';
-          return [formattedDate];
+        val = val ? formatDate(val) : 'N/A';
       }
-      const rawText = item[col.key] ? String(item[col.key]) : '';
-      return wrapText(rawText, helveticaFont, rowFontSize, col.width - (cellPadding * 2));
+      const rawText = val ? String(val) : '';
+      return prepareTextForPDF(rawText, customRegularFont, customBoldFont, helveticaFont, helveticaBoldFont, rowFontSize, col.width - (cellPadding * 2), false);
     });
 
-    const maxLines = Math.max(...wrappedContent.map(lines => lines.length || 1));
+    const maxLines = Math.max(...cellContent.map(lines => lines.length || 1));
     const dynamicHeight = Math.max(rowHeight, maxLines * rowLineHeight + (cellPadding * 2));
 
     // Draw Row
-    columns.forEach((col, idx) => {
+    cleanColumns.forEach((col, idx) => {
       // Draw Cell Box
       page.drawRectangle({
         x: col.currentX,
@@ -157,18 +467,23 @@ exports.generateTablePDF = async ({
       });
 
       // Draw Text Lines
-      const lines = wrappedContent[idx];
-      const firstLineY = currentY - cellPadding - rowFontSize;
-      
-      lines.forEach((line, lineIdx) => {
-        const lineWidth = helveticaFont.widthOfTextAtSize(line, rowFontSize);
-        page.drawText(line, {
-          x: col.currentX + (col.width - lineWidth) / 2, // Center text
-          y: firstLineY - (lineIdx * rowLineHeight),
-          font: helveticaFont,
-          size: rowFontSize,
-          color: rgb(0.1, 0.1, 0.1),
-        });
+      const lines = cellContent[idx];
+      const textHeight = lines.length * rowLineHeight;
+      const textY = currentY - (dynamicHeight - textHeight) / 2 - rowFontSize + 2;
+
+      drawPreparedText(page, lines, {
+        x: col.currentX + cellPadding,
+        y: textY,
+        size: rowFontSize,
+        customRegularFont,
+        customBoldFont,
+        helveticaFont,
+        helveticaBoldFont,
+        color: rgb(0.1, 0.1, 0.1),
+        isBold: false,
+        lineHeight: rowLineHeight,
+        alignment: 'center',
+        width: col.width - (cellPadding * 2)
       });
     });
 
@@ -180,7 +495,7 @@ exports.generateTablePDF = async ({
   pages.forEach((p, i) => {
     const { width } = p.getSize();
     let text = `Page ${i + 1} of ${pages.length}`;
-    if (i === 0) text = `Total Records: ${data.length} | ${text}`;
+    if (i === 0) text = `Total Records: ${cleanData.length} | ${text}`;
     
     const textWidth = helveticaFont.widthOfTextAtSize(text, 8);
     p.drawText(text, {

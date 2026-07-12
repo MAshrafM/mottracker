@@ -1,4 +1,6 @@
 .vercel
-active_motors_test.xlsx
-all_motors_test.xlsx
-test_excel.js
+tests
+fonts/downloadFont.js
+node_modules
+.env
+_seeder

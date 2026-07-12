@@ -12,6 +12,8 @@
   "author": "MAshraf",
   "license": "ISC",
   "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "arabic-persian-reshaper": "^1.0.1",
     "bcryptjs": "^3.0.2",
     "colors": "^1.4.0",
     "cors": "^2.8.5",

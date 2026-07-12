@@ -17,7 +17,10 @@ const { getActiveMotorReport,
     exportUnitMotorReportToExcel,
     exportUnitMotorReportToPDF,
     getAllMotorDetailedReport,
-    exportAllMotorsDetailedToExcel
+    exportAllMotorsDetailedToExcel,
+    getShutdownReport,
+    exportShutdownReportPDFByDate,
+    exportShutdownReportPDFByUnit
 } = require('../controllers/reportController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -69,4 +72,12 @@ router.route('/unit-motor/export-excel')
     .get(authorize('admin', 'manager'), exportUnitMotorReportToExcel);
 router.route('/unit-motor/export-pdf')
     .get(authorize('admin', 'manager'), exportUnitMotorReportToPDF);
+
+router.route('/shutdown-report')
+    .get(authorize('admin', 'manager', 'user'), getShutdownReport);
+router.route('/shutdown-report/export-pdf-by-date')
+    .get(authorize('admin', 'manager'), exportShutdownReportPDFByDate);
+router.route('/shutdown-report/export-pdf-by-unit')
+    .get(authorize('admin', 'manager'), exportShutdownReportPDFByUnit);
+
 module.exports = router;

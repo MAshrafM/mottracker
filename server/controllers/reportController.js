@@ -167,7 +167,7 @@ const compareTons = (tonA, tonB) => {
     return parseA.lastTwoDigits - parseB.lastTwoDigits;
   }
 
-  return tonA.localeCompare(tonB);
+  return String(tonA || '').localeCompare(String(tonB || ''));
 };
 
 const getUnitMotorData = async (unitId) => {
@@ -757,7 +757,7 @@ const compareAllMotors = (a, b) => {
   }
 
   // 8. Fallback to literal comparison
-  return a.tonNumber.localeCompare(b.tonNumber);
+  return String(a.tonNumber || '').localeCompare(String(b.tonNumber || ''));
 };
 
 const getAllMotorDetailedData = async () => {
@@ -1601,3 +1601,191 @@ exports.exportUnitMotorReportToPDF = async (req, res) => {
     res.status(500).json({ message: 'Server error while generating PDF.', error: error.message });
   }
 };
+
+// --- Shutdown Report Helpers and Controllers ---
+
+const getTonNumberForMotorAtDate = (motor, eventDate) => {
+  if (!motor) return 'N/A';
+  
+  if (motor.assignmentHistory && motor.assignmentHistory.length > 0) {
+    const d = new Date(eventDate);
+    const match = motor.assignmentHistory.find(h => {
+      if (!h.dateInstalled) return false;
+      const installed = new Date(h.dateInstalled);
+      const removed = h.dateRemoved ? new Date(h.dateRemoved) : null;
+      return installed <= d && (!removed || removed >= d);
+    });
+    if (match && match.ton) {
+      return match.ton;
+    }
+  }
+
+  if (motor.eq && motor.eq.tonNumber) {
+    return motor.eq.tonNumber;
+  }
+
+  if (motor.assignmentHistory && motor.assignmentHistory.length > 0) {
+    const last = motor.assignmentHistory[motor.assignmentHistory.length - 1];
+    if (last && last.ton) {
+      return last.ton;
+    }
+  }
+
+  return 'N/A';
+};
+
+const getUnitNameFromTon = (tonNumber) => {
+  if (!tonNumber || tonNumber === 'N/A') return 'Other';
+  const ton = String(tonNumber).trim().toLowerCase();
+  
+  for (const key of Object.keys(UNIT_CONFIGS)) {
+    const config = UNIT_CONFIGS[key];
+    if (config.prefixes && config.prefixes.some(prefix => ton.startsWith(prefix.toLowerCase()))) {
+      return config.name;
+    }
+  }
+  return 'Other';
+};
+
+const getShutdownReportData = async (startDateStr, endDateStr) => {
+  let start = startDateStr ? new Date(startDateStr) : new Date(0);
+  let end = endDateStr ? new Date(endDateStr) : new Date();
+
+  if (startDateStr) start.setHours(0, 0, 0, 0);
+  if (endDateStr) end.setHours(23, 59, 59, 999);
+
+  const motors = await Motor.find({})
+    .populate('eq')
+    .lean();
+
+  const filteredEvents = [];
+
+  for (const motor of motors) {
+    if (!motor.maintenanceHistory || motor.maintenanceHistory.length === 0) {
+      continue;
+    }
+
+    for (const event of motor.maintenanceHistory) {
+      const eventDate = new Date(event.date);
+      if (eventDate >= start && eventDate <= end) {
+        const tonNumber = getTonNumberForMotorAtDate(motor, event.date);
+        const unitName = getUnitNameFromTon(tonNumber);
+
+        filteredEvents.push({
+          date: event.date,
+          serialNumber: motor.serialNumber || 'N/A',
+          tonNumber: tonNumber,
+          power: motor.power || 'N/A',
+          speed: motor.speed ? `${motor.speed} rpm` : 'N/A',
+          description: event.description || '',
+          unit: unitName
+        });
+      }
+    }
+  }
+
+  return filteredEvents;
+};
+
+exports.getShutdownReport = async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    const data = await getShutdownReportData(from, to);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error('Error fetching shutdown report:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.exportShutdownReportPDFByDate = async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    const data = await getShutdownReportData(from, to);
+
+    // Sort chronologically by date
+    data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Format dates before passing to PDF generator
+    const flatData = data.map(item => ({
+      ...item,
+      dateFormatted: formatDate(item.date)
+    }));
+
+    const dateRangeLabel = from && to 
+      ? `(${formatDate(from)} - ${formatDate(to)})` 
+      : '';
+
+    const columns = [
+      { label: 'Date', key: 'dateFormatted', width: 70 },
+      { label: 'TON Number', key: 'tonNumber', width: 80 },
+      { label: 'Serial Number', key: 'serialNumber', width: 80 },
+      { label: 'History Description', key: 'description', width: 265 }
+    ];
+
+    const pdfBytes = await generateTablePDF({
+      title: `Shutdown Report by Date ${dateRangeLabel}`.trim(),
+      columns: columns,
+      data: flatData,
+      orientation: 'portrait'
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=shutdown_report_by_date.pdf`);
+    res.status(200).send(Buffer.from(pdfBytes));
+  } catch (error) {
+    console.error('Error generating PDF by date:', error);
+    res.status(500).json({ message: 'Server error while generating PDF.', error: error.message });
+  }
+};
+
+exports.exportShutdownReportPDFByUnit = async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    const data = await getShutdownReportData(from, to);
+
+    // Sort by unit name, then TON number (using compareTons), and then chronologically
+    data.sort((a, b) => {
+      const unitCompare = String(a.unit || '').localeCompare(String(b.unit || ''));
+      if (unitCompare !== 0) return unitCompare;
+      
+      const tonCompare = compareTons(a.tonNumber, b.tonNumber);
+      if (tonCompare !== 0) return tonCompare;
+
+      return new Date(a.date) - new Date(b.date);
+    });
+
+    // Format dates before passing to PDF generator
+    const flatData = data.map(item => ({
+      ...item,
+      dateFormatted: formatDate(item.date)
+    }));
+
+    const dateRangeLabel = from && to 
+      ? `(${formatDate(from)} - ${formatDate(to)})` 
+      : '';
+
+    const columns = [
+      { label: 'Unit', key: 'unit', width: 70 },
+      { label: 'TON Number', key: 'tonNumber', width: 70 },
+      { label: 'Date', key: 'dateFormatted', width: 70 },
+      { label: 'Serial Number', key: 'serialNumber', width: 80 },
+      { label: 'History Description', key: 'description', width: 205 }
+    ];
+
+    const pdfBytes = await generateTablePDF({
+      title: `Shutdown Report by Unit/TON ${dateRangeLabel}`.trim(),
+      columns: columns,
+      data: flatData,
+      orientation: 'portrait'
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=shutdown_report_by_unit.pdf`);
+    res.status(200).send(Buffer.from(pdfBytes));
+  } catch (error) {
+    console.error('Error generating PDF by unit:', error);
+    res.status(500).json({ message: 'Server error while generating PDF.', error: error.message });
+  }
+};
+
