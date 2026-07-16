@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import api from '../services/api';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import { Loader, Printer, ArrowLeft, QrCode } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
@@ -795,16 +797,15 @@ const MaintenanceHistory = () => {
 
               <div className="space-y-2 md:col-span-2">
                 <label className="text-blue-300 text-sm font-semibold">Description</label>
-                <input
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Enter maintenance description..."
-                  required
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
-                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
-                             focus:ring-blue-400/50 transition-all duration-300"
-                />
+                <div className="bg-white/10 border border-white/20 rounded-lg text-white">
+                  <ReactQuill
+                    theme="snow"
+                    value={description}
+                    onChange={setDescription}
+                    placeholder="Enter maintenance description..."
+                    className="h-32 mb-12"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center space-x-2 md:col-span-3">
@@ -895,9 +896,10 @@ const MaintenanceHistory = () => {
                     </div>
 
                     {/* Description */}
-                    <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-3 ml-6">
-                      {event.description}
-                    </p>
+                    <div 
+                      className="text-gray-300 text-sm md:text-base leading-relaxed mb-3 ml-6 prose prose-sm prose-invert max-w-none"
+                      dangerouslySetInnerHTML={{ __html: event.description }}
+                    />
 
                     {/* Action Buttons - Always visible on mobile, hover on desktop */}
                     <div className="flex justify-end space-x-2 ml-6 mt-2">
@@ -979,16 +981,14 @@ const MaintenanceHistory = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-blue-500 text-sm font-semibold">Description</label>
-                <input
-                  type="text"
-                  name="description"
-                  value={editingEvent.description}
-                  onChange={handleEditInputChange}
-                  required
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
-                             placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
-                             focus:ring-blue-400/50 transition-all duration-300"
-                />
+                <div className="bg-white/10 border border-white/20 rounded-lg text-white">
+                  <ReactQuill
+                    theme="snow"
+                    value={editingEvent.description}
+                    onChange={(val) => setEditingEvent({ ...editingEvent, description: val })}
+                    className="h-32 mb-12"
+                  />
+                </div>
               </div>
               <div className="flex justify-end pt-4">
                 <button

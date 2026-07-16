@@ -306,9 +306,10 @@ const MotorMaintenanceReportPage = () => {
                                                         <td className="px-6 py-4 font-medium text-slate-900 align-top">
                                                             {new Date(log.date).toLocaleDateString('en-GB')}
                                                         </td>
-                                                        <td className="px-6 py-4 text-slate-700 whitespace-pre-wrap">
-                                                            {log.description}
-                                                        </td>
+                                                        <td 
+                                                            className="px-6 py-4 text-slate-700 prose prose-sm max-w-none"
+                                                            dangerouslySetInnerHTML={{ __html: log.description }}
+                                                        />
                                                     </tr>
                                                 ))}
                                             </tbody>

@@ -311,9 +311,10 @@ const ShutdownReportPage = () => {
                             {row.tonNumber}
                           </td>
                           <td className="px-6 py-4 font-mono">{row.serialNumber}</td>
-                          <td className="px-6 py-4 text-gray-300 leading-relaxed break-words">
-                            {row.description}
-                          </td>
+                          <td 
+                            className="px-6 py-4 text-gray-300 leading-relaxed break-words prose prose-sm prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{ __html: row.description }}
+                          />
                         </tr>
                       ))}
                     </tbody>
@@ -345,9 +346,10 @@ const ShutdownReportPage = () => {
                             {formatDateDisplay(row.date)}
                           </td>
                           <td className="px-6 py-4 font-mono">{row.serialNumber}</td>
-                          <td className="px-6 py-4 text-gray-300 leading-relaxed break-words">
-                            {row.description}
-                          </td>
+                          <td 
+                            className="px-6 py-4 text-gray-300 leading-relaxed break-words prose prose-sm prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{ __html: row.description }}
+                          />
                         </tr>
                       ))}
                     </tbody>
