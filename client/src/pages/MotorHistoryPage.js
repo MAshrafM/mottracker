@@ -9,6 +9,17 @@ import MassMaintenanceEntry from '../components/MassMaintenanceEntry';
 import DatePicker from '../components/DatePicker';
 import logo from '../logo_ar.gif';
 
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ direction: 'rtl' }],
+    [{ align: [] }],
+    ['clean']
+  ]
+};
+
 const MaintenanceHistory = () => {
   const { motorId } = useParams();
   const [searchParams] = useSearchParams();
@@ -473,8 +484,11 @@ const MaintenanceHistory = () => {
                           <td className="px-6 py-4 font-medium text-slate-900 align-top">
                             {new Date(log.date).toLocaleDateString('en-GB')}
                           </td>
-                          <td className="px-6 py-4 text-slate-700 whitespace-pre-wrap">
-                            {log.description}
+                          <td className="px-6 py-4 text-slate-700 align-top">
+                            <div 
+                              className="prose prose-sm max-w-none text-slate-700 break-words overflow-hidden [overflow-wrap:anywhere] [&_img]:max-w-full [&_table]:max-w-full [&_table]:overflow-x-auto"
+                              dangerouslySetInnerHTML={{ __html: log.description }}
+                            />
                           </td>
                         </tr>
                       ))}
@@ -802,6 +816,7 @@ const MaintenanceHistory = () => {
                     theme="snow"
                     value={description}
                     onChange={setDescription}
+                    modules={quillModules}
                     placeholder="Enter maintenance description..."
                     className="h-32 mb-12"
                   />
@@ -897,19 +912,19 @@ const MaintenanceHistory = () => {
 
                     {/* Description */}
                     <div 
-                      className="text-gray-300 text-sm md:text-base leading-relaxed mb-3 ml-6 prose prose-sm prose-invert max-w-none"
+                      className="text-gray-300 text-sm md:text-base leading-relaxed mb-3 ml-0 md:ml-6 prose prose-sm prose-invert max-w-none break-words overflow-hidden [overflow-wrap:anywhere] [&_img]:max-w-full [&_table]:max-w-full [&_table]:overflow-x-auto"
                       dangerouslySetInnerHTML={{ __html: event.description }}
                     />
 
                     {/* Action Buttons - Always visible on mobile, hover on desktop */}
-                    <div className="flex justify-end space-x-2 ml-6 mt-2">
-              {/* Edit button for admin/manager */}
+                    <div className="flex justify-end space-x-2 ml-0 md:ml-6 mt-2">
+                      {/* Edit button for admin/manager */}
                       {(user?.role === 'admin' || user?.role === 'manager') && (
                         <button
                           onClick={() => openEditModal(event)}
                           className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
                              text-white p-2 rounded-lg transition-all duration-300 transform hover:scale-105 
-                             shadow-md hover:shadow-lg opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                             shadow-md hover:shadow-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center"
                           title="Edit this event"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -924,7 +939,7 @@ const MaintenanceHistory = () => {
                           onClick={() => handleDeleteEvent(event._id)}
                           className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 
                              text-white p-2 rounded-lg transition-all duration-300 transform hover:scale-105 
-                             shadow-md hover:shadow-lg opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                             shadow-md hover:shadow-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center justify-center"
                           title="Delete this event"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -986,6 +1001,7 @@ const MaintenanceHistory = () => {
                     theme="snow"
                     value={editingEvent.description}
                     onChange={(val) => setEditingEvent({ ...editingEvent, description: val })}
+                    modules={quillModules}
                     className="h-32 mb-12"
                   />
                 </div>

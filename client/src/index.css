@@ -80,3 +80,39 @@
     display: none;
   }
 }
+
+/* Quill Editor Dark Theme & RTL Direction Styles */
+.ql-toolbar.ql-snow {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.ql-container.ql-snow {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  color: white;
+}
+.ql-snow .ql-stroke {
+  stroke: #cbd5e1 !important;
+}
+.ql-snow .ql-fill {
+  fill: #cbd5e1 !important;
+}
+.ql-snow .ql-picker {
+  color: #cbd5e1 !important;
+}
+.ql-direction-rtl {
+  direction: rtl;
+  text-align: right;
+}
+.ql-align-right {
+  text-align: right;
+}
+.ql-align-center {
+  text-align: center;
+}
+.ql-align-justify {
+  text-align: justify;
+}

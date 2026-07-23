@@ -267,10 +267,34 @@ exports.generateTablePDF = async ({
   const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+  // Helper to strip HTML tags and decode common entities to plain text
+  const stripHtml = (html) => {
+    if (!html) return '';
+    let str = String(html);
+    if (!/<[a-z][\s\S]*>/i.test(str)) {
+      return str;
+    }
+    // Replace list items and block elements with spaces or bullets
+    str = str.replace(/<li[^>]*>/gi, ' • ');
+    str = str.replace(/<\/(p|div|h[1-6]|tr|li|table|blockquote)>/gi, ' ');
+    str = str.replace(/<br\s*\/?>/gi, ' ');
+    // Remove remaining tags
+    str = str.replace(/<[^>]+>/g, '');
+    // Decode common HTML entities
+    str = str
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;|&apos;/gi, "'");
+    return str.replace(/\s+/g, ' ').trim();
+  };
+
   // Helper to sanitize control characters while preserving non-control Unicode (like Arabic)
   const cleanWinAnsi = (val) => {
     if (val === null || val === undefined) return '';
-    let str = String(val);
+    let str = stripHtml(String(val));
     
     // Replace tabs with 4 spaces
     str = str.replace(/\t/g, '    ');
