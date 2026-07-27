@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { FileDown, FileSpreadsheet, Loader } from 'lucide-react';
-import { useMotorData } from '../context/MotorContext';
+import { useMotorData } from '../context/DataContext';
 
 const SpareMotorsReport = () => {
   const { motors } = useMotorData();

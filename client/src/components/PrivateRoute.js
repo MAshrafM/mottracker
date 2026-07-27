@@ -2,7 +2,7 @@
 import React, { useContext } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
-import { MotorProvider } from '../context/MotorContext';
+import { DataProvider } from '../context/DataContext';
 
 const PrivateRoute = () => {
   const { user, loading } = useContext(AuthContext);
@@ -26,9 +26,9 @@ const PrivateRoute = () => {
   }
 
   return (
-    <MotorProvider>
+    <DataProvider>
       <Outlet />
-    </MotorProvider>
+    </DataProvider>
   );
 };
 

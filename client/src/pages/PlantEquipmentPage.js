@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Loader, ImageIcon, ExternalLink, Zap } from 'lucide-react';
 import api from '../services/api';
 import AuthContext from '../context/AuthContext';
+import { useDataContext } from '../context/DataContext';
 
 const parsePower = (powerStr) => {
   if (!powerStr) return 0;
@@ -14,6 +15,7 @@ const parsePower = (powerStr) => {
 
 const PlantEquipmentPage = () => {
   const { user } = useContext(AuthContext);
+  const { equipment: contextEquipment, motors: contextMotors, loading: dataLoading, refreshEquipment, refreshAll } = useDataContext();
   const [equipments, setEquipments] = useState([]);
   const [spareMotors, setSpareMotors] = useState([]);
 
@@ -138,31 +140,18 @@ const PlantEquipmentPage = () => {
     }
   ];
 
+  // Sync from context into local state
   useEffect(() => {
-    fetchEquipments();
-    fetchSpareMotors();
-  }, []);
-
-  const fetchEquipments = async () => {
-    try {
-      const response = await api.get('/equipment');
-      setEquipments(response.data.data);
-    } catch (err) {
-      setError('Failed to fetch equipment.');
-    } finally {
+    if (contextEquipment) {
+      setEquipments(contextEquipment);
+    }
+    if (contextMotors) {
+      setSpareMotors(contextMotors.filter(m => m.status === 'spare'));
+    }
+    if (!dataLoading && contextEquipment && contextMotors) {
       setIsLoading(false);
     }
-  };
-
-  const fetchSpareMotors = async () => {
-    try {
-      const response = await api.get('/motors');
-      // Filter for motors with status 'spare'
-      setSpareMotors(response.data.data.filter(m => m.status === 'spare'));
-    } catch (err) {
-      console.error("Failed to fetch spare motors.");
-    }
-  };
+  }, [contextEquipment, contextMotors, dataLoading]);
 
   const handleOpenImage = async (tonNumber) => {
     const ton = tonNumber.replace(/\./g, '');
@@ -228,7 +217,7 @@ const PlantEquipmentPage = () => {
       } else {
         await api.post('/equipment', formData);
       }
-      fetchEquipments();
+      refreshEquipment();
       closeCrudModal();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save equipment.');
@@ -239,7 +228,7 @@ const PlantEquipmentPage = () => {
     if (window.confirm('Are you sure you want to delete this equipment? This cannot be undone.')) {
       try {
         await api.delete(`/equipment/${equipmentId}`);
-        fetchEquipments();
+        refreshEquipment();
       } catch (err) {
         // Display the error in the main view since the modal will be closed
         setError(err.response?.data?.message || 'Failed to delete equipment.');
@@ -268,8 +257,7 @@ const PlantEquipmentPage = () => {
     try {
       await api.post(`/equipment/${selectedEquipment._id}/assign-motor`, { motorId: selectedMotorId });
       // Refresh both lists after assignment
-      fetchEquipments();
-      fetchSpareMotors();
+      refreshAll();
       closeAssignModal();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to assign motor.');
@@ -280,7 +268,7 @@ const PlantEquipmentPage = () => {
     if (window.confirm('Mark this motor as greased today?')) {
       try {
         await api.post(`/motors/${motorId}/grease`);
-        fetchEquipments(); // Refresh to show new date
+        refreshEquipment(); // Refresh to show new date
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to update greasing date.');
       }
@@ -291,8 +279,7 @@ const PlantEquipmentPage = () => {
     if (window.confirm(`Are you sure you want to remove the motor from ${equipment.designation}? The motor will be set to 'Out of Service'.`)) {
       try {
         await api.put(`/equipment/${equipment._id}/unassign`);
-        fetchEquipments();
-        fetchSpareMotors();
+        refreshAll();
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to unassign motor.');
       }
