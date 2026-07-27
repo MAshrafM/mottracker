@@ -6,6 +6,8 @@ const cors = require('cors');
 // Load environment variables from .env file BEFORE anything else
 dotenv.config();
 
+const compression = require('compression');
+
 // Import the database connection function
 const connectDB = require('./config/db');
 // --- Import route files ---
@@ -49,6 +51,7 @@ app.use(cors(corsOptions));
 // Preflight requests are sent for 'complex' requests (like POST with JSON)
 app.options('*', cors(corsOptions));
 */
+app.use(compression());
 app.use(cors()); // Allow all origins for development; adjust in production
 app.use(express.json({ limit: '50mb' })); // Enable parsing of JSON in request body and increase limit for bulk uploads
 app.use(express.urlencoded({ limit: '50mb', extended: true }));

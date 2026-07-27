@@ -11,7 +11,8 @@ exports.getEquipments = async (req, res) => {
     // Populate both the current motor and the history
     const equipments = await PlantEquipment.find()
       .populate('currentMotor', 'serialNumber manufacturer type power current speed lastMaintenanceDate lastGreasingDate')
-      .populate('motorHistory.motor', 'serialNumber manufacturer type');
+      .populate('motorHistory.motor', 'serialNumber manufacturer type')
+      .lean();
     res.status(200).json({ success: true, count: equipments.length, data: equipments });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -145,7 +146,9 @@ exports.assignMotor = async (req, res) => {
 // @desc  Get current motor
 exports.activeMotor = async (req, res) => {
   try {
-    const equipment = await PlantEquipment.findOne({ currentMotor: req.params.motorId }).select('tonNumber designation plant')
+    const equipment = await PlantEquipment.findOne({ currentMotor: req.params.motorId })
+      .select('tonNumber designation plant')
+      .lean();
     if (!equipment) return res.status(404).json({ success: false, message: 'Equipment not found' });
     res.status(200).json({ success: true, data: equipment });
   } catch (error) {

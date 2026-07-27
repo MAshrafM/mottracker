@@ -6,6 +6,10 @@ const dotenv = require('dotenv');
 // Load environment variables
 dotenv.config(); // Ensure the .env file is loaded
 
+// In-memory user cache to speed up authentication checks (5-minute TTL)
+const userCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000;
+
 // Middleware to protect routes
 exports.protect = async (req, res, next) => {
   // Check if there is a qrToken query parameter or x-qr-token header
@@ -53,20 +57,27 @@ exports.protect = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from the token's ID and attach it to the request object
-      // We exclude the password field from being attached
-      req.user = await User.findById(decoded.id).select('-password');
+      // Check cache first
+      const cacheKey = decoded.id;
+      const cached = userCache.get(cacheKey);
+      if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+        req.user = cached.user;
+      } else {
+        // Get user from the token's ID and attach it to the request object
+        req.user = await User.findById(decoded.id).select('-password').lean();
+        if (req.user) {
+          userCache.set(cacheKey, { user: req.user, timestamp: Date.now() });
+        }
+      }
 
       if (req.user) {
-        try {
-          const now = new Date();
-          const oneDay = 24 * 60 * 60 * 1000;
-          if (!req.user.last_seen_at || (now - new Date(req.user.last_seen_at)) > oneDay) {
-            req.user.last_seen_at = now;
-            await req.user.save({ validateBeforeSave: false });
-          }
-        } catch (saveError) {
-          console.error('Failed to update last_seen_at:', saveError);
+        const now = new Date();
+        const oneDay = 24 * 60 * 60 * 1000;
+        if (!req.user.last_seen_at || (now - new Date(req.user.last_seen_at)) > oneDay) {
+          req.user.last_seen_at = now;
+          User.updateOne({ _id: decoded.id }, { last_seen_at: now }).catch(saveError => {
+            console.error('Failed to update last_seen_at:', saveError);
+          });
         }
       }
 

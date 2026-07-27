@@ -30,9 +30,10 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Update last login
-    user.lastLogin = Date.now();
-    await user.save({ validateBeforeSave: false }); // Skip validation to avoid re-hashing password if validation rules are strict
+    // Update last login (non-blocking background update)
+    User.updateOne({ _id: user._id }, { lastLogin: Date.now() }).catch(err => {
+      console.error('Failed to update lastLogin:', err);
+    });
 
     // 3. If everything is ok, send token to client
     sendTokenResponse(user, 200, res);

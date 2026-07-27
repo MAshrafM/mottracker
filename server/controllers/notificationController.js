@@ -12,14 +12,13 @@ exports.getNotifications = async (req, res) => {
                 { user: null },
                 { user: req.user._id }
             ]
-        }).sort({ createdAt: -1 }).limit(100);
+        }).sort({ createdAt: -1 }).limit(100).lean();
 
         // Transform notifications to include 'read' property for the current user
-        const mappedNotifications = notifications.map(notif => {
-            const notifObj = notif.toObject();
-            notifObj.read = notif.readBy ? notif.readBy.some(id => id.toString() === req.user._id.toString()) : false;
-            return notifObj;
-        });
+        const mappedNotifications = notifications.map(notif => ({
+            ...notif,
+            read: notif.readBy ? notif.readBy.some(id => id.toString() === req.user._id.toString()) : false
+        }));
 
         res.status(200).json({ success: true, count: mappedNotifications.length, data: mappedNotifications });
     } catch (error) {

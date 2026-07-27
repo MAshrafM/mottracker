@@ -9,7 +9,7 @@ const { createNotification } = require('./notificationController');
 
 exports.getMaintenanceEvents = async (req, res) => {
   try {
-    const motor = await Motor.findById(req.params.motorId);
+    const motor = await Motor.findById(req.params.motorId).select('maintenanceHistory').lean();
     if (!motor) {
       return res.status(404).json({ success: false, message: 'Motor not found' });
     }

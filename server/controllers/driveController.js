@@ -17,9 +17,22 @@ const auth = new google.auth.GoogleAuth({
   scopes: SCOPES,
 });
 
+// In-memory link cache for Google Drive webViewLinks (1 hour TTL)
+const driveLinkCache = new Map();
+const CACHE_TTL = 60 * 60 * 1000;
+
 exports.openImageByTon = async (req, res) => {
   const { tonNumber } = req.params;
   const FOLDER_ID = '1-IPc-3toFqGCq-6KN1GDWteKMFXrC4kd'; 
+
+  // Check cache first
+  const cached = driveLinkCache.get(tonNumber);
+  if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    return res.status(200).json({ 
+      success: true, 
+      url: cached.url 
+    });
+  }
 
   try {
     const driveService = google.drive({ version: 'v3', auth });
@@ -36,9 +49,12 @@ exports.openImageByTon = async (req, res) => {
       return res.status(404).send('Image not found in Drive.');
     }
 
+    const webViewLink = files[0].webViewLink;
+    driveLinkCache.set(tonNumber, { url: webViewLink, timestamp: Date.now() });
+
     res.status(200).json({ 
       success: true, 
-      url: files[0].webViewLink 
+      url: webViewLink 
     });
 
   } catch (error) {

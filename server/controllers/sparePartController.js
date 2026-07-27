@@ -61,7 +61,8 @@ const getSpareParts = async (req, res) => {
         const spareParts = await SparePart.find(query)
             .sort({ updatedAt: -1 }) // Recently updated first
             .skip(skip)
-            .limit(limitNum);
+            .limit(limitNum)
+            .lean();
 
         // Get total count for pagination UI (optional, but good for "Load More" logic)
         // Optimization: For very large datasets, countDocuments can be slow. 

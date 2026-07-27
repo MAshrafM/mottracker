@@ -67,6 +67,8 @@ const MotorSchema = new Schema({
   toJSON: { virtuals: true },
 });
 
+MotorSchema.index({ status: 1 });
+
 
 MotorSchema.virtual('eq', {
   ref: 'PlantEquipment',

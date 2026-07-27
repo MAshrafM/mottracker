@@ -55,4 +55,6 @@ const PlantEquipmentSchema = new Schema({
   timestamps: true
 });
 
+PlantEquipmentSchema.index({ currentMotor: 1 });
+
 module.exports = mongoose.model('PlantEquipment', PlantEquipmentSchema);

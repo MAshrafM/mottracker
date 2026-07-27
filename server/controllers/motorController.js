@@ -8,7 +8,9 @@ const { createNotification } = require('./notificationController');
 // @access  Private
 exports.getMotors = async (req, res) => {
   try {
-    const motors = await Motor.find();
+    const motors = await Motor.find()
+      .select('-maintenanceHistory -assignmentHistory')
+      .lean();
     res.status(200).json({ success: true, count: motors.length, data: motors });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -20,7 +22,9 @@ exports.getMotors = async (req, res) => {
 // @access  Private
 exports.getMotor = async (req, res) => {
   try {
-    const motor = await Motor.findById(req.params.id).populate('assignmentHistory.equipment');
+    const motor = await Motor.findById(req.params.id)
+      .populate('assignmentHistory.equipment')
+      .lean();
     if (!motor) {
       return res.status(404).json({ success: false, message: 'Motor not found' });
     }
@@ -30,14 +34,42 @@ exports.getMotor = async (req, res) => {
   }
 };
 
+// @desc    Get all motors with equipment details (optimized via aggregation)
+// @route   GET /api/motors/with-equipment
+// @access  Private
 exports.getMotorWithEquipment = async (req, res) => {
   try {
-    const motor = await Motor.find()
-      .populate('eq');
-    if (!motor) {
-      return res.status(404).json({ success: false, message: 'Motor not found' });
-    }
-    res.status(200).json({ success: true, data: motor });
+    const motors = await Motor.aggregate([
+      {
+        $project: {
+          maintenanceHistory: 0,
+          assignmentHistory: 0
+        }
+      },
+      {
+        $lookup: {
+          from: 'plantequipments',
+          localField: '_id',
+          foreignField: 'currentMotor',
+          pipeline: [
+            {
+              $project: {
+                tonNumber: 1,
+                designation: 1,
+                plant: 1
+              }
+            }
+          ],
+          as: 'eq'
+        }
+      },
+      {
+        $addFields: {
+          eq: { $arrayElemAt: ['$eq', 0] }
+        }
+      }
+    ]);
+    res.status(200).json({ success: true, data: motors });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

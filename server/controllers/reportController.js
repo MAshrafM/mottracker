@@ -179,8 +179,8 @@ const getUnitMotorData = async (unitId) => {
   let equipments;
   if (config.isHT) {
     equipments = await PlantEquipment.find({})
-      .populate('currentMotor')
-      .populate('motorHistory.motor')
+      .populate('currentMotor', 'serialNumber power speed lastMaintenanceDate')
+      .populate('motorHistory.motor', 'serialNumber power speed lastMaintenanceDate')
       .lean();
   } else {
     // Find equipment whose tonNumber starts with any of the prefixes
@@ -190,8 +190,8 @@ const getUnitMotorData = async (unitId) => {
     };
 
     equipments = await PlantEquipment.find(query)
-      .populate('currentMotor')
-      .populate('motorHistory.motor')
+      .populate('currentMotor', 'serialNumber power speed lastMaintenanceDate')
+      .populate('motorHistory.motor', 'serialNumber power speed lastMaintenanceDate')
       .lean();
   }
 
@@ -375,7 +375,7 @@ exports.exportActiveMotorsToExcel = async (req, res) => {
 // Helper for Detailed Active Motors
 const getActiveMotorDetailedData = async () => {
   const equipments = await PlantEquipment.find({ currentMotor: { $ne: null } })
-    .populate('currentMotor')
+    .populate({ path: 'currentMotor', select: '-assignmentHistory' })
     .lean();
 
   const activeMotorData = [];
@@ -763,8 +763,8 @@ const compareAllMotors = (a, b) => {
 const getAllMotorDetailedData = async () => {
   // Fetch all equipment with their current motors and history
   const equipments = await PlantEquipment.find({})
-    .populate('currentMotor')
-    .populate('motorHistory.motor')
+    .populate({ path: 'currentMotor', select: '-assignmentHistory' })
+    .populate({ path: 'motorHistory.motor', select: '-assignmentHistory' })
     .lean();
 
   const allMotorRows = [];

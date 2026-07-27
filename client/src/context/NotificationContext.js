@@ -11,8 +11,8 @@ export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [showLog, setShowLog] = useState(false);
 
-    // Polling interval in milliseconds (e.g., 30 seconds)
-    const POLLING_INTERVAL = 30000;
+    // Polling interval in milliseconds (e.g., 60 seconds)
+    const POLLING_INTERVAL = 60000;
 
     useEffect(() => {
         // Only fetch if user is logged in
@@ -24,13 +24,26 @@ export const NotificationProvider = ({ children }) => {
         // Fetch initial notifications
         fetchNotifications();
 
-        // Set up polling
+        // Set up polling (only fetch if document is visible)
         const intervalId = setInterval(() => {
-            fetchNotifications();
+            if (document.visibilityState === 'visible') {
+                fetchNotifications();
+            }
         }, POLLING_INTERVAL);
 
+        // Fetch immediately when switching back to tab
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchNotifications();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
         // Cleanup function
-        return () => clearInterval(intervalId);
+        return () => {
+            clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [user]);
 
     const fetchNotifications = async () => {

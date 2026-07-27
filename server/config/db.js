@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
+    if (mongoose.connection.readyState >= 1) {
+      return;
+    }
     const environment = process.env.NODE_ENV || 'development';
     let mongoURI = process.env.MONGO_URI;
 
