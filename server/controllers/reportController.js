@@ -1625,34 +1625,113 @@ const parseBoundaryDate = (dateStr, isEnd = false) => {
   return isEnd ? new Date() : new Date(0);
 };
 
-const getTonNumberForMotorAtDate = (motor, eventDate, motorToEquipmentMap = new Map()) => {
-  if (!motor) return 'N/A';
-  const d = new Date(eventDate);
-  const motorIdStr = motor._id ? motor._id.toString() : null;
+const matchTonFromDescription = (description, equipments) => {
+  if (!description || typeof description !== 'string') return null;
 
-  if (motor.assignmentHistory && motor.assignmentHistory.length > 0) {
-    const match = motor.assignmentHistory.find(h => {
-      const installed = h.dateInstalled ? new Date(h.dateInstalled) : null;
-      const removed = h.dateRemoved ? new Date(h.dateRemoved) : null;
+  const cleanText = description.replace(/<[^>]*>/g, ' ').trim();
+  if (!cleanText) return null;
 
-      if (installed && removed) {
-        return installed <= d && removed >= d;
+  // 1. Direct search for exact equipment tonNumber in text (case-insensitive)
+  for (const eq of equipments) {
+    if (eq.tonNumber) {
+      const tonClean = eq.tonNumber.trim();
+      const regex = new RegExp(`\\b${tonClean.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+      if (regex.test(cleanText)) {
+        return eq.tonNumber;
       }
-      if (installed && !removed) {
-        return installed <= d;
-      }
-      if (!installed && removed) {
-        return d <= removed;
-      }
-      return false;
-    });
-
-    if (match && match.ton) {
-      return match.ton;
     }
   }
 
-  // Fallback to active equipment TON if motor is currently assigned
+  // 2. Match shorthand like "H12" or "H012" -> 335H012, or "On Service on B." -> 388K002B
+  for (const eq of equipments) {
+    if (!eq.tonNumber) continue;
+    const ton = eq.tonNumber.trim();
+
+    const matchParts = ton.match(/^(\d{3})?([a-zA-Z]+)(\d+)([a-zA-Z0-9.]*)$/);
+    if (matchParts) {
+      const letter = matchParts[2].toUpperCase();
+      const num = parseInt(matchParts[3], 10);
+      const suffix = matchParts[4].toUpperCase();
+
+      // Check shorthand like "H12", "H012", "H-12"
+      const shorthandRegex = new RegExp(`\\b${letter}[- ]?0*${num}\\b`, 'i');
+      if (shorthandRegex.test(cleanText)) {
+        return eq.tonNumber;
+      }
+
+      // Check pattern like "On Service on B" or "Service on B."
+      if (suffix) {
+        const cleanSuffix = suffix.replace(/[^a-zA-Z0-9]/g, '');
+        if (cleanSuffix.length > 0) {
+          const suffixRegex = new RegExp(`\\bon\\s+service\\s+on\\s+${cleanSuffix}\\b`, 'i');
+          if (suffixRegex.test(cleanText)) {
+            return eq.tonNumber;
+          }
+        }
+      }
+    }
+  }
+
+  return null;
+};
+
+const getTonNumberForMotorAtDate = (motor, eventDate, description = '', motorToEquipmentMap = new Map(), equipments = []) => {
+  if (!motor) return 'N/A';
+
+  // Layer 1: Description text match (highest precision for explicit log notes like "On Service on H12")
+  if (description && equipments.length > 0) {
+    const descMatch = matchTonFromDescription(description, equipments);
+    if (descMatch) {
+      return descMatch;
+    }
+  }
+
+  const d = new Date(eventDate);
+  const motorIdStr = motor._id ? motor._id.toString() : null;
+
+  // Layer 2: Reverse search in assignmentHistory (newest to oldest)
+  if (motor.assignmentHistory && motor.assignmentHistory.length > 0) {
+    const historyDesc = [...motor.assignmentHistory].reverse();
+
+    for (let i = 0; i < historyDesc.length; i++) {
+      const h = historyDesc[i];
+      if (!h || !h.ton) continue;
+
+      const installed = h.dateInstalled ? new Date(h.dateInstalled) : null;
+      const removed = h.dateRemoved ? new Date(h.dateRemoved) : null;
+
+      // Latest/Active assignment entry
+      if (i === 0) {
+        if (!removed || (motor.status === 'active' && motorIdStr && motorToEquipmentMap.get(motorIdStr) === h.ton)) {
+          if (!installed || installed <= d) {
+            return h.ton;
+          }
+          // Delayed software logging check: if assignment was created recently in app (installed > d)
+          // and prev entry was removed on same date (same app entry session), attribute to current active assignment
+          const prevEntry = historyDesc[1];
+          if (prevEntry && prevEntry.dateRemoved && installed) {
+            const prevRem = new Date(prevEntry.dateRemoved);
+            if (Math.abs(installed - prevRem) < 86400000 * 2) {
+              return h.ton;
+            }
+          }
+        }
+      }
+
+      // Range check [installed, removed]
+      if (installed && removed) {
+        if (installed <= d && removed >= d) {
+          return h.ton;
+        }
+      } else if (installed && !removed) {
+        if (installed <= d) return h.ton;
+      } else if (!installed && removed) {
+        if (d <= removed) return h.ton;
+      }
+    }
+  }
+
+  // Layer 3: Fallback to active equipment if motor is currently active
   if (motor.eq && motor.eq.tonNumber) {
     return motor.eq.tonNumber;
   }
@@ -1660,7 +1739,7 @@ const getTonNumberForMotorAtDate = (motor, eventDate, motorToEquipmentMap = new 
     return motorToEquipmentMap.get(motorIdStr);
   }
 
-  // Fallback to latest available non-empty assignment history entry
+  // Layer 4: Fallback to latest non-empty assignment history entry
   if (motor.assignmentHistory && motor.assignmentHistory.length > 0) {
     for (let i = motor.assignmentHistory.length - 1; i >= 0; i--) {
       const h = motor.assignmentHistory[i];
@@ -1690,7 +1769,7 @@ const getShutdownReportData = async (startDateStr, endDateStr) => {
   const start = parseBoundaryDate(startDateStr, false);
   const end = parseBoundaryDate(endDateStr, true);
 
-  // Fetch all equipments to construct active motor -> equipment tonNumber lookup map
+  // Fetch all equipments to construct active motor -> equipment tonNumber lookup map and equipment list
   const equipments = await PlantEquipment.find({}).lean();
   const motorToEquipmentMap = new Map();
 
@@ -1717,7 +1796,13 @@ const getShutdownReportData = async (startDateStr, endDateStr) => {
       if (isNaN(eventDate.getTime())) continue;
 
       if (eventDate >= start && eventDate <= end) {
-        const tonNumber = getTonNumberForMotorAtDate(motor, event.date, motorToEquipmentMap);
+        const tonNumber = getTonNumberForMotorAtDate(
+          motor, 
+          event.date, 
+          event.description, 
+          motorToEquipmentMap, 
+          equipments
+        );
         const unitName = getUnitNameFromTon(tonNumber);
 
         filteredEvents.push({
