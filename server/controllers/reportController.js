@@ -5,6 +5,7 @@ const { generateTablePDF } = require('../utils/pdfService'); // Import the servi
 const { formatDate, formatMTBM } = require('../utils/helpers'); // Your helper functions
 const ExcelJS = require('exceljs');
 const { PDFDocument, rgb, StandardFonts, PageSizes, degrees } = require('pdf-lib');
+const { transformToMeasurementReport } = require('../utils/measurementExtractor');
 
 const UNIT_CONFIGS = {
   ammonia: {
@@ -1920,6 +1921,77 @@ exports.exportShutdownReportPDFByUnit = async (req, res) => {
   } catch (error) {
     console.error('Error generating PDF by unit:', error);
     res.status(500).json({ message: 'Server error while generating PDF.', error: error.message });
+  }
+};
+
+exports.exportShutdownReportExcel = async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    const data = await getShutdownReportData(from, to);
+
+    // Sort chronologically by date
+    data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const formattedRecords = data.map(item => ({
+      ...item,
+      dateFormatted: formatDate(item.date)
+    }));
+
+    const measurementRecords = transformToMeasurementReport(formattedRecords);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Measurement Sub-Report');
+
+    worksheet.columns = [
+      { header: 'Date', key: 'date', width: 15 },
+      { header: 'TON Number', key: 'ton', width: 18 },
+      { header: 'Serial Number', key: 'serialNumber', width: 18 },
+      { header: 'Rotor DE', key: 'rotorDE', width: 15 },
+      { header: 'Rotor NDE', key: 'rotorNDE', width: 15 },
+      { header: 'Housing DE', key: 'housingDE', width: 15 },
+      { header: 'Housing NDE', key: 'housingNDE', width: 15 },
+      { header: 'Current (In.L)', key: 'inL', width: 15 },
+      { header: 'Vib No-Load (V.NL)', key: 'vNL', width: 20 },
+      { header: 'Vib Load (V.L)', key: 'vL', width: 20 }
+    ];
+
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1F497D' }
+    };
+    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+    measurementRecords.forEach(row => {
+      worksheet.addRow({
+        date: row.date || 'N/A',
+        ton: row.ton || 'N/A',
+        serialNumber: row.serialNumber || 'N/A',
+        rotorDE: row.rotorDE || '-',
+        rotorNDE: row.rotorNDE || '-',
+        housingDE: row.housingDE || '-',
+        housingNDE: row.housingNDE || '-',
+        inL: row.inL || '-',
+        vNL: row.vNL || '-',
+        vL: row.vL || '-'
+      });
+    });
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=shutdown_measurement_report_${new Date().toISOString().split('T')[0]}.xlsx`
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Error exporting measurement report to Excel:', error);
+    res.status(500).json({ message: 'Server error while generating Excel.', error: error.message });
   }
 };
 

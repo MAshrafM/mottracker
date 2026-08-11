@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { FileDown, Loader, ChevronLeft, Calendar, Info, Search } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Loader, ChevronLeft, Calendar, Info, Search, Gauge } from 'lucide-react';
 import DatePicker from '../components/DatePicker';
+import { transformToMeasurementReport } from '../utils/measurementExtractor';
 
 const ShutdownReportPage = () => {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const ShutdownReportPage = () => {
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('date'); // 'date' | 'unit'
+  const [activeTab, setActiveTab] = useState('date'); // 'date' | 'unit' | 'measurements'
 
   const fetchReport = async () => {
     if (!fromDate || !toDate) {
@@ -102,6 +103,26 @@ const ShutdownReportPage = () => {
     }
   };
 
+  const exportExcelMeasurements = async () => {
+    try {
+      const response = await api.get('/reports/shutdown-report/export-excel-measurements', {
+        params: { from: fromDate, to: toDate },
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `shutdown_measurement_report_${fromDate}_to_${toDate}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error exporting Excel measurements:', err);
+      alert('Failed to export Excel measurements.');
+    }
+  };
+
   const formatDateDisplay = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -131,6 +152,12 @@ const ShutdownReportPage = () => {
     return new Date(a.date) - new Date(b.date);
   });
 
+  const formattedRecordsForMeasurement = dataSortedByDate.map(r => ({
+    ...r,
+    dateFormatted: formatDateDisplay(r.date)
+  }));
+  const measurementRecords = transformToMeasurementReport(formattedRecordsForMeasurement);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-6 text-white relative">
       {/* Background Pattern */}
@@ -152,7 +179,7 @@ const ShutdownReportPage = () => {
               </button>
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">Shutdown Report</h1>
-                <p className="text-gray-300 mt-1">Filter and export motor maintenance histories by date range</p>
+                <p className="text-gray-300 mt-1">Filter and export motor maintenance histories & extracted measurements</p>
               </div>
             </div>
 
@@ -239,6 +266,13 @@ const ShutdownReportPage = () => {
                 <FileDown size={18} />
                 <span>Export PDF (by Unit/TON)</span>
               </button>
+              <button
+                onClick={exportExcelMeasurements}
+                className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all duration-300 transform hover:scale-105"
+              >
+                <FileSpreadsheet size={18} />
+                <span>Export Excel (Measurements)</span>
+              </button>
             </div>
           </div>
         )}
@@ -264,10 +298,10 @@ const ShutdownReportPage = () => {
         ) : (
           <div className="space-y-6">
             {/* Tab Navigation */}
-            <div className="flex border-b border-white/10">
+            <div className="flex border-b border-white/10 overflow-x-auto">
               <button
                 onClick={() => setActiveTab('date')}
-                className={`py-3 px-6 font-semibold border-b-2 transition-all duration-200 ${
+                className={`py-3 px-6 font-semibold border-b-2 transition-all duration-200 whitespace-nowrap ${
                   activeTab === 'date'
                     ? 'border-blue-500 text-white bg-white/5'
                     : 'border-transparent text-gray-400 hover:text-white'
@@ -277,13 +311,24 @@ const ShutdownReportPage = () => {
               </button>
               <button
                 onClick={() => setActiveTab('unit')}
-                className={`py-3 px-6 font-semibold border-b-2 transition-all duration-200 ${
+                className={`py-3 px-6 font-semibold border-b-2 transition-all duration-200 whitespace-nowrap ${
                   activeTab === 'unit'
                     ? 'border-blue-500 text-white bg-white/5'
                     : 'border-transparent text-gray-400 hover:text-white'
                 }`}
               >
                 Arranged by Unit & TON
+              </button>
+              <button
+                onClick={() => setActiveTab('measurements')}
+                className={`py-3 px-6 font-semibold border-b-2 transition-all duration-200 flex items-center space-x-2 whitespace-nowrap ${
+                  activeTab === 'measurements'
+                    ? 'border-blue-500 text-white bg-white/5'
+                    : 'border-transparent text-gray-400 hover:text-white'
+                }`}
+              >
+                <Gauge size={16} className="text-cyan-400" />
+                <span>Measurement Sub-Report</span>
               </button>
             </div>
 
@@ -320,7 +365,7 @@ const ShutdownReportPage = () => {
                     </tbody>
                   </table>
                 </div>
-              ) : (
+              ) : activeTab === 'unit' ? (
                 // Table 2: Arranged by Unit & TON
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
@@ -355,6 +400,101 @@ const ShutdownReportPage = () => {
                     </tbody>
                   </table>
                 </div>
+              ) : (
+                // Table 3: Measurement Sub-Report
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-white/5 border-b border-white/10 text-xs text-blue-300 font-bold uppercase tracking-wider">
+                        <th className="px-4 py-3.5">Date</th>
+                        <th className="px-4 py-3.5">TON Number</th>
+                        <th className="px-4 py-3.5">Serial Number</th>
+                        <th className="px-4 py-3.5 text-center">Rotor (DE / NDE)</th>
+                        <th className="px-4 py-3.5 text-center">Housing (DE / NDE)</th>
+                        <th className="px-4 py-3.5 text-center">Current (In.L)</th>
+                        <th className="px-4 py-3.5 text-center">Vib No-Load (V.NL)</th>
+                        <th className="px-4 py-3.5 text-center">Vib Load (V.L)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 text-sm text-gray-200">
+                      {measurementRecords.map((row, index) => {
+                        const hasRotor = row.rotorDE || row.rotorNDE;
+                        const hasHousing = row.housingDE || row.housingNDE;
+
+                        return (
+                          <tr key={index} title={row.rawText || ''} className="hover:bg-white/5 transition-colors duration-150">
+                            <td className="px-4 py-4 font-semibold text-blue-200 whitespace-nowrap">
+                              {row.date}
+                            </td>
+                            <td className="px-4 py-4 font-mono font-bold text-amber-400 whitespace-nowrap">
+                              {row.ton}
+                            </td>
+                            <td className="px-4 py-4 font-mono whitespace-nowrap">{row.serialNumber}</td>
+                            
+                            {/* Rotor DE / NDE */}
+                            <td className="px-4 py-4 text-center font-mono whitespace-nowrap">
+                              {hasRotor ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-semibold text-xs">
+                                  <span>DE: {row.rotorDE || '-'}</span>
+                                  <span className="text-gray-500">|</span>
+                                  <span>NDE: {row.rotorNDE || '-'}</span>
+                                </span>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )}
+                            </td>
+
+                            {/* Housing DE / NDE */}
+                            <td className="px-4 py-4 text-center font-mono whitespace-nowrap">
+                              {hasHousing ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 font-semibold text-xs">
+                                  <span>DE: {row.housingDE || '-'}</span>
+                                  <span className="text-gray-500">|</span>
+                                  <span>NDE: {row.housingNDE || '-'}</span>
+                                </span>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )}
+                            </td>
+
+                            {/* Current (In.L) */}
+                            <td className="px-4 py-4 text-center font-mono whitespace-nowrap">
+                              {row.inL ? (
+                                <span className="px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/20 text-purple-300 font-bold text-xs">
+                                  {row.inL}
+                                </span>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )}
+                            </td>
+
+                            {/* Vib No-Load */}
+                            <td className="px-4 py-4 text-center font-mono whitespace-nowrap">
+                              {row.vNL ? (
+                                <span className="px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-300 font-semibold text-xs">
+                                  {row.vNL}
+                                </span>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )}
+                            </td>
+
+                            {/* Vib Load */}
+                            <td className="px-4 py-4 text-center font-mono whitespace-nowrap">
+                              {row.vL ? (
+                                <span className="px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 font-semibold text-xs">
+                                  {row.vL}
+                                </span>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
@@ -365,3 +505,4 @@ const ShutdownReportPage = () => {
 };
 
 export default ShutdownReportPage;
+
