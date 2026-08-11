@@ -1604,30 +1604,69 @@ exports.exportUnitMotorReportToPDF = async (req, res) => {
 
 // --- Shutdown Report Helpers and Controllers ---
 
-const getTonNumberForMotorAtDate = (motor, eventDate) => {
+const parseBoundaryDate = (dateStr, isEnd = false) => {
+  if (!dateStr) return isEnd ? new Date() : new Date(0);
+  const rawStr = String(dateStr).trim();
+  const dateOnlyMatch = rawStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (dateOnlyMatch) {
+    const year = parseInt(dateOnlyMatch[1], 10);
+    const month = parseInt(dateOnlyMatch[2], 10) - 1;
+    const day = parseInt(dateOnlyMatch[3], 10);
+    return isEnd 
+      ? new Date(year, month, day, 23, 59, 59, 999) 
+      : new Date(year, month, day, 0, 0, 0, 0);
+  }
+  const d = new Date(rawStr);
+  if (!isNaN(d.getTime())) {
+    if (isEnd) d.setHours(23, 59, 59, 999);
+    else d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  return isEnd ? new Date() : new Date(0);
+};
+
+const getTonNumberForMotorAtDate = (motor, eventDate, motorToEquipmentMap = new Map()) => {
   if (!motor) return 'N/A';
-  
+  const d = new Date(eventDate);
+  const motorIdStr = motor._id ? motor._id.toString() : null;
+
   if (motor.assignmentHistory && motor.assignmentHistory.length > 0) {
-    const d = new Date(eventDate);
     const match = motor.assignmentHistory.find(h => {
-      if (!h.dateInstalled) return false;
-      const installed = new Date(h.dateInstalled);
+      const installed = h.dateInstalled ? new Date(h.dateInstalled) : null;
       const removed = h.dateRemoved ? new Date(h.dateRemoved) : null;
-      return installed <= d && (!removed || removed >= d);
+
+      if (installed && removed) {
+        return installed <= d && removed >= d;
+      }
+      if (installed && !removed) {
+        return installed <= d;
+      }
+      if (!installed && removed) {
+        return d <= removed;
+      }
+      return false;
     });
+
     if (match && match.ton) {
       return match.ton;
     }
   }
 
+  // Fallback to active equipment TON if motor is currently assigned
   if (motor.eq && motor.eq.tonNumber) {
     return motor.eq.tonNumber;
   }
+  if (motorIdStr && motorToEquipmentMap.has(motorIdStr)) {
+    return motorToEquipmentMap.get(motorIdStr);
+  }
 
+  // Fallback to latest available non-empty assignment history entry
   if (motor.assignmentHistory && motor.assignmentHistory.length > 0) {
-    const last = motor.assignmentHistory[motor.assignmentHistory.length - 1];
-    if (last && last.ton) {
-      return last.ton;
+    for (let i = motor.assignmentHistory.length - 1; i >= 0; i--) {
+      const h = motor.assignmentHistory[i];
+      if (h && h.ton) {
+        return h.ton;
+      }
     }
   }
 
@@ -1648,11 +1687,18 @@ const getUnitNameFromTon = (tonNumber) => {
 };
 
 const getShutdownReportData = async (startDateStr, endDateStr) => {
-  let start = startDateStr ? new Date(startDateStr) : new Date(0);
-  let end = endDateStr ? new Date(endDateStr) : new Date();
+  const start = parseBoundaryDate(startDateStr, false);
+  const end = parseBoundaryDate(endDateStr, true);
 
-  if (startDateStr) start.setHours(0, 0, 0, 0);
-  if (endDateStr) end.setHours(23, 59, 59, 999);
+  // Fetch all equipments to construct active motor -> equipment tonNumber lookup map
+  const equipments = await PlantEquipment.find({}).lean();
+  const motorToEquipmentMap = new Map();
+
+  equipments.forEach(eq => {
+    if (eq.tonNumber && eq.currentMotor) {
+      motorToEquipmentMap.set(eq.currentMotor.toString(), eq.tonNumber);
+    }
+  });
 
   const motors = await Motor.find({})
     .populate('eq')
@@ -1666,9 +1712,12 @@ const getShutdownReportData = async (startDateStr, endDateStr) => {
     }
 
     for (const event of motor.maintenanceHistory) {
+      if (!event.date) continue;
       const eventDate = new Date(event.date);
+      if (isNaN(eventDate.getTime())) continue;
+
       if (eventDate >= start && eventDate <= end) {
-        const tonNumber = getTonNumberForMotorAtDate(motor, event.date);
+        const tonNumber = getTonNumberForMotorAtDate(motor, event.date, motorToEquipmentMap);
         const unitName = getUnitNameFromTon(tonNumber);
 
         filteredEvents.push({

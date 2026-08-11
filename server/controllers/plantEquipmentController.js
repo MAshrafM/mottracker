@@ -43,10 +43,51 @@ exports.updateEquipment = async (req, res) => {
     if (!equipment) {
       return res.status(404).json({ success: false, message: 'Equipment not found' });
     }
+
+    // Sync updated TON number across motor assignment histories linked to this equipment
+    if (req.body.tonNumber) {
+      await Motor.updateMany(
+        { 'assignmentHistory.equipment': equipment._id },
+        { $set: { 'assignmentHistory.$[elem].ton': equipment.tonNumber } },
+        { arrayFilters: [{ 'elem.equipment': equipment._id }] }
+      );
+    }
+
     res.status(200).json({ success: true, data: equipment });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
+};
+
+// Helper function to gracefully mark motor removal while preserving dateInstalled
+const markMotorUnassigned = async (motorId, equipment) => {
+  if (!motorId) return;
+  const motor = await Motor.findById(motorId);
+  if (!motor) return;
+
+  motor.status = 'out of service';
+
+  // Check if there is an existing active assignment entry for this equipment
+  const activeAssignment = motor.assignmentHistory.find(
+    h => h.equipment && h.equipment.toString() === equipment._id.toString() && !h.dateRemoved
+  );
+
+  if (activeAssignment) {
+    activeAssignment.dateRemoved = new Date();
+    if (!activeAssignment.dateInstalled) {
+      activeAssignment.dateInstalled = motor.createdAt || new Date();
+    }
+  } else {
+    motor.assignmentHistory.push({
+      equipment: equipment._id,
+      ton: equipment.tonNumber,
+      plant: equipment.plant || 'AFC-3',
+      dateInstalled: motor.createdAt || new Date(),
+      dateRemoved: new Date()
+    });
+  }
+
+  await motor.save();
 };
 
 // @desc    Delete a piece of equipment
@@ -60,17 +101,7 @@ exports.deleteEquipment = async (req, res) => {
     }
     // Business rule: If motor is installed, set it to 'out of service' before deleting equipment
     if (equipment.currentMotor) {
-      await Motor.findByIdAndUpdate(equipment.currentMotor, {
-        status: 'out of service',
-        $push: {
-          assignmentHistory: {
-            equipment: equipment._id,
-            ton: equipment.tonNumber,
-            plant: equipment.plant || 'AFC-3',
-            dateRemoved: new Date()
-          }
-        }
-      });
+      await markMotorUnassigned(equipment.currentMotor, equipment);
     }
     await equipment.deleteOne();
     res.status(200).json({ success: true, data: {} });
@@ -94,19 +125,9 @@ exports.assignMotor = async (req, res) => {
     if (newMotor.status !== 'spare') return res.status(400).json({ success: false, message: 'Motor is not a spare.' });
 
     // --- The Core Logic ---
-    // 1. If there's an old motor, set it to 'spare' and update its history record
+    // 1. If there's an old motor, set it to 'out of service' and update its history record
     if (equipment.currentMotor) {
-      await Motor.findByIdAndUpdate(equipment.currentMotor, {
-        status: 'out of service',
-        $push: {
-          assignmentHistory: {
-            equipment: equipment._id,
-            ton: equipment.tonNumber,
-            plant: equipment.plant || 'AFC-3',
-            dateRemoved: new Date()
-          }
-        }
-      });
+      await markMotorUnassigned(equipment.currentMotor, equipment);
       const historyEntry = equipment.motorHistory.find(h => h.motor.equals(equipment.currentMotor) && !h.dateRemoved);
       if (historyEntry) {
         historyEntry.dateRemoved = new Date();
@@ -172,17 +193,7 @@ exports.unassignMotor = async (req, res) => {
     }
 
     // Update the motor status to 'out of service' and record removal in its history
-    await Motor.findByIdAndUpdate(equipment.currentMotor, {
-      status: 'out of service',
-      $push: {
-        assignmentHistory: {
-          equipment: equipment._id,
-          ton: equipment.tonNumber,
-          plant: equipment.plant || 'AFC-3', // Default or handle appropriately
-          dateRemoved: new Date()
-        }
-      }
-    });
+    await markMotorUnassigned(equipment.currentMotor, equipment);
 
     // Update equipment history to mark removal
     const historyEntry = equipment.motorHistory.find(h => h.motor.equals(equipment.currentMotor) && !h.dateRemoved);
