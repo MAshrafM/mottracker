@@ -85,26 +85,9 @@ MotorSchema.pre('save', function (next) {
     this.qrToken = crypto.randomBytes(16).toString('hex');
   }
   if (!this.isModified('meanTimeBetweenMaintenance') && (this.isModified('maintenanceHistory') || this.meanTimeBetweenMaintenance === undefined)) {
-    const completeEvents = this.maintenanceHistory
-      .filter(event => {
-        const desc = (event.description || '').toLowerCase();
-        const hasText = desc.includes('compelet maintainance') ||
-                        desc.includes('complete maintenance') ||
-                        desc.includes('complete maint') ||
-                        desc.includes('motor complete maint');
-        return hasText && event.date && !isNaN(new Date(event.date).getTime());
-      })
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    if (completeEvents.length >= 2) {
-      const latest = completeEvents[completeEvents.length - 1];
-      const secondLatest = completeEvents[completeEvents.length - 2];
-      const diffTime = Math.abs(new Date(latest.date) - new Date(secondLatest.date));
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      this.meanTimeBetweenMaintenance = diffDays;
-    } else {
-      this.meanTimeBetweenMaintenance = null;
-    }
+    const { calculateMTBMFromEvents } = require('../utils/helpers');
+    const { mtbm } = calculateMTBMFromEvents(this.maintenanceHistory || []);
+    this.meanTimeBetweenMaintenance = mtbm;
   }
   next();
 });

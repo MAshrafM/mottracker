@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useCallback } from 'react';
 import api from '../services/api';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { Loader, Printer, ArrowLeft, QrCode } from 'lucide-react';
+import { Loader, Printer, ArrowLeft, QrCode, Calculator } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import MassMaintenanceEntry from '../components/MassMaintenanceEntry';
@@ -158,6 +158,14 @@ const MaintenanceHistory = () => {
   };
 
   const openEditMotorModal = () => {
+    let activeAssignment = null;
+    if (motor && motor.assignmentHistory && motor.assignmentHistory.length > 0) {
+      activeAssignment = motor.assignmentHistory.find(h => !h.dateRemoved);
+      if (!activeAssignment) {
+        activeAssignment = motor.assignmentHistory[motor.assignmentHistory.length - 1];
+      }
+    }
+
     setMotorFormData({
       serialNumber: motor.serialNumber || '',
       type: motor.type || '',
@@ -173,12 +181,41 @@ const MaintenanceHistory = () => {
       lastMaintenanceDate: motor.lastMaintenanceDate 
         ? new Date(motor.lastMaintenanceDate).toISOString().split('T')[0] 
         : '',
+      meanTimeBetweenMaintenance: motor.meanTimeBetweenMaintenance !== undefined && motor.meanTimeBetweenMaintenance !== null 
+        ? motor.meanTimeBetweenMaintenance 
+        : '',
+      dateAssigned: activeAssignment && activeAssignment.dateInstalled 
+        ? new Date(activeAssignment.dateInstalled).toISOString().split('T')[0] 
+        : '',
+      dateRemoved: activeAssignment && activeAssignment.dateRemoved 
+        ? new Date(activeAssignment.dateRemoved).toISOString().split('T')[0] 
+        : '',
       SAP: motor.SAP || '',
       Note: motor.Note || '',
       Warehouse: motor.Warehouse || ''
     });
     setIsEditMotorOpen(true);
     setError('');
+  };
+
+  const handleCalculateMTBMForMotor = async () => {
+    try {
+      setError('');
+      const res = await api.post(`/motors/${motorId}/calculate-mtbm`);
+      const newMTBM = res.data.meanTimeBetweenMaintenance;
+      setMotorFormData(prev => ({
+        ...prev,
+        meanTimeBetweenMaintenance: newMTBM !== null && newMTBM !== undefined ? newMTBM : ''
+      }));
+      fetchMotorDetails();
+      if (newMTBM !== null && newMTBM !== undefined) {
+        alert(`MTBM Calculated: ${newMTBM} days (${formatMTBM(newMTBM)}) based on ${res.data.completeEventsCount} complete maintenance events.`);
+      } else {
+        alert(`MTBM calculated as N/A: Found ${res.data.completeEventsCount} complete maintenance events (needs at least 2).`);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to calculate MTBM.');
+    }
   };
 
   const closeEditMotorModal = () => {
@@ -198,6 +235,7 @@ const MaintenanceHistory = () => {
       const cleanedData = { ...motorFormData };
       if (cleanedData.speed === '') cleanedData.speed = null;
       if (cleanedData.lastMaintenanceDate === '') cleanedData.lastMaintenanceDate = null;
+      if (cleanedData.meanTimeBetweenMaintenance === '') cleanedData.meanTimeBetweenMaintenance = null;
 
       await api.put(`/motors/${motorId}`, cleanedData);
       closeEditMotorModal();
@@ -558,17 +596,29 @@ const MaintenanceHistory = () => {
               </button>
             )}
             {(user?.role === 'admin' || user?.role === 'manager') && (
-              <button
-                onClick={openEditMotorModal}
-                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
-                           text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
-                           transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                <span>Edit Motor Details</span>
-              </button>
+              <>
+                <button
+                  onClick={handleCalculateMTBMForMotor}
+                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 
+                             text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                             transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1.5"
+                  title="Recalculate MTBM based on complete maintenance history"
+                >
+                  <Calculator size={16} />
+                  <span>Recalculate MTBM</span>
+                </button>
+                <button
+                  onClick={openEditMotorModal}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
+                             text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                             transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>Edit Motor Details</span>
+                </button>
+              </>
             )}
             <button
               onClick={() => setIsGeneratingReport(true)}
@@ -738,12 +788,23 @@ const MaintenanceHistory = () => {
               </p>
             </div>
             <div className="bg-white/5 rounded-lg p-3">
-              <p className="flex justify-between items-center">
+              <div className="flex justify-between items-center">
                 <strong className="text-blue-300 text-base">MTBM:</strong>
-                <span className="text-base text-cyan-300 font-bold">
-                  {formatMTBM(displayMTBM)}
-                </span>
-              </p>
+                <div className="flex items-center space-x-2">
+                  <span className="text-base text-cyan-300 font-bold">
+                    {formatMTBM(displayMTBM)}
+                  </span>
+                  {(user?.role === 'admin' || user?.role === 'manager') && (
+                    <button
+                      onClick={handleCalculateMTBMForMotor}
+                      className="p-1 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 rounded transition-all transform hover:scale-110"
+                      title="Calculate / Recalculate MTBM with complete maintenance logic"
+                    >
+                      <Calculator className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="bg-white/5 rounded-lg p-3">
               <p className="flex justify-between items-center">
@@ -1227,6 +1288,68 @@ const MaintenanceHistory = () => {
                                placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 
                                focus:ring-blue-400/50 transition-all duration-300"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Date Assigned (Dev / Installation)</label>
+                  <DatePicker
+                    name="dateAssigned"
+                    value={motorFormData.dateAssigned}
+                    onChange={handleMotorInputChange}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 
+                               transition-all duration-300"
+                    placeholder="YYYY-MM-DD"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-300 text-sm font-semibold">Date Removed (Dev / Removal)</label>
+                  <DatePicker
+                    name="dateRemoved"
+                    value={motorFormData.dateRemoved}
+                    onChange={handleMotorInputChange}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white 
+                               focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 
+                               transition-all duration-300"
+                    placeholder="YYYY-MM-DD (blank if active)"
+                  />
+                </div>
+
+                <div className="space-y-2 md:col-span-2 lg:col-span-3 bg-white/5 p-4 rounded-xl border border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-cyan-300 text-sm font-semibold flex items-center space-x-2">
+                      <Calculator className="w-4 h-4" />
+                      <span>Mean Time Between Maintenance (MTBM)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleCalculateMTBMForMotor}
+                      className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 
+                                 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all 
+                                 shadow-md flex items-center space-x-1.5"
+                    >
+                      <Calculator className="w-3.5 h-3.5" />
+                      <span>Calculate MTBM</span>
+                    </button>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      name="meanTimeBetweenMaintenance"
+                      type="number"
+                      value={motorFormData.meanTimeBetweenMaintenance}
+                      onChange={handleMotorInputChange}
+                      placeholder="MTBM in days (or click Calculate MTBM)"
+                      className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white 
+                                 placeholder-gray-400 focus:outline-none focus:border-cyan-400 focus:ring-2 
+                                 focus:ring-cyan-400/50 transition-all duration-300 font-mono"
+                    />
+                    {motorFormData.meanTimeBetweenMaintenance && (
+                      <span className="text-sm font-semibold text-cyan-300 whitespace-nowrap">
+                        {formatMTBM(Number(motorFormData.meanTimeBetweenMaintenance))}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 

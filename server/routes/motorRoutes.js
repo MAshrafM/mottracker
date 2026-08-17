@@ -11,7 +11,8 @@ const {
   updateMotor,
   deleteMotor,
   updateLastGreasingDate,
-  exportMotorQRPDF
+  exportMotorQRPDF,
+  calculateMTBM
 } = require('../controllers/motorController');
 const maintenanceRouter = require('./maintenanceRoutes');
 const { protect, authorize } = require('../middleware/authMiddleware');
@@ -34,6 +35,9 @@ router.route('/:id')
   .get(getMotor)
   .put(authorize('admin', 'manager'), updateMotor) // Admin and manager can update
   .delete(authorize('admin'), deleteMotor); // Only admin can delete
+
+router.route('/:id/calculate-mtbm')
+  .post(authorize('admin', 'manager'), calculateMTBM);
 
 router.route('/:id/grease')
   .post(authorize('admin', 'manager'), updateLastGreasingDate);

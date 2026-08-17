@@ -56,17 +56,8 @@ const getPrevMaintenanceDate = (motor) => {
   if (!motor || !motor.maintenanceHistory || !Array.isArray(motor.maintenanceHistory) || motor.maintenanceHistory.length === 0) {
     return null;
   }
-  const completeEvents = motor.maintenanceHistory
-    .filter(event => {
-      const desc = (event.description || '').toLowerCase();
-      const hasText = desc.includes('compelet maintainance') ||
-        desc.includes('complete maintenance') ||
-        desc.includes('complete maint') ||
-        desc.includes('motor complete maint');
-      return hasText && event.date && !isNaN(new Date(event.date).getTime());
-    })
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
-
+  const { calculateMTBMFromEvents } = require('../utils/helpers');
+  const { completeEvents } = calculateMTBMFromEvents(motor.maintenanceHistory);
   if (completeEvents.length >= 2) {
     return completeEvents[completeEvents.length - 2].date;
   }

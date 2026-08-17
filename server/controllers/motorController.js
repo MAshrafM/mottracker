@@ -1,7 +1,9 @@
 // server/controllers/motorController.js
 
 const Motor = require('../models/motorModel');
+const PlantEquipment = require('../models/plantEquipmentModel');
 const { createNotification } = require('./notificationController');
+const { calculateMTBMFromEvents } = require('../utils/helpers');
 
 // @desc    Get all motors
 // @route   GET /api/motors
@@ -188,15 +190,109 @@ exports.updateMotor = async (req, res) => {
 
     if (updateData.speed === '') updateData.speed = null;
     if (updateData.lastMaintenanceDate === '') updateData.lastMaintenanceDate = null;
+    if (updateData.meanTimeBetweenMaintenance === '') updateData.meanTimeBetweenMaintenance = null;
 
-    const motor = await Motor.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-      runValidators: true,
-    });
+    const motor = await Motor.findById(req.params.id);
     if (!motor) {
       return res.status(404).json({ success: false, message: 'Motor not found' });
     }
 
+    // Apply standard updates
+    Object.assign(motor, updateData);
+
+    // Handle dateAssigned (dateInstalled), dateRemoved, and TON if provided
+    const hasDateAssigned = req.body.dateAssigned !== undefined || req.body.dateInstalled !== undefined;
+    const hasDateRemoved = req.body.dateRemoved !== undefined;
+    const tonVal = req.body.tonNumber !== undefined ? req.body.tonNumber : req.body.ton;
+
+    if (hasDateAssigned || hasDateRemoved || (tonVal && typeof tonVal === 'string' && tonVal.trim())) {
+      const assignedVal = req.body.dateAssigned !== undefined ? req.body.dateAssigned : req.body.dateInstalled;
+      const removedVal = req.body.dateRemoved;
+
+      let equipment = null;
+      if (tonVal && typeof tonVal === 'string' && tonVal.trim()) {
+        equipment = await PlantEquipment.findOne({ tonNumber: tonVal.trim() });
+      }
+
+      // Find active or latest assignment in motor.assignmentHistory
+      let activeAssignment = motor.assignmentHistory.find(h => !h.dateRemoved);
+      if (!activeAssignment && motor.assignmentHistory.length > 0) {
+        activeAssignment = motor.assignmentHistory[motor.assignmentHistory.length - 1];
+      }
+
+      if (activeAssignment) {
+        if (hasDateAssigned) {
+          activeAssignment.dateInstalled = assignedVal ? new Date(assignedVal) : null;
+        }
+        if (hasDateRemoved) {
+          activeAssignment.dateRemoved = removedVal ? new Date(removedVal) : null;
+        }
+        if (equipment) {
+          activeAssignment.equipment = equipment._id;
+          activeAssignment.ton = equipment.tonNumber;
+          activeAssignment.plant = equipment.plant || activeAssignment.plant;
+        } else if (tonVal && typeof tonVal === 'string' && tonVal.trim()) {
+          activeAssignment.ton = tonVal.trim();
+        }
+      } else if (hasDateAssigned || hasDateRemoved || (tonVal && typeof tonVal === 'string' && tonVal.trim())) {
+        motor.assignmentHistory.push({
+          equipment: equipment ? equipment._id : undefined,
+          ton: equipment ? equipment.tonNumber : (tonVal && typeof tonVal === 'string' ? tonVal.trim() : undefined),
+          plant: equipment ? equipment.plant : undefined,
+          dateInstalled: assignedVal ? new Date(assignedVal) : new Date(),
+          dateRemoved: removedVal ? new Date(removedVal) : null
+        });
+      }
+
+      // Synchronize with PlantEquipment if assigned
+      try {
+        if (!equipment) {
+          equipment = await PlantEquipment.findOne({
+            $or: [
+              { currentMotor: motor._id },
+              { 'motorHistory.motor': motor._id }
+            ]
+          });
+        }
+
+        if (equipment) {
+          let eqHistory = equipment.motorHistory.find(h => h.motor && h.motor.toString() === motor._id.toString() && !h.dateRemoved);
+          if (!eqHistory) {
+            const matches = equipment.motorHistory.filter(h => h.motor && h.motor.toString() === motor._id.toString());
+            if (matches.length > 0) {
+              eqHistory = matches[matches.length - 1];
+            }
+          }
+
+          if (eqHistory) {
+            if (hasDateAssigned) {
+              eqHistory.dateAssigned = assignedVal ? new Date(assignedVal) : eqHistory.dateAssigned;
+            }
+            if (hasDateRemoved) {
+              eqHistory.dateRemoved = removedVal ? new Date(removedVal) : null;
+            }
+          } else {
+            equipment.motorHistory.push({
+              motor: motor._id,
+              dateAssigned: assignedVal ? new Date(assignedVal) : new Date(),
+              dateRemoved: removedVal ? new Date(removedVal) : null
+            });
+          }
+
+          if (!removedVal) {
+            equipment.currentMotor = motor._id;
+          } else if (equipment.currentMotor && equipment.currentMotor.toString() === motor._id.toString()) {
+            equipment.currentMotor = null;
+          }
+
+          await equipment.save();
+        }
+      } catch (eqErr) {
+        console.warn('Could not sync dateAssigned/dateRemoved to PlantEquipment:', eqErr.message);
+      }
+    }
+
+    await motor.save();
 
     // Notify all clients
     await createNotification(req.app.get('socketio'), {
@@ -208,6 +304,38 @@ exports.updateMotor = async (req, res) => {
     res.status(200).json({ success: true, data: motor });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Calculate and update MTBM for a motor based on complete maintenance events
+// @route   POST /api/motors/:id/calculate-mtbm
+// @access  Private/Manager or Admin
+exports.calculateMTBM = async (req, res) => {
+  try {
+    const motor = await Motor.findById(req.params.id);
+    if (!motor) {
+      return res.status(404).json({ success: false, message: 'Motor not found' });
+    }
+
+    const { mtbm, count, completeEvents } = calculateMTBMFromEvents(motor.maintenanceHistory || []);
+
+    motor.meanTimeBetweenMaintenance = mtbm;
+    await motor.save();
+
+    await createNotification(req.app.get('socketio'), {
+      type: 'info',
+      message: `MTBM Calculated for ${motor.serialNumber}: ${mtbm !== null ? `${mtbm} days` : 'N/A'}`,
+      relatedId: motor._id
+    });
+
+    res.status(200).json({
+      success: true,
+      data: motor,
+      meanTimeBetweenMaintenance: mtbm,
+      completeEventsCount: count
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 

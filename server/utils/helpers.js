@@ -30,4 +30,67 @@ const formatMTBM = (days) => {
   }
 };
 
-module.exports = { formatDate, formatMTBM };
+// --- Check if a maintenance event description indicates complete maintenance ---
+const isCompleteMaintenanceEvent = (description) => {
+  if (!description) return false;
+  const clean = String(description)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&[a-z0-9]+;/gi, ' ')
+    .replace(/[\u00a0\s]+/g, ' ')
+    .toLowerCase()
+    .trim();
+
+  const regex = /(?:complete|compelet|compelete|compleet|complet|full)\s*(?:motor\s*)?maint|overhaul|صيانة\s*كاملة|عمرة/i;
+  return regex.test(clean) ||
+    clean.includes('complete maintenance') ||
+    clean.includes('compelet maintainance') ||
+    clean.includes('complete maint') ||
+    clean.includes('motor complete maint') ||
+    clean.includes('complete maintainance') ||
+    clean.includes('compelete maintainance') ||
+    clean.includes('complet maintenance');
+};
+
+// --- Calculate MTBM from maintenance history array ---
+const calculateMTBMFromEvents = (maintenanceHistory) => {
+  if (!maintenanceHistory || !Array.isArray(maintenanceHistory) || maintenanceHistory.length === 0) {
+    return { mtbm: null, completeEvents: [], count: 0 };
+  }
+
+  const completeEvents = maintenanceHistory
+    .filter(event => {
+      const isValidDate = event && event.date && !isNaN(new Date(event.date).getTime());
+      return isValidDate && isCompleteMaintenanceEvent(event.description);
+    })
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  if (completeEvents.length >= 2) {
+    const latest = completeEvents[completeEvents.length - 1];
+    const secondLatest = completeEvents[completeEvents.length - 2];
+    const diffTime = Math.abs(new Date(latest.date) - new Date(secondLatest.date));
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return {
+      mtbm: diffDays,
+      completeEvents,
+      count: completeEvents.length,
+      latestDate: latest.date,
+      secondLatestDate: secondLatest.date
+    };
+  }
+
+  return {
+    mtbm: null,
+    completeEvents,
+    count: completeEvents.length,
+    latestDate: completeEvents.length === 1 ? completeEvents[0].date : null
+  };
+};
+
+module.exports = {
+  formatDate,
+  formatMTBM,
+  isCompleteMaintenanceEvent,
+  calculateMTBMFromEvents
+};
