@@ -597,16 +597,18 @@ const MaintenanceHistory = () => {
             )}
             {(user?.role === 'admin' || user?.role === 'manager') && (
               <>
-                <button
-                  onClick={handleCalculateMTBMForMotor}
-                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 
-                             text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
-                             transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1.5"
-                  title="Recalculate MTBM based on complete maintenance history"
-                >
-                  <Calculator size={16} />
-                  <span>Recalculate MTBM</span>
-                </button>
+                {process.env.NODE_ENV === 'development' && (
+                  <button
+                    onClick={handleCalculateMTBMForMotor}
+                    className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 
+                               text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                               transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1.5"
+                    title="Recalculate MTBM based on complete maintenance history"
+                  >
+                    <Calculator size={16} />
+                    <span>Recalculate MTBM</span>
+                  </button>
+                )}
                 <button
                   onClick={openEditMotorModal}
                   className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 
@@ -794,7 +796,7 @@ const MaintenanceHistory = () => {
                   <span className="text-base text-cyan-300 font-bold">
                     {formatMTBM(displayMTBM)}
                   </span>
-                  {(user?.role === 'admin' || user?.role === 'manager') && (
+                  {(user?.role === 'admin' || user?.role === 'manager') && process.env.NODE_ENV === 'development' && (
                     <button
                       onClick={handleCalculateMTBMForMotor}
                       className="p-1 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 rounded transition-all transform hover:scale-110"
@@ -1322,16 +1324,18 @@ const MaintenanceHistory = () => {
                       <Calculator className="w-4 h-4" />
                       <span>Mean Time Between Maintenance (MTBM)</span>
                     </label>
-                    <button
-                      type="button"
-                      onClick={handleCalculateMTBMForMotor}
-                      className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 
-                                 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all 
-                                 shadow-md flex items-center space-x-1.5"
-                    >
-                      <Calculator className="w-3.5 h-3.5" />
-                      <span>Calculate MTBM</span>
-                    </button>
+                    {process.env.NODE_ENV === 'development' && (
+                      <button
+                        type="button"
+                        onClick={handleCalculateMTBMForMotor}
+                        className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 
+                                   text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all 
+                                   shadow-md flex items-center space-x-1.5"
+                      >
+                        <Calculator className="w-3.5 h-3.5" />
+                        <span>Calculate MTBM</span>
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center space-x-3">
                     <input
