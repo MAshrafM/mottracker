@@ -4,10 +4,12 @@ import api from '../services/api';
 import { Loader, Grid3X3, List } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import { useMotorData } from '../context/DataContext';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import DatePicker from '../components/DatePicker';
 
 const MotorManagementPage = () => {
+  const [searchParams] = useSearchParams();
+  const initialFrame = searchParams.get('frame') || searchParams.get('frameSize') || '';
   const { user } = useContext(AuthContext);
   const { motors, refreshData } = useMotorData();
   const [updatedMotors, setUpdatedMotors] = useState([]);
@@ -21,6 +23,7 @@ const MotorManagementPage = () => {
     status: '',
     serialNumber: '',
     manufacturer: '',
+    frameSize: initialFrame,
   });
 
   // different views
@@ -153,7 +156,8 @@ const MotorManagementPage = () => {
       (filters.speed === '' || (motor.speed?.toString() || '').toLowerCase().includes(filters.speed.toLowerCase())) &&
       (filters.status === '' || motor.status === filters.status) &&
       (filters.serialNumber === '' || (motor.serialNumber?.toString() || '').toLowerCase().includes(filters.serialNumber.toLowerCase())) &&
-      (filters.manufacturer === '' || (motor.manufacturer?.toString() || '').toLowerCase().includes(filters.manufacturer.toLowerCase()))
+      (filters.manufacturer === '' || (motor.manufacturer?.toString() || '').toLowerCase().includes(filters.manufacturer.toLowerCase())) &&
+      (!filters.frameSize || (motor.frameSize?.toString() || '').toLowerCase().includes(filters.frameSize.toLowerCase()))
     );
   });
 
@@ -261,6 +265,15 @@ const MotorManagementPage = () => {
             name="manufacturer"
             placeholder="Search by Manufacturer..."
             value={filters.manufacturer}
+            onChange={handleFilterChange}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 
+                      focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 transition-all duration-300"
+          />
+          <input
+            type="text"
+            name="frameSize"
+            placeholder="Search by Frame Size (e.g. 280M)..."
+            value={filters.frameSize}
             onChange={handleFilterChange}
             className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 
                       focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 transition-all duration-300"

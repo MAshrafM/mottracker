@@ -197,6 +197,11 @@ const DashboardPage = () => {
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </Link>
 
+                  <Link to="/standards/motor-dimensions" className="group relative overflow-hidden bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 rounded-lg p-3 text-center hover:border-cyan-400/50 transition-all duration-300">
+                    <span className="relative z-10 text-cyan-200 group-hover:text-white text-sm font-medium">Frame Size Selection</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </Link>
+
                   {/* Development Tools */}
                   {process.env.NODE_ENV === 'development' && (
                     <Link to="/dev/parser" className="group relative overflow-hidden bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg p-3 text-center hover:border-purple-400/50 transition-all duration-300">

@@ -28,6 +28,7 @@ const SparePartsPage = lazy(() => import('./pages/SparePartsPage'));
 const EquipmentByPowerPage = lazy(() => import('./pages/EquipmentByPowerPage'));
 const DevParserPage = lazy(() => import('./pages/DevParserPage'));
 const CableSizingPage = lazy(() => import('./pages/CableSizingPage'));
+const MotorStandardsPage = lazy(() => import('./pages/MotorStandardsPage'));
 
 const PageFallback = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -71,6 +72,9 @@ function App() {
                 <Route path="/reports/shutdown" element={<ShutdownReportPage />} />
                 <Route path="/spare-parts" element={<SparePartsPage />} />
                 <Route path="/cable-sizing" element={<CableSizingPage />} />
+                <Route path="/standards/motor-dimensions" element={<MotorStandardsPage />} />
+                <Route path="/framesize-selection" element={<MotorStandardsPage />} />
+                <Route path="/frame-size-selection" element={<MotorStandardsPage />} />
               </Route>
 
               {/* Development Only Routes */}
