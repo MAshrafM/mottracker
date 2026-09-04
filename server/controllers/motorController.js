@@ -41,6 +41,35 @@ exports.getMotor = async (req, res) => {
 // @access  Private
 exports.getMotorWithEquipment = async (req, res) => {
   try {
+    // Auto-reconciliation: self-heal any orphan motors marked 'active' without an equipment assignment
+    try {
+      const activeEquipments = await PlantEquipment.find({ currentMotor: { $ne: null } }).select('currentMotor').lean();
+      const activeMotorIds = activeEquipments.map(eq => eq.currentMotor.toString());
+
+      const orphanActiveMotors = await Motor.find({
+        status: 'active',
+        _id: { $nin: activeMotorIds }
+      });
+
+      if (orphanActiveMotors.length > 0) {
+        const now = new Date();
+        for (const orphan of orphanActiveMotors) {
+          orphan.status = 'out of service';
+          if (orphan.assignmentHistory && orphan.assignmentHistory.length > 0) {
+            orphan.assignmentHistory.forEach(h => {
+              if (!h.dateRemoved) {
+                h.dateRemoved = now;
+                if (!h.dateInstalled) h.dateInstalled = orphan.createdAt || now;
+              }
+            });
+          }
+          await orphan.save();
+        }
+      }
+    } catch (reconcileErr) {
+      console.warn('Auto-reconciliation warning in getMotorWithEquipment:', reconcileErr.message);
+    }
+
     const motors = await Motor.aggregate([
       {
         $project: {
@@ -86,6 +115,10 @@ exports.createMotor = async (req, res) => {
     const data = { ...req.body };
     if (data.speed === '') data.speed = null;
     if (data.lastMaintenanceDate === '') data.lastMaintenanceDate = null;
+    // New motors cannot be 'active' upon creation without equipment assignment
+    if (data.status === 'active') {
+      data.status = 'spare';
+    }
     const motor = await Motor.create(data);
     res.status(201).json({ success: true, data: motor });
   } catch (error) {
@@ -106,6 +139,10 @@ exports.createBulkMotors = async (req, res) => {
 
     if (!serialNumbers || !Array.isArray(serialNumbers) || serialNumbers.length === 0) {
       return res.status(400).json({ success: false, message: 'Please provide an array of serial numbers.' });
+    }
+
+    if (commonDetails.status === 'active') {
+      commonDetails.status = 'spare';
     }
 
     // Create array of motor objects
@@ -197,6 +234,31 @@ exports.updateMotor = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Motor not found' });
     }
 
+    const now = new Date();
+
+    // If status is being changed to 'spare' or 'out of service', ensure it is removed from any equipment
+    if (updateData.status === 'spare' || updateData.status === 'out of service') {
+      const linkedEquipments = await PlantEquipment.find({ currentMotor: motor._id });
+      for (const eq of linkedEquipments) {
+        eq.currentMotor = null;
+        eq.motorHistory.forEach(h => {
+          if (h.motor && h.motor.toString() === motor._id.toString() && !h.dateRemoved) {
+            h.dateRemoved = now;
+          }
+        });
+        await eq.save();
+      }
+
+      if (motor.assignmentHistory && motor.assignmentHistory.length > 0) {
+        motor.assignmentHistory.forEach(h => {
+          if (!h.dateRemoved) {
+            h.dateRemoved = now;
+            if (!h.dateInstalled) h.dateInstalled = motor.createdAt || now;
+          }
+        });
+      }
+    }
+
     // Apply standard updates
     Object.assign(motor, updateData);
 
@@ -212,6 +274,13 @@ exports.updateMotor = async (req, res) => {
       let equipment = null;
       if (tonVal && typeof tonVal === 'string' && tonVal.trim()) {
         equipment = await PlantEquipment.findOne({ tonNumber: tonVal.trim() });
+      }
+
+      // If removedVal is specified, status should transition to 'out of service'
+      if (removedVal) {
+        motor.status = 'out of service';
+      } else if (equipment && !motor.status) {
+        motor.status = 'active';
       }
 
       // Find active or latest assignment in motor.assignmentHistory
@@ -239,7 +308,7 @@ exports.updateMotor = async (req, res) => {
           equipment: equipment ? equipment._id : undefined,
           ton: equipment ? equipment.tonNumber : (tonVal && typeof tonVal === 'string' ? tonVal.trim() : undefined),
           plant: equipment ? equipment.plant : undefined,
-          dateInstalled: assignedVal ? new Date(assignedVal) : new Date(),
+          dateInstalled: assignedVal ? new Date(assignedVal) : now,
           dateRemoved: removedVal ? new Date(removedVal) : null
         });
       }
@@ -274,15 +343,33 @@ exports.updateMotor = async (req, res) => {
           } else {
             equipment.motorHistory.push({
               motor: motor._id,
-              dateAssigned: assignedVal ? new Date(assignedVal) : new Date(),
+              dateAssigned: assignedVal ? new Date(assignedVal) : now,
               dateRemoved: removedVal ? new Date(removedVal) : null
             });
           }
 
           if (!removedVal) {
+            // If equipment had another motor, set that previous motor to 'out of service'
+            if (equipment.currentMotor && equipment.currentMotor.toString() !== motor._id.toString()) {
+              const prevMotor = await Motor.findById(equipment.currentMotor);
+              if (prevMotor) {
+                prevMotor.status = 'out of service';
+                if (prevMotor.assignmentHistory && prevMotor.assignmentHistory.length > 0) {
+                  prevMotor.assignmentHistory.forEach(h => {
+                    if (!h.dateRemoved) {
+                      h.dateRemoved = now;
+                      if (!h.dateInstalled) h.dateInstalled = prevMotor.createdAt || now;
+                    }
+                  });
+                }
+                await prevMotor.save();
+              }
+            }
             equipment.currentMotor = motor._id;
+            motor.status = 'active';
           } else if (equipment.currentMotor && equipment.currentMotor.toString() === motor._id.toString()) {
             equipment.currentMotor = null;
+            motor.status = 'out of service';
           }
 
           await equipment.save();
@@ -306,6 +393,7 @@ exports.updateMotor = async (req, res) => {
     res.status(400).json({ success: false, error: error.message });
   }
 };
+
 
 // @desc    Calculate and update MTBM for a motor based on complete maintenance events
 // @route   POST /api/motors/:id/calculate-mtbm

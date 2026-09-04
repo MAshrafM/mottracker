@@ -417,6 +417,8 @@ const MotorMaintenanceReportPage = () => {
                             </div>
                             <span className={`px-2 py-1 rounded text-xs font-semibold ${motor.status === 'active'
                                 ? 'bg-green-500/20 text-green-300'
+                                : motor.status === 'out of service'
+                                ? 'bg-red-500/20 text-red-300'
                                 : 'bg-yellow-500/20 text-yellow-300'
                                 }`}>
                                 {motor.status}

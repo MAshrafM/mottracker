@@ -314,6 +314,8 @@ const MotorManagementPage = () => {
                 <div className="flex justify-center md:justify-start">
                   <span className={`px-3 py-1 rounded-full text-sm font-semibold ${motor.status === 'active'
                     ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                    : motor.status === 'out of service'
+                    ? 'bg-red-500/20 text-red-300 border border-red-500/30'
                     : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
                     }`}>
                     {motor.status}
@@ -459,10 +461,20 @@ const MotorManagementPage = () => {
                         Set Spare
                       </button>
                     )}
-                    {user.role === 'admin' && motor.status === 'spare' && (
+                    {(user.role === 'admin' || user.role === 'manager') && motor.status === 'spare' && (
                       <button
                         onClick={() => handleOutOfService(motor)}
                         className="bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 
+                                text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                                transform hover:scale-105 shadow-md hover:shadow-lg"
+                      >
+                        Set Out of Service
+                      </button>
+                    )}
+                    {(user.role === 'admin' || user.role === 'manager') && motor.status === 'active' && !motor.eq && (
+                      <button
+                        onClick={() => handleOutOfService(motor)}
+                        className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 
                                 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
                                 transform hover:scale-105 shadow-md hover:shadow-lg"
                       >
@@ -504,6 +516,8 @@ const MotorManagementPage = () => {
                     <div className="flex justify-between items-start">
                       <span className={`px-3 py-1 rounded-full text-sm font-semibold ${motor.status === 'active'
                         ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                        : motor.status === 'out of service'
+                        ? 'bg-red-500/20 text-red-300 border border-red-500/30'
                         : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
                         }`}>
                         {motor.status}
@@ -532,10 +546,30 @@ const MotorManagementPage = () => {
                       Edit
                     </button>
                   )}
-                  {user.role === 'admin' && motor.status === 'spare' && (
+                  {motor.status === 'out of service' && (
+                    <button
+                      onClick={() => handleSpare(motor)}
+                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 
+                              text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                              transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      Set Spare
+                    </button>
+                  )}
+                  {(user.role === 'admin' || user.role === 'manager') && motor.status === 'spare' && (
                     <button
                       onClick={() => handleOutOfService(motor)}
                       className="bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 
+                              text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                              transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      Set Out of Service
+                    </button>
+                  )}
+                  {(user.role === 'admin' || user.role === 'manager') && motor.status === 'active' && !motor.eq && (
+                    <button
+                      onClick={() => handleOutOfService(motor)}
+                      className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 
                               text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
                               transform hover:scale-105 shadow-md hover:shadow-lg"
                     >
@@ -747,8 +781,14 @@ const MotorManagementPage = () => {
                                focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 
                                transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="spare" className="bg-gray-800">Spare</option>
-                    <option value="active" className="bg-gray-800">Active</option>
+                    {isEditing && formData.status === 'active' ? (
+                      <option value="active" className="bg-gray-800">Active (Installed)</option>
+                    ) : (
+                      <>
+                        <option value="spare" className="bg-gray-800">Spare</option>
+                        <option value="out of service" className="bg-gray-800">Out of Service</option>
+                      </>
+                    )}
                   </select>
                 </div>
 

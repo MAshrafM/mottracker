@@ -77,9 +77,11 @@ const MaintenanceHistory = () => {
   const fetchMotorDetails = useCallback(async () => {
     try {
       const response = await api.get(`/motors/${motorId}`);
-      setMotor(response.data.data);
-      if (response.data.data.status === 'active') {
-        setIsActive(true);
+      const motorData = response.data.data;
+      setMotor(motorData);
+      setIsActive(motorData.status === 'active');
+      if (motorData.status !== 'active') {
+        setEq(null);
       }
     } catch (err) {
       console.error('Error fetching motor details:', err);
@@ -151,6 +153,18 @@ const MaintenanceHistory = () => {
     if (window.confirm('Are you sure you want to set this motor as Spare?')) {
       try {
         await api.put(`/motors/${motor._id}`, { status: 'spare' });
+        fetchMotorDetails();
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to update motor status.');
+      }
+    }
+  };
+
+  const handleOutOfService = async (motor) => {
+    if (window.confirm('Are you sure you want to set this motor to Out of Service?')) {
+      try {
+        await api.put(`/motors/${motor._id}`, { status: 'out of service' });
+        fetchMotorDetails();
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to update motor status.');
       }
@@ -571,6 +585,8 @@ const MaintenanceHistory = () => {
           <div className="flex justify-center md:justify-start">
             <span className={`px-3 py-1 rounded-full text-sm font-semibold ${motor.status === 'active'
               ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+              : motor.status === 'out of service'
+              ? 'bg-red-500/20 text-red-300 border border-red-500/30'
               : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
               }`}>
               {motor.status}
@@ -593,6 +609,26 @@ const MaintenanceHistory = () => {
                                 transform hover:scale-105 shadow-md hover:shadow-lg"
               >
                 Set Spare
+              </button>
+            )}
+            {(user?.role === 'admin' || user?.role === 'manager') && motor.status === 'spare' && (
+              <button
+                onClick={() => handleOutOfService(motor)}
+                className="bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600 
+                                text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                                transform hover:scale-105 shadow-md hover:shadow-lg"
+              >
+                Set Out of Service
+              </button>
+            )}
+            {(user?.role === 'admin' || user?.role === 'manager') && motor.status === 'active' && !eq && (
+              <button
+                onClick={() => handleOutOfService(motor)}
+                className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 
+                                text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                                transform hover:scale-105 shadow-md hover:shadow-lg"
+              >
+                Set Out of Service
               </button>
             )}
             {(user?.role === 'admin' || user?.role === 'manager') && (
