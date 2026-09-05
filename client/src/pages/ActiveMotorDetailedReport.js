@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { FileSpreadsheet, Loader, ChevronLeft } from 'lucide-react';
+import AuthContext from '../context/AuthContext';
 
 const getUnitFromTon = (tonNumber) => {
   if (!tonNumber) return '';
@@ -19,6 +20,7 @@ const getUnitFromTon = (tonNumber) => {
 };
 
 const ActiveMotorDetailedReport = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -101,14 +103,16 @@ const ActiveMotorDetailedReport = () => {
             </div>
           </div>
 
-          <button
-            onClick={exportToExcel}
-            disabled={loading || reportData.length === 0}
-            className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
-          >
-            <FileSpreadsheet size={20} />
-            <span>Export to Excel</span>
-          </button>
+          {(user?.role === 'admin' || user?.role === 'manager') && (
+            <button
+              onClick={exportToExcel}
+              disabled={loading || reportData.length === 0}
+              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+            >
+              <FileSpreadsheet size={20} />
+              <span>Export to Excel</span>
+            </button>
+          )}
         </div>
 
         {/* Error message */}

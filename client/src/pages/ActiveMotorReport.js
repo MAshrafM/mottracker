@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { FileDown, FileSpreadsheet, Loader, ChevronLeft } from 'lucide-react';
+import AuthContext from '../context/AuthContext';
 
 const ActiveMotorsReport = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -93,23 +95,27 @@ const ActiveMotorsReport = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-            <button
-              onClick={exportToExcel}
-              disabled={loading || reportData.length === 0}
-              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl w-full sm:w-auto"
-            >
-              <FileSpreadsheet size={20} />
-              <span>Export to Excel</span>
-            </button>
+            {(user?.role === 'admin' || user?.role === 'manager') && (
+              <>
+                <button
+                  onClick={exportToExcel}
+                  disabled={loading || reportData.length === 0}
+                  className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl w-full sm:w-auto"
+                >
+                  <FileSpreadsheet size={20} />
+                  <span>Export to Excel</span>
+                </button>
 
-            <button
-              onClick={exportToPDF}
-              disabled={loading || reportData.length === 0}
-              className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl w-full sm:w-auto"
-            >
-              <FileDown size={20} />
-              <span>Export to PDF</span>
-            </button>
+                <button
+                  onClick={exportToPDF}
+                  disabled={loading || reportData.length === 0}
+                  className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl w-full sm:w-auto"
+                >
+                  <FileDown size={20} />
+                  <span>Export to PDF</span>
+                </button>
+              </>
+            )}
 
             <div className="bg-blue-500/10 border border-blue-500/20 text-blue-300 px-4 py-2.5 rounded-lg font-semibold text-center w-full sm:w-auto">
               Total Active: <span className="text-amber-400 font-bold">{totalActiveMotors}</span>

@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { FileDown, FileSpreadsheet, Loader, ChevronLeft, Calendar, Info, Search, Gauge } from 'lucide-react';
 import DatePicker from '../components/DatePicker';
 import { transformToMeasurementReport } from '../utils/measurementExtractor';
+import AuthContext from '../context/AuthContext';
 
 const ShutdownReportPage = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   
   // Set default date range: from the 1st of the current month to today
@@ -251,29 +253,31 @@ const ShutdownReportPage = () => {
                 Found <span className="text-amber-400 font-bold">{reportData.length}</span> event(s) in this period.
               </span>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <button
-                onClick={exportPDFByDate}
-                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all duration-300 transform hover:scale-105"
-              >
-                <FileDown size={18} />
-                <span>Export PDF (by Date)</span>
-              </button>
-              <button
-                onClick={exportPDFByUnit}
-                className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all duration-300 transform hover:scale-105"
-              >
-                <FileDown size={18} />
-                <span>Export PDF (by Unit/TON)</span>
-              </button>
-              <button
-                onClick={exportExcelMeasurements}
-                className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all duration-300 transform hover:scale-105"
-              >
-                <FileSpreadsheet size={18} />
-                <span>Export Excel (Measurements)</span>
-              </button>
-            </div>
+            {(user?.role === 'admin' || user?.role === 'manager') && (
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <button
+                  onClick={exportPDFByDate}
+                  className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all duration-300 transform hover:scale-105"
+                >
+                  <FileDown size={18} />
+                  <span>Export PDF (by Date)</span>
+                </button>
+                <button
+                  onClick={exportPDFByUnit}
+                  className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all duration-300 transform hover:scale-105"
+                >
+                  <FileDown size={18} />
+                  <span>Export PDF (by Unit/TON)</span>
+                </button>
+                <button
+                  onClick={exportExcelMeasurements}
+                  className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all duration-300 transform hover:scale-105"
+                >
+                  <FileSpreadsheet size={18} />
+                  <span>Export Excel (Measurements)</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 

@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 import { FileDown, FileSpreadsheet, Loader } from 'lucide-react';
+import AuthContext from '../context/AuthContext';
 
 const BearingReport = () => {
+  const { user } = useContext(AuthContext);
   const [bearingData, setBearingData] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -80,21 +82,25 @@ const BearingReport = () => {
         ) : (
           <div className="flex-col sm:flex-row items-center justify-between gap-3 mb-4">
             <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
-            <button
-              onClick={exportToExcel}
-              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto"
-            >
-              <FileSpreadsheet size={18} />
-              Export to Excel
-            </button>
-            
-            <button
-              onClick={exportToPDF}
-              className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto"
-            >
-              <FileDown size={18} />
-              Export to PDF
-            </button>
+            {(user?.role === 'admin' || user?.role === 'manager') && (
+              <>
+                <button
+                  onClick={exportToExcel}
+                  className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto"
+                >
+                  <FileSpreadsheet size={18} />
+                  Export to Excel
+                </button>
+                
+                <button
+                  onClick={exportToPDF}
+                  className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto"
+                >
+                  <FileDown size={18} />
+                  Export to PDF
+                </button>
+              </>
+            )}
             
             <div className="text-white-600 font-medium py-2 text-center sm:text-left sm:ml-auto w-full sm:w-auto">
               <p>Total Bearing Types: <span className="text-amber-400">{bearingData.length}</span></p>

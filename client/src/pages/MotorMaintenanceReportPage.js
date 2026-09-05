@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 import { useMotorData } from '../context/DataContext';
 import { Loader, Printer, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import logo from '../logo_ar.gif';
+import AuthContext from '../context/AuthContext';
 
 const formatMTBM = (days) => {
     if (days === null || days === undefined || isNaN(days)) return 'N/A';
@@ -19,6 +20,8 @@ const formatMTBM = (days) => {
 };
 
 const MotorMaintenanceReportPage = () => {
+    const { user } = useContext(AuthContext);
+    const canGenerateReport = user?.role === 'admin' || user?.role === 'manager';
     const { motors, refreshData } = useMotorData();
     const [filteredMotors, setFilteredMotors] = useState([]);
     const [selectedMotor, setSelectedMotor] = useState(null);
@@ -62,6 +65,7 @@ const MotorMaintenanceReportPage = () => {
     };
 
     const handleSelectMotor = async (motor) => {
+        if (!canGenerateReport) return;
         setSelectedMotor(motor);
         setLoadingHistory(true);
         try {
@@ -94,7 +98,7 @@ const MotorMaintenanceReportPage = () => {
         );
     }
 
-    if (selectedMotor) {
+    if (selectedMotor && canGenerateReport) {
         let displayMTBM = selectedMotor.meanTimeBetweenMaintenance;
         let isCalculated = false;
         if (displayMTBM === null || displayMTBM === undefined || isNaN(displayMTBM)) {
@@ -405,12 +409,14 @@ const MotorMaintenanceReportPage = () => {
                 {filteredMotors.map((motor) => (
                     <div
                         key={motor._id}
-                        className="glass rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 cursor-pointer group"
-                        onClick={() => handleSelectMotor(motor)}
+                        className={`glass rounded-xl p-6 shadow-xl transition-all duration-300 ${
+                            canGenerateReport ? 'hover:shadow-2xl transform hover:scale-105 cursor-pointer group' : ''
+                        }`}
+                        onClick={() => canGenerateReport && handleSelectMotor(motor)}
                     >
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h3 className="text-xl font-bold text-white group-hover:text-blue-300 transition-colors">
+                                <h3 className={`text-xl font-bold text-white ${canGenerateReport ? 'group-hover:text-blue-300 transition-colors' : ''}`}>
                                     {motor.manufacturer} | {motor.type}
                                 </h3>
                                 <p className="text-sm text-slate-400 mt-1">S/N: {motor.serialNumber}</p>
@@ -432,11 +438,13 @@ const MotorMaintenanceReportPage = () => {
                             <p>Loc: <span className="text-white">{motor.Warehouse || 'N/A'}</span></p>
                         </div>
 
-                        <div className="mt-4 pt-4 border-t border-white/10 flex justify-end">
-                            <span className="text-blue-400 text-sm font-medium flex items-center group-hover:translate-x-1 transition-transform">
-                                Generate Report <ArrowLeft className="w-4 h-4 ml-1 rotate-180" />
-                            </span>
-                        </div>
+                        {canGenerateReport && (
+                            <div className="mt-4 pt-4 border-t border-white/10 flex justify-end">
+                                <span className="text-blue-400 text-sm font-medium flex items-center group-hover:translate-x-1 transition-transform">
+                                    Generate Report <ArrowLeft className="w-4 h-4 ml-1 rotate-180" />
+                                </span>
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>

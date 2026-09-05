@@ -338,7 +338,7 @@ const MaintenanceHistory = () => {
     }
   }
 
-  if (isGeneratingReport) {
+  if (isGeneratingReport && (user?.role === 'admin' || user?.role === 'manager')) {
     let activeAssignment = null;
     if (motor && motor.assignmentHistory && motor.assignmentHistory.length > 0) {
       activeAssignment = motor.assignmentHistory.find(h => !h.dateRemoved);
@@ -658,24 +658,28 @@ const MaintenanceHistory = () => {
                 </button>
               </>
             )}
-            <button
-              onClick={() => setIsGeneratingReport(true)}
-              className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-800 hover:to-slate-700 
-                         text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
-                         transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1.5"
-            >
-              <Printer size={16} />
-              <span>Generate Report</span>
-            </button>
-            <button
-              onClick={handlePrintQR}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 
-                         text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
-                         transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1.5"
-            >
-              <QrCode size={16} />
-              <span>Print QR Tag</span>
-            </button>
+            {(user?.role === 'admin' || user?.role === 'manager') && (
+              <>
+                <button
+                  onClick={() => setIsGeneratingReport(true)}
+                  className="bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-800 hover:to-slate-700 
+                             text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                             transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1.5"
+                >
+                  <Printer size={16} />
+                  <span>Generate Report</span>
+                </button>
+                <button
+                  onClick={handlePrintQR}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 
+                             text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 
+                             transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1.5"
+                >
+                  <QrCode size={16} />
+                  <span>Print QR Tag</span>
+                </button>
+              </>
+            )}
             {!user && (
               <button
                 onClick={() => navigate('/login')}
